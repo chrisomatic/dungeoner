@@ -15,12 +15,18 @@
 #include "renderer.h"
 
 // =========================
+// Defines
+// =========================
+
+#define BPP 4 // bits per pixel
+
+// =========================
 // Global Vars
 // =========================
 
 Timer game_timer = {0};
 
-unsigned char frame_buffer[1366*768*4] = {0};
+unsigned char frame_buffer[STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT*BPP] = {0};
 
 // =========================
 // Function Prototypes
@@ -81,14 +87,6 @@ void init()
         exit(1);
     }
 
-
-    // @TEMP
-    for(int i = 0; i < 1366*768; ++i)
-    {
-        frame_buffer[4*i] = 0xff;
-        frame_buffer[4*i+3] = 0xff;
-    }
-
     printf("Initializing...\n");
 
     printf(" - Shaders.\n");
@@ -98,7 +96,7 @@ void init()
     player_init();
 
     printf(" - Renderer.\n");
-    renderer_init(frame_buffer);
+    renderer_init(frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
 
 void deinit()
@@ -110,6 +108,14 @@ void deinit()
 void update()
 {
     player_update();
+
+    // @TEMP
+    for(int i = 0; i < STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT; ++i)
+    {
+        frame_buffer[4*i] = 0x50;
+        frame_buffer[4*i+3] = 0x00;
+    }
+
 }
 
 void draw()
