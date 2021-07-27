@@ -13,12 +13,12 @@ static struct
     bool monotonic;
     uint64_t  frequency;
     uint64_t  offset;
-} timer;
+} _timer;
 
 static uint64_t get_timer_value(void)
 {
 #if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
-    if (timer.monotonic)
+    if (_timer.monotonic)
     {
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -40,22 +40,22 @@ static void init_timer(void)
 
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
     {
-        timer.monotonic = true;
-        timer.frequency = 1000000000;
+        _timer.monotonic = true;
+        _timer.frequency = 1000000000;
     }
     else
 #endif
     {
-        timer.monotonic = false;
-        timer.frequency = 1000000;
+        _timer.monotonic = false;
+        _timer.frequency = 1000000;
     }
-    timer.offset = get_timer_value();
+    _timer.offset = get_timer_value();
 }
 
 
 static double get_time()
 {
-    return (double) (get_timer_value() - timer.offset) / timer.frequency;
+    return (double) (get_timer_value() - _timer.offset) / _timer.frequency;
 
 }
 
@@ -64,6 +64,7 @@ void timer_begin(Timer* timer)
     init_timer();
     timer->time_start = get_time();
     timer->time_last = timer->time_start;
+    timer->frame_fps = 0.0f;
 }
 
 double timer_get_time()
@@ -79,15 +80,17 @@ void timer_set_fps(Timer* timer, float fps)
 
 void timer_wait_for_frame(Timer* timer)
 {
-    while(get_time() < timer->time_last + timer->spf)
+    double now;
+    for(;;)
+    {
+        now = get_time();
+        if(now >= timer->time_last + timer->spf)
+            break;
         usleep(100);
-}
+    }
 
-void timer_wait(Timer* timer, float fps)
-{
-    float spf = 1.0f / fps;
-    while(get_time() < timer->time_last + spf)
-        usleep(100);
+    timer->frame_fps = 1.0f / (now - timer->time_last);
+    timer->time_last = now;
 }
 
 double timer_get_elapsed(Timer* timer)
@@ -96,9 +99,9 @@ double timer_get_elapsed(Timer* timer)
     return time_curr - timer->time_start;
 }
 
-void timer_inc_frame(Timer* timer)
+double timer_get_prior_frame_fps(Timer* timer)
 {
-    timer->time_last += timer->spf;
+    return timer->frame_fps;
 }
 
 void timer_delay_us(int us)

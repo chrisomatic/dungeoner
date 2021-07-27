@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
 
@@ -70,7 +71,7 @@ void start_game()
         draw();
 
         timer_wait_for_frame(&game_timer);
-        timer_inc_frame(&game_timer);
+        printf("fps: %f\n",timer_get_prior_frame_fps(&game_timer));
     }
 
     deinit();
@@ -81,11 +82,15 @@ void init()
     bool success;
 
     success = window_init();
+
     if(!success)
     {
         fprintf(stderr,"Failed to initialize window!\n");
         exit(1);
     }
+
+    time_t t;
+    srand((unsigned) time(&t));
 
     printf("Initializing...\n");
 
@@ -112,15 +117,16 @@ void update()
     // @TEMP
     for(int i = 0; i < STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT; ++i)
     {
-        frame_buffer[4*i] = 0x50;
-        frame_buffer[4*i+3] = 0x00;
+        frame_buffer[4*i+0] = rand() % 255;
+        frame_buffer[4*i+1] = rand() % 255;
+        frame_buffer[4*i+2] = rand() % 255;
     }
 
 }
 
 void draw()
 {
-    renderer_draw();
+    renderer_draw(frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
     window_swap_buffers();
 }
 

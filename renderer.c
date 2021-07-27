@@ -8,7 +8,7 @@
 static GLuint texture = 0;
 static GLuint vao, vbo, ibo;
 
-void renderer_init(unsigned char* buffer, int width, int height)
+void renderer_init()
 {
     printf("GL version: %s\n",glGetString(GL_VERSION));
 
@@ -40,8 +40,6 @@ void renderer_init(unsigned char* buffer, int width, int height)
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
  
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -52,7 +50,7 @@ void renderer_init(unsigned char* buffer, int width, int height)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void renderer_draw()
+void renderer_draw(unsigned char* buffer, int width, int height)
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -60,6 +58,8 @@ void renderer_draw()
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
