@@ -1,6 +1,17 @@
 #pragma once
 
-#include "common.h"
+#include <stdbool.h>
+#include "3dmath.h"
+
+typedef struct
+{
+    Vector3f position;
+    Vector3f target;
+    Vector3f up;
+
+    double cursor_x;
+    double cursor_y;
+} Camera;
 
 typedef struct
 {
@@ -13,6 +24,8 @@ typedef struct
 
     float angle_h;
     float angle_v;
+
+    Camera camera;
 
     bool forward;
     bool back;

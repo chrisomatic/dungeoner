@@ -5,6 +5,7 @@
 
 #include <GL/glew.h>
 
+#include "3dmath.h"
 #include "shader.h"
 
 GLuint program;
@@ -81,6 +82,7 @@ static int read_file(const char* filepath, char* ret_buf, uint32_t max_buffer_si
     }
     return i;
 }
+
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path)
 {
     // create
@@ -143,4 +145,8 @@ void shader_set_float(GLuint program, const char* name, float f)
 void shader_set_vec3(GLuint program, const char* name, float x, float y, float z)
 {
     glUniform3f(glGetUniformLocation(program, name), x,y,z);
+}
+void shader_set_mat4(GLuint program, const char* name, Matrix* mat)
+{
+    glUniformMatrix4fv(glGetUniformLocation(program, name), 1, GL_TRUE, &mat->m[0][0]);
 }

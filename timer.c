@@ -81,6 +81,7 @@ void timer_set_fps(Timer* timer, float fps)
 void timer_wait_for_frame(Timer* timer)
 {
     double now;
+
     for(;;)
     {
         now = get_time();

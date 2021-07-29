@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <GL/glew.h>
 
-#include "common.h"
+#include "3dmath.h"
 #include "shader.h"
 
 static GLuint texture = 0;
 static GLuint vao, vbo, ibo;
 
-void renderer_init()
+void renderer_init(unsigned char* buffer, int width, int height)
 {
     printf("GL version: %s\n",glGetString(GL_VERSION));
 
@@ -21,10 +21,10 @@ void renderer_init()
 
     Vertex vertices[4] = 
     {
-        {{-z, -z},{+0.0,+0.0}},
-        {{-z, +z},{+0.0,+1.0}},
-        {{+z, +z},{+1.0,+1.0}},
-        {{+z, -z},{+1.0,+0.0}},
+        {{-z, -z, 0.0},{+0.0,+0.0}},
+        {{-z, +z, 0.0},{+0.0,+1.0}},
+        {{+z, +z, 0.0},{+1.0,+1.0}},
+        {{+z, -z, 0.0},{+1.0,+0.0}},
     }; 
 
     uint32_t indices[6] = {0,1,2,2,0,3};
@@ -39,6 +39,8 @@ void renderer_init()
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
  
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -50,24 +52,41 @@ void renderer_init()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void renderer_draw(unsigned char* buffer, int width, int height)
+void renderer_draw()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
 
+#if 1
+    Vector3f pos = {0.0f,0.0f,0.0f};
+    Vector3f rot = {0.0f,0.0f,0.0f};
+    Vector3f sca = {1.0f,1.0f,1.0f};
+#endif
+
+    Matrix mat = {.m =
+        {
+        {0.5f,0.0f,0.0f,0.0f},
+        {0.0f,0.5f,0.0f,0.0f},
+        {0.0f,0.0f,0.5f,0.0f},
+        {0.0f,0.0f,0.0f,1.0f}
+        }
+    };
+    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
+    print_matrix(wvp);
+
+    shader_set_mat4(program,"wvp",&mat);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)8);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ibo);
 
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);

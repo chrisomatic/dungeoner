@@ -7,19 +7,14 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "common.h"
+#include "3dmath.h"
 #include "settings.h"
 #include "window.h"
 #include "shader.h"
 #include "timer.h"
 #include "player.h"
 #include "renderer.h"
-
-// =========================
-// Defines
-// =========================
-
-#define BPP 4 // bits per pixel
+#include "level.h"
 
 // =========================
 // Global Vars
@@ -36,8 +31,8 @@ unsigned char frame_buffer[STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT*BPP] = {0};
 void start_game();
 void init();
 void deinit();
-void update();
-void draw();
+void simulate();
+void render();
 
 // =========================
 // Main Loop
@@ -67,8 +62,8 @@ void start_game()
         if(window_should_close())
             break;
 
-        update();
-        draw();
+        simulate();
+        render();
 
         timer_wait_for_frame(&game_timer);
         printf("fps: %f\n",timer_get_prior_frame_fps(&game_timer));
@@ -99,6 +94,14 @@ void init()
 
     printf(" - Player.\n");
     player_init();
+    
+    // @TEMP
+    for(int i = 0; i < STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT; ++i)
+    {
+        frame_buffer[4*i+0] = rand() % 255;
+        frame_buffer[4*i+1] = rand() % 255;
+        frame_buffer[4*i+2] = rand() % 255;
+    }
 
     printf(" - Renderer.\n");
     renderer_init(frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
@@ -110,23 +113,14 @@ void deinit()
     window_deinit();
 }
 
-void update()
+void simulate()
 {
     player_update();
-
-    // @TEMP
-    for(int i = 0; i < STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT; ++i)
-    {
-        frame_buffer[4*i+0] = rand() % 255;
-        frame_buffer[4*i+1] = rand() % 255;
-        frame_buffer[4*i+2] = rand() % 255;
-    }
-
 }
 
-void draw()
+void render()
 {
-    renderer_draw(frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+    renderer_draw();
     window_swap_buffers();
 }
 
