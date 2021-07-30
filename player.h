@@ -41,3 +41,4 @@ extern Player player;
 
 void player_init();
 void player_update();
+void player_update_angle(int cursor_x, int cursor_y);

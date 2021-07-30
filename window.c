@@ -11,8 +11,8 @@
 
 static GLFWwindow* window;
 
-int view_width = STARTING_VIEW_WIDTH;
-int view_height = STARTING_VIEW_HEIGHT;
+int view_width = 0;
+int view_height = 0;
 
 static void window_size_callback(GLFWwindow* window, int window_width, int window_height);
 static void window_maximize_callback(GLFWwindow* window, int maximized);
@@ -35,6 +35,9 @@ bool window_init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); 
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
+
+    view_width = STARTING_VIEW_WIDTH;
+    view_height = STARTING_VIEW_HEIGHT;
 
     window = glfwCreateWindow(view_width,view_height,"Dungeoner",NULL,NULL);
 
@@ -92,8 +95,8 @@ static void window_size_callback(GLFWwindow* window, int window_width, int windo
 {
     printf("Window: W %d, H %d\n",window_width,window_height);
 
-    view_height = window_height;
     view_width  = window_width; //ASPECT_RATIO * window_height;
+    view_height = window_height;
 
     int start_x = (window_width + view_width) / 2.0f - view_width;
     int start_y = (window_height + view_height) / 2.0f - view_height;
@@ -117,6 +120,9 @@ static void window_maximize_callback(GLFWwindow* window, int maximized)
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    int mode = glfwGetInputMode(window,GLFW_CURSOR);
+    if(mode == GLFW_CURSOR_DISABLED)
+        player_update_angle(xpos, ypos);
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -152,6 +158,10 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_LEFT_SHIFT:
                 player.run = true;
+                break;
+            case GLFW_KEY_TAB:
+                show_wireframe = !show_wireframe;
+                printf("Wireframe: %d\n",show_wireframe);
                 break;
             case GLFW_KEY_ESCAPE:
             {

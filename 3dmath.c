@@ -118,6 +118,7 @@ void add(Vector3f* a, Vector3f b)
     a->z = a->z + b.z;
 }
 
+
 void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm)
 {
     subtract(&b,a);
@@ -204,7 +205,7 @@ static void get_translate_transform(Matrix* mat, Vector3f* position)
 
 static void get_perspective_transform(Matrix* mat)
 {
-    const float ar           = view_width/view_height;
+    const float ar           = view_width/(float)view_height;
     const float z_near       = Z_NEAR;
     const float z_far        = Z_FAR;
     const float z_range      = z_near - z_far;
@@ -255,26 +256,23 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     Matrix camera_translate_trans = {0};
     Matrix camera_rotate_trans    = {0};
 
-    Vector3f camera_pos = {
-        player.camera.position.x,
-        player.camera.position.y,
-        player.camera.position.z
-    };
-
     get_scale_transform(&scale_trans, scale);
     get_rotation_transform(&rotation_trans, rotation);
     get_translate_transform(&translate_trans, pos);
     get_perspective_transform(&perspective_trans);
-
-    get_translate_transform(&camera_translate_trans, &camera_pos);
+    get_translate_transform(&camera_translate_trans, &player.camera.position);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
 
-    dot_product_mat(identity_matrix, perspective_trans,      &wvp_trans);
-    dot_product_mat(wvp_trans,    camera_rotate_trans,    &wvp_trans);
-    dot_product_mat(wvp_trans,    camera_translate_trans, &wvp_trans);
-    dot_product_mat(wvp_trans,    translate_trans,        &wvp_trans);
-    dot_product_mat(wvp_trans,    rotation_trans,         &wvp_trans);
-    dot_product_mat(wvp_trans,    scale_trans,            &wvp_trans);
+    memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
+
+    print_matrix(&perspective_trans);
+
+    dot_product_mat(wvp_trans, perspective_trans,      &wvp_trans);
+    dot_product_mat(wvp_trans, camera_rotate_trans,    &wvp_trans);
+    dot_product_mat(wvp_trans, camera_translate_trans, &wvp_trans);
+    dot_product_mat(wvp_trans, translate_trans,        &wvp_trans);
+    dot_product_mat(wvp_trans, rotation_trans,         &wvp_trans);
+    dot_product_mat(wvp_trans, scale_trans,            &wvp_trans);
 
     return &wvp_trans;
 }

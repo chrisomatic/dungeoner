@@ -66,7 +66,7 @@ void start_game()
         render();
 
         timer_wait_for_frame(&game_timer);
-        printf("fps: %f\n",timer_get_prior_frame_fps(&game_timer));
+        //printf("fps: %f\n",timer_get_prior_frame_fps(&game_timer));
     }
 
     deinit();

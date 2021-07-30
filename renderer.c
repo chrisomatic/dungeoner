@@ -8,11 +8,24 @@
 static GLuint texture = 0;
 static GLuint vao, vbo, ibo;
 
+int show_wireframe = 0;
+
 void renderer_init(unsigned char* buffer, int width, int height)
 {
     printf("GL version: %s\n",glGetString(GL_VERSION));
 
-    glClearColor(0.15f, 0.15f, 0.15f, 0.0f);
+    glClearColor(0.50f, 0.60f, 0.80f, 0.0f);
+
+#if 0
+    glFrontFace(GL_CW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+#endif
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glDepthRange(0.0f, 1.0f);
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -21,13 +34,13 @@ void renderer_init(unsigned char* buffer, int width, int height)
 
     Vertex vertices[4] = 
     {
-        {{-z, -z, 0.0},{+0.0,+0.0}},
-        {{-z, +z, 0.0},{+0.0,+1.0}},
-        {{+z, +z, 0.0},{+1.0,+1.0}},
-        {{+z, -z, 0.0},{+1.0,+0.0}},
+        {{-z, -z, 0.1},{+0.0,+0.0}},
+        {{-z, +z, 0.1},{+0.0,+1.0}},
+        {{+z, +z, 0.1},{+1.0,+1.0}},
+        {{+z, -z, 0.1},{+1.0,+0.0}},
     }; 
 
-    uint32_t indices[6] = {0,1,2,2,0,3};
+    uint32_t indices[6] = {0,1,2,0,2,3};
 
  	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -52,11 +65,21 @@ void renderer_init(unsigned char* buffer, int width, int height)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+float scale_factor = 0.0f;
+float scale_amt = 0.01f;
+
 void renderer_draw()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(program);
+
+    scale_factor += scale_amt;
+    if(scale_factor >= 1.00f || scale_factor <= 0.00f)
+    {
+        scale_amt *=-1;
+    }
 
 #if 1
     Vector3f pos = {0.0f,0.0f,0.0f};
@@ -72,10 +95,11 @@ void renderer_draw()
         {0.0f,0.0f,0.0f,1.0f}
         }
     };
-    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
-    print_matrix(wvp);
 
-    shader_set_mat4(program,"wvp",&mat);
+    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
+    //print_matrix(wvp);
+
+    shader_set_mat4(program,"wvp",wvp);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -89,7 +113,14 @@ void renderer_draw()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ibo);
 
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    if(show_wireframe)
+    {
+        glDrawElements(GL_LINES,6,GL_UNSIGNED_INT,0);
+    }
+    else
+    {
+        glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    }
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
