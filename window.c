@@ -57,6 +57,7 @@ bool window_init()
 
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     printf("Initializing GLEW.\n");
 

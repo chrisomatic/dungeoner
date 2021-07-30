@@ -265,8 +265,6 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
 
     memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
 
-    print_matrix(&perspective_trans);
-
     dot_product_mat(wvp_trans, perspective_trans,      &wvp_trans);
     dot_product_mat(wvp_trans, camera_rotate_trans,    &wvp_trans);
     dot_product_mat(wvp_trans, camera_translate_trans, &wvp_trans);

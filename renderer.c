@@ -5,6 +5,9 @@
 #include "3dmath.h"
 #include "shader.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "util/stb_image.h"
+
 static GLuint texture = 0;
 static GLuint vao, vbo, ibo;
 
@@ -30,7 +33,7 @@ void renderer_init(unsigned char* buffer, int width, int height)
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    float z = 0.9;
+    float z = 1.0f;
 
     Vertex vertices[4] = 
     {
@@ -50,10 +53,26 @@ void renderer_init(unsigned char* buffer, int width, int height)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
 
+    const char* filepath = "textures/stonewall.jpg";
+    int x,y,n;
+    unsigned char* data;  
+    data = stbi_load(filepath, &x, &y, &n, 0);
+
+    if(!data)
+    {
+        printf("Failed to load file (%s)",filepath);
+        return;
+    }
+    
+    printf("Loaded file %s. w: %d h: %d\n",filepath,x,y);
+
+    GLenum format;
+    if(n == 3) format = GL_RGB;
+    else       format = GL_RGBA;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, data);
  
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
