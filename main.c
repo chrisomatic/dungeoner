@@ -22,8 +22,6 @@
 
 Timer game_timer = {0};
 
-unsigned char frame_buffer[STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT*BPP] = {0};
-
 // =========================
 // Function Prototypes
 // =========================
@@ -66,7 +64,6 @@ void start_game()
         render();
 
         timer_wait_for_frame(&game_timer);
-        //printf("fps: %f\n",timer_get_prior_frame_fps(&game_timer));
     }
 
     deinit();
@@ -95,16 +92,8 @@ void init()
     printf(" - Player.\n");
     player_init();
     
-    // @TEMP
-    for(int i = 0; i < STARTING_VIEW_WIDTH*STARTING_VIEW_HEIGHT; ++i)
-    {
-        frame_buffer[4*i+0] = rand() % 255;
-        frame_buffer[4*i+1] = rand() % 255;
-        frame_buffer[4*i+2] = rand() % 255;
-    }
-
     printf(" - Renderer.\n");
-    renderer_init(frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+    renderer_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
 
 void deinit()

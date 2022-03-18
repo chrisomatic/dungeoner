@@ -101,7 +101,7 @@ void player_init()
 {
     memset(&player,0,sizeof(Player));
 
-    player.accel_factor = 0.02f;
+    player.accel_factor = 0.05f;
     player.height = 1.5f; // meters
     player.mass = 1.0f; // kg
 

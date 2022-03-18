@@ -8,8 +8,8 @@
 const char* level =
     "##############\n"
     "#        #   #\n"
-    "# P      #   #\n"
-    "#            #\n"
+    "# P      # x #\n"
+    "#      r     #\n"
     "##############\n";
 
 void level_print()
