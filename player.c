@@ -6,66 +6,136 @@
 #include "settings.h"
 #include "player.h"
 #include "3dmath.h"
+#include "log.h"
 
 Player player = {0};
+
+#define GRAVITY 0.02f
+#define FRICTION 0.01f
+
+static bool spectator = false;
 
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
 
+static void update_player_accel()
+{
+    Vector3f* accel = &player.accel;
+
+    // zero out prior accel
+    accel->x = 0.0f;
+    accel->y = 0.0f;
+    accel->z = 0.0f;
+
+    float accel_factor = 0.01f;
+
+    Vector3f target = {
+        player.camera.target.x,
+        player.camera.target.y,
+        player.camera.target.z
+    };
+
+    accel->y -= GRAVITY;
+
+    if(spectator || player.position.y == 0.0f)
+    {
+        accel->y = 0.0f;
+        //accel->y += GRAVITY; // ground normal
+
+        if(player.jump)
+        {
+            LOGI("Jump");
+            player.jump = false;
+            accel->y += 0.6f;
+        }
+
+        if(player.forward)
+        {
+            accel->x -= target.x;
+            accel->y -= spectator ? target.y : 0.0f;
+            accel->z -= target.z;
+        }
+
+        if(player.back)
+        {
+            accel->x += target.x;
+            accel->y += spectator ? target.y : 0.0f;
+            accel->z += target.z;
+        }
+
+        if(player.left)
+        {
+            Vector3f left = {0};
+            cross(player.camera.up, target, &left);
+            normalize(&left);
+
+            subtract(accel,left);
+        }
+
+        if(player.right)
+        {
+            Vector3f right = {0};
+            cross(player.camera.up, target, &right);
+            normalize(&right);
+
+            add(accel,right);
+        }
+
+        accel->x *= accel_factor;
+        accel->z *= accel_factor;
+
+        // friction
+        if(player.position.y == 0.0f && accel->x == 0.0f && accel->z == 0.0f)
+        {
+            Vector3f friction = {-player.velocity.x, 0.0f,-player.velocity.z};
+            normalize(&friction);
+            friction.x *= FRICTION;
+            friction.y *= FRICTION;
+            friction.z *= FRICTION;
+
+            add(accel,friction);
+        }
+    }
+
+    float m = magn(*accel);
+    if(ABS(m) < 0.001)
+    {
+        accel->x = 0.0f;
+        accel->y = 0.0f;
+        accel->z = 0.0f;
+    }
+}
+
 static void update_player_velocity()
 {
-    Vector3f* target = &player.camera.target;
-    Vector3f* velocity = &player.velocity;
+    player.velocity.x += player.accel.x;
+    player.velocity.y += player.accel.y;
+    player.velocity.z += player.accel.z;
+    
+    Vector3f ground_velocity = {
+        player.velocity.x,
+        0.0f,
+        player.velocity.z
+    };
 
-    velocity->x = 0.0f;
-    velocity->y = 0.0f;
-    velocity->z = 0.0f;
+    float magnitude = magn(ground_velocity);
+    //LOGI("Vel Magnitude: %f", magnitude);
 
-    if(player.forward)
-    {
-        //velocity->y = 0.0f;
-        //normalize(&target_dir);
-        subtract(velocity,*target);
-    }
-
-    if(player.back)
-    {
-        //target_dir.y = 0.0f;
-        //normalize(&target_dir);
-        add(velocity,*target);
-    }
-
-    if(player.left)
-    {
-        Vector3f left = {0};
-        cross(player.camera.up, *target, &left);
-        normalize(&left);
-
-        subtract(velocity,left);
-    }
-
-    if(player.right)
-    {
-
-        Vector3f right = {0};
-        cross(player.camera.up, *target, &right);
-        normalize(&right);
-
-        add(velocity,right);
-    }
-
-    float speed = player.accel_factor;
+    float speed_cap = 0.25f;
     if(player.run)
+        speed_cap *= 4.0f;
+    
+    if(magnitude >= speed_cap)
     {
-        speed *= 2.0f;
+        normalize(&ground_velocity);
+
+        player.velocity.x = ground_velocity.x*speed_cap;
+        player.velocity.z = ground_velocity.z*speed_cap;
     }
 
-    normalize(velocity);
-    velocity->x *= speed;
-    velocity->y *= speed;
-    velocity->z *= speed;
 
-    printf("Velocity: %f %f %f\n",velocity->x,velocity->y, velocity->z);
+
+    //printf("Velocity: %f %f %f\n",player.velocity.x,player.velocity.y, player.velocity.z);
 }
 
 static void update_camera_rotation()
@@ -101,9 +171,9 @@ void player_init()
 {
     memset(&player,0,sizeof(Player));
 
-    player.accel_factor = 0.05f;
     player.height = 1.5f; // meters
     player.mass = 1.0f; // kg
+    player.speed_factor = 1.0f;
 
     Vector3f h_target = {player.camera.target.x,0.0f,player.camera.target.z};
     normalize(&h_target);
@@ -140,10 +210,19 @@ float player_speed = 0.1f;
 
 void player_update()
 {
-    update_player_velocity();
     update_camera_rotation();
+    update_player_accel();
+    update_player_velocity();
 
     add(&player.position, player.velocity);
+    if(player.position.y < 0.0f)
+        player.position.y = 0.0f;
+
+    LOGI("A: %f %f %f, V: %f %f %f, P: %f %f %f",
+            player.accel.x, player.accel.y, player.accel.z,
+            player.velocity.x, player.velocity.y, player.velocity.z,
+            player.position.x, player.position.y, player.position.z
+            );
 
     copy_vector(&player.camera.position,player.position);
 }

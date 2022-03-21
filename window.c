@@ -8,6 +8,7 @@
 #include "player.h"
 #include "settings.h"
 #include "window.h"
+#include "log.h"
 
 static GLFWwindow* window;
 
@@ -22,11 +23,11 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 
 bool window_init()
 {
-    printf("Initializing GLFW.\n");
+    LOGI("Initializing GLFW.");
 
     if(!glfwInit())
     {
-        fprintf(stderr,"Failed to init GLFW!\n");
+        LOGE("Failed to init GLFW!");
         return false;
     }
 
@@ -43,7 +44,7 @@ bool window_init()
 
     if(window == NULL)
     {
-        fprintf(stderr, "Failed to create GLFW Window!\n");
+        LOGE("Failed to create GLFW Window!");
         glfwTerminate();
         return false;
     }
@@ -61,13 +62,13 @@ bool window_init()
 
     glfwSwapInterval(0);
 
-    printf("Initializing GLEW.\n");
+    LOGI("Initializing GLEW.");
 
     // GLEW
     glewExperimental = 1;
     if(glewInit() != GLEW_OK)
     {
-        fprintf(stderr, "Failed to initialize GLEW\n");
+        LOGE("Failed to initialize GLEW");
         return false;
     }
 
@@ -96,7 +97,7 @@ void window_swap_buffers()
 
 static void window_size_callback(GLFWwindow* window, int window_width, int window_height)
 {
-    printf("Window: W %d, H %d\n",window_width,window_height);
+    LOGI("Window: W %d, H %d",window_width,window_height);
 
     view_width  = window_width; //ASPECT_RATIO * window_height;
     view_height = window_height;
@@ -112,12 +113,12 @@ static void window_maximize_callback(GLFWwindow* window, int maximized)
     if (maximized)
     {
         // The window was maximized
-        printf("Maximized.\n");
+        LOGI("Maximized.");
     }
     else
     {
         // The window was restored
-        printf("Restored.\n");
+        LOGI("Restored.");
     }
 }
 
@@ -164,7 +165,7 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_TAB:
                 show_wireframe = !show_wireframe;
-                printf("Wireframe: %d\n",show_wireframe);
+                LOGI("Wireframe: %d",show_wireframe);
                 break;
             case GLFW_KEY_ESCAPE:
             {

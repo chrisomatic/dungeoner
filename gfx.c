@@ -4,15 +4,14 @@
 
 #include "3dmath.h"
 #include "shader.h"
+#include "util.h"
+#include "log.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "util/stb_image.h"
+#include "gfx.h"
 
 static GLuint vao;
 
 // textures
-static GLuint t_stone;
-
 int show_wireframe = 0;
 
 typedef struct
@@ -20,12 +19,13 @@ typedef struct
     GLuint vbo;
     GLuint ibo;
     GLuint program;
+    GLuint texture;
 } Object;
 
-Object quad = {};
-Object cube = {};
+static Object quad = {};
+static Object cube = {};
 
-void draw_quad(GLuint texture, float x, float y, float z)
+void gfx_quad(GLuint texture, float x, float y, float z)
 {
     glUseProgram(program);
 
@@ -75,7 +75,7 @@ void draw_quad(GLuint texture, float x, float y, float z)
     glUseProgram(0);
 }
 
-void draw_cube(GLuint texture, float x, float y, float z)
+void gfx_cube(GLuint texture, float x, float y, float z)
 {
     glUseProgram(program);
 
@@ -123,7 +123,7 @@ void draw_cube(GLuint texture, float x, float y, float z)
     glUseProgram(0);
 }
 
-void init_quad()
+static void init_quad()
 {
     Vertex vertices[4] = 
     {
@@ -144,7 +144,7 @@ void init_quad()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
 }
 
-void init_cube()
+static void init_cube()
 {
     Vertex vertices[8] = 
     {
@@ -190,44 +190,15 @@ void init_cube()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
-GLuint load_texture(const char* texture_path)
+void gfx_init(int width, int height)
 {
-    int x,y,n;
-    unsigned char* data;  
-    data = stbi_load(texture_path, &x, &y, &n, 0);
-
-    if(!data)
-    {
-        printf("Failed to load file (%s)",texture_path);
-        return 0;
-    }
-    
-    printf("Loaded file %s. w: %d h: %d\n",texture_path,x,y);
-
-    GLenum format;
-    GLuint texture;
-
-    if(n == 3) format = GL_RGB;
-    else       format = GL_RGBA;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, data);
-
-    return texture;
-}
-
-void renderer_init(int width, int height)
-{
-    printf("GL version: %s\n",glGetString(GL_VERSION));
+    LOGI("GL version: %s",glGetString(GL_VERSION));
 
     glClearColor(0.20f, 0.20f, 0.20f, 0.0f);
 
-#if 0
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
-#endif
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -240,8 +211,6 @@ void renderer_init(int width, int height)
     init_quad();
     init_cube();
 
-    t_stone = load_texture("textures/stonewall.jpg");
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -252,18 +221,4 @@ void renderer_init(int width, int height)
     glUniform1i(glGetUniformLocation(program, "sampler"), 0);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-float scale_factor = 0.0f;
-float scale_amt = 0.01f;
-
-void renderer_draw()
-{
-    glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // render scene
-    draw_quad(t_stone, 0.0f,0.0f,0.0f);
-    draw_quad(t_stone, 10.0f,0.0f,10.0f);
-    draw_cube(t_stone, 5.0f,5.0f,5.0f);
 }

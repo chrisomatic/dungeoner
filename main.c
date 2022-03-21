@@ -8,19 +8,27 @@
 #include <stdbool.h>
 
 #include "3dmath.h"
+#include "gfx.h"
 #include "settings.h"
 #include "window.h"
 #include "shader.h"
 #include "timer.h"
 #include "player.h"
-#include "renderer.h"
 #include "level.h"
+#include "util.h"
+#include "log.h"
 
 // =========================
 // Global Vars
 // =========================
 
 Timer game_timer = {0};
+
+// =========================
+// Textures
+// =========================
+
+GLuint t_stone;
 
 // =========================
 // Function Prototypes
@@ -77,23 +85,26 @@ void init()
 
     if(!success)
     {
-        fprintf(stderr,"Failed to initialize window!\n");
+        LOGE("Failed to initialize window!\n");
         exit(1);
     }
 
     time_t t;
     srand((unsigned) time(&t));
 
-    printf("Initializing...\n");
+    LOGI("Initializing...");
 
-    printf(" - Shaders.\n");
+    LOGI(" - Shaders.");
     shader_load_all();
 
-    printf(" - Player.\n");
+    LOGI(" - Player.");
     player_init();
+
+    LOGI(" - Textures.");
+    t_stone = load_texture("textures/stonewall.jpg");
     
-    printf(" - Renderer.\n");
-    renderer_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+    LOGI(" - Renderer.");
+    gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
 
 void deinit()
@@ -109,7 +120,14 @@ void simulate()
 
 void render()
 {
-    renderer_draw();
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // render scene
+    gfx_quad(t_stone, 0.0f,0.0f,0.0f);
+    gfx_quad(t_stone, 10.0f,0.0f,10.0f);
+    gfx_cube(t_stone, 5.0f,5.0f,5.0f);
+
     window_swap_buffers();
 }
 

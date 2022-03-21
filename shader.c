@@ -7,6 +7,7 @@
 
 #include "3dmath.h"
 #include "shader.h"
+#include "log.h"
 
 GLuint program;
 GLuint sampler;
@@ -44,7 +45,7 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
     {
         GLchar info[1000+1] = {0};
 		glGetProgramInfoLog(*p, 1000, NULL, info);
-		fprintf(stderr, "Error linking shader program: '%s'\n", info);
+		LOGE("Error linking shader program: '%s'", info);
         exit(1);
 	}
 
@@ -53,7 +54,7 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
     if (!success) {
         GLchar info[1000+1] = {0};
         glGetProgramInfoLog(*p, 1000, NULL, info);
-        fprintf(stderr, "Invalid shader program: '%s'\n", info);
+        LOGE("Invalid shader program: '%s'", info);
         exit(1);
     }
 
@@ -89,14 +90,14 @@ static void shader_add(GLuint program, GLenum shader_type, const char* shader_fi
 	GLuint shader_id = glCreateShader(shader_type);
     if (!shader_id)
     {
-        fprintf(stderr, "Error creating shader type %d\n", shader_type);
+        LOGE("Error creating shader type %d", shader_type);
         return;
     }
 
     char* buf = calloc(MAX_SHADER_LEN+1,sizeof(char));
     if(!buf)
     {
-        fprintf(stderr, "Failed to malloc shader buffer\n");
+        LOGE("Failed to malloc shader buffer");
         return;
     }
 
@@ -104,13 +105,13 @@ static void shader_add(GLuint program, GLenum shader_type, const char* shader_fi
     int len = read_file(shader_file_path,buf, MAX_SHADER_LEN);
     if(len == 0)
     {
-        printf("Read zero bytes from shader file.\n");
+        LOGI("Read zero bytes from shader file.");
         free(buf);
         return;
     }
 
 	// compile
-	printf("Compiling shader: %s (size: %d bytes)\n", shader_file_path, len);
+	LOGI("Compiling shader: %s (size: %d bytes)", shader_file_path, len);
 
 	glShaderSource(shader_id, 1, (const char**)&buf, NULL);
 	glCompileShader(shader_id);
@@ -122,7 +123,7 @@ static void shader_add(GLuint program, GLenum shader_type, const char* shader_fi
     {
         GLchar info[1000+1] = {0};
 		glGetShaderInfoLog(shader_id, 1000, NULL, info);
-		fprintf(stderr,"Error compiling shader type %d: '%s'\n", shader_type, info);
+		LOGE("Error compiling shader type %d: '%s'", shader_type, info);
         free(buf);
         return;
 	}
