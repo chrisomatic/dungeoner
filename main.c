@@ -138,7 +138,7 @@ void render()
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
     GFX_QUAD_HORZ(t_grass, 20.0f,0.0f,10.0f, 100.0f);
 
-    gfx_cube(t_stone, 5.0f,5.0f,5.0f);
+    gfx_cube(t_stone,5.0f,-20.0f,20.0f);
 
     window_swap_buffers();
 }

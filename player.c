@@ -12,15 +12,13 @@
 Player player = {0};
 
 #define GRAVITY_EARTH 9.80
-#define GRAVITY_SPECIAL 4.00
+#define GRAVITY_SPECIAL 2.00
 
 #define GRAVITY GRAVITY_SPECIAL
 #define FRICTION 0.01
 
 #define PLAYER_IN_AIR    player.position.y > 0.0
 #define PLAYER_ON_GROUND player.position.y == 0.0
-
-static bool spectator = false;
 
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
@@ -34,23 +32,27 @@ static void update_player_accel()
     accel->y = 0.0f;
     accel->z = 0.0f;
 
-    Vector3f target = {
-        player.camera.target.x,
-        player.camera.target.y,
-        player.camera.target.z
-    };
+    bool spectator = (player.camera.mode == CAMERA_MODE_FREE);
 
-    accel->y -= GRAVITY;
+    if(!spectator)
+        accel->y -= GRAVITY;
 
-    if(PLAYER_ON_GROUND)
+    if(spectator || PLAYER_ON_GROUND)
     {
-        accel->y += GRAVITY; // ground normal
+        if(!spectator)
+            accel->y += GRAVITY; // ground normal
 
-        if(player.jump)
+        // where the player is looking
+        Vector3f target = {
+            player.camera.target.x,
+            player.camera.target.y,
+            player.camera.target.z
+        };
+
+        if(player.jump && !spectator)
         {
             LOGI("Jump");
-            player.jump = false;
-            accel->y += 120.0f;
+            accel->y += 75.0f;
         }
 
         if(player.forward)
@@ -84,17 +86,16 @@ static void update_player_accel()
 
             add(accel,right);
         }
-
     }
 
     accel->x *= g_delta_t;
     accel->y *= g_delta_t;
     accel->z *= g_delta_t;
 
-    if(PLAYER_ON_GROUND && accel->y <= 0.0 && player.velocity.x != 0.0f && player.velocity.z != 0.0f) // on ground and moving
+    if(!spectator && PLAYER_ON_GROUND && accel->y <= 0.0 && player.velocity.x != 0.0f && player.velocity.z != 0.0f) // on ground and moving
     {
         // kinetic friction
-        float mu_k = 0.1*g_delta_t;
+        float mu_k = 0.2*g_delta_t;
         float normal = player.mass * GRAVITY;
         float friction_magn = normal * mu_k;
 
@@ -128,8 +129,10 @@ static void update_player_velocity()
 
     if(PLAYER_ON_GROUND && player.velocity.y < 0.0)
     {
-        // on the ground
-        player.velocity.y = 0.0;
+        // hit the ground
+        LOGI("Land!");
+        player.velocity.y = -0.2f*player.velocity.y;
+        if(player.velocity.y < 0.006) player.velocity.y = 0;
     }
     
     Vector3f ground_velocity = {
@@ -139,14 +142,11 @@ static void update_player_velocity()
     };
 
     float magnitude = magn(ground_velocity);
-    //LOGI("Vel Magnitude: %f", magnitude);
 
     float speed_cap = 0.5;
 
     if(player.run)
-    {
         speed_cap *= 2.0;
-    }
     
     if(PLAYER_ON_GROUND && magnitude >= speed_cap)
     {
@@ -155,8 +155,13 @@ static void update_player_velocity()
         player.velocity.x = ground_velocity.x*speed_cap;
         player.velocity.z = ground_velocity.z*speed_cap;
     }
+}
 
-    //printf("Velocity: %f %f %f\n",player.velocity.x,player.velocity.y, player.velocity.z);
+static void update_player_position()
+{
+    add(&player.position, player.velocity);
+    if(player.position.y < 0.0f)
+        player.position.y = 0.0f;
 }
 
 static void update_camera_rotation()
@@ -225,19 +230,24 @@ void player_init()
     player.camera.position.z = 0.0f;
     player.camera.target.z   = 1.0f;
     player.camera.up.y       = 1.0f;
+
+    player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 }
 
-float player_speed = 0.1f;
+
+void player_update_camera()
+{
+    copy_vector(&player.camera.position,player.position);
+    player.camera.position.y += player.height; // put camera in head of player
+}
 
 void player_update()
 {
     update_camera_rotation();
+
     update_player_accel();
     update_player_velocity();
-
-    add(&player.position, player.velocity);
-    if(player.position.y < 0.0f)
-        player.position.y = 0.0f;
+    update_player_position();
 
     if(player.velocity.x != 0 || player.velocity.y != 0 || player.velocity.z != 0)
     {
@@ -247,9 +257,8 @@ void player_update()
             player.position.x, player.position.y, player.position.z
             );
     }
-    
-    copy_vector(&player.camera.position,player.position);
-    player.camera.position.y += player.height; // put camera in head of player
+
+    player_update_camera();
 }
 
 void player_update_angle(int cursor_x, int cursor_y)

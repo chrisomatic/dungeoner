@@ -109,12 +109,14 @@ void gfx_cube(GLuint texture, float x, float y, float z)
 
     if(show_wireframe)
     {
-        glDrawElements(GL_LINES,36,GL_UNSIGNED_INT,0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     else
     {
-        glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+
+    glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -144,6 +146,32 @@ static void init_quad()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
 }
 
+static void init_sphere()
+{
+    // platonic solid
+    const Vertex base_vertices[] = 
+    {
+        {{-0.707f,+0.0f,-0.707f},{0.0f,0.0f}},
+        {{+0.707f,+0.0f,-0.707f},{0.0f,0.707f}},
+        {{+0.707f,+0.0f,+0.707f},{0.707f,0.707f}},
+        {{-0.707f,+0.0f,+0.707f},{0.0f,0.707f}},
+        {{+0.0f,+1.0f,+0.0f},{1.0f,0.0f}},
+        {{+0.0f,-1.0f,+0.0f},{1.0f,1.0f}}
+    };
+
+    const uint32_t base_indices[] =
+    {
+        4,1,0,
+        4,2,1,
+        4,3,2,
+        4,0,3,
+        5,0,1,
+        5,1,2,
+        5,2,3,
+        5,3,0
+    };
+}
+
 static void init_cube()
 {
     Vertex vertices[8] = 
@@ -158,27 +186,14 @@ static void init_cube()
         {{-1.0, +1.0, -1.0},{+0.0,+1.0}}
     }; 
 
-    uint32_t indices[6 * 6] =
+    uint32_t indices[6*6] =
     {
-        //0, 1, 3, 3, 1, 2,
-        //1, 5, 2, 2, 5, 6,
-        //5, 4, 6, 6, 4, 7,
-        //4, 0, 7, 7, 0, 3,
-        //3, 2, 7, 7, 2, 6,
-        //4, 5, 0, 0, 5, 1
-
-        // front
-        0, 1, 2, 2, 3, 0,
-		// right
-		1, 5, 6, 6, 2, 1,
-		// back
-		7, 6, 5, 5, 4, 7,
-		// left
-		4, 0, 3, 3, 7, 4,
-		// bottom
-		4, 5, 1, 1, 0, 4,
-		// top
-		3, 2, 6, 6, 7, 3
+        0,1,2,2,3,0, // front
+		1,5,6,6,2,1, // right
+		7,6,5,5,4,7, // back
+		4,0,3,3,7,4, // left
+		4,5,1,1,0,4, // bottom
+		3,2,6,6,7,3  // top
     };
 
  	glGenBuffers(1, &cube.vbo);

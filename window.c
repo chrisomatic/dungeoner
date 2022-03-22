@@ -167,6 +167,17 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 show_wireframe = !show_wireframe;
                 LOGI("Wireframe: %d",show_wireframe);
                 break;
+            case GLFW_KEY_M:
+                if(player.camera.mode == CAMERA_MODE_FREE)
+                {
+                    player.camera.mode = CAMERA_MODE_FIRST_PERSON;
+                    player_update_camera();
+                }
+                else if(player.camera.mode == CAMERA_MODE_FREE)
+                    player.camera.mode = CAMERA_MODE_FREE;
+
+                LOGI("Camera mode: %d",player.camera.mode);
+                break;
             case GLFW_KEY_ESCAPE:
             {
                 int mode = glfwGetInputMode(window,GLFW_CURSOR);
