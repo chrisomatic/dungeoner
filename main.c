@@ -23,12 +23,14 @@
 // =========================
 
 Timer game_timer = {0};
+double g_delta_t = 0.0f;
 
 // =========================
 // Textures
 // =========================
 
 GLuint t_stone;
+GLuint t_grass;
 
 // =========================
 // Function Prototypes
@@ -61,17 +63,24 @@ void start_game()
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
 
+    double t0=0.0,t1=0.0;
+
     // main game loop
     for(;;)
     {
+        g_delta_t = t1-t0;
+
         window_poll_events();
         if(window_should_close())
             break;
+
+        t0 = timer_get_time();
 
         simulate();
         render();
 
         timer_wait_for_frame(&game_timer);
+        t1 = timer_get_time();
     }
 
     deinit();
@@ -102,6 +111,7 @@ void init()
 
     LOGI(" - Textures.");
     t_stone = load_texture("textures/stonewall.jpg");
+    t_grass = load_texture("textures/grass.png");
     
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
@@ -124,8 +134,10 @@ void render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render scene
-    gfx_quad(t_stone, 0.0f,0.0f,0.0f);
-    gfx_quad(t_stone, 10.0f,0.0f,10.0f);
+    GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
+    GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
+    GFX_QUAD_HORZ(t_grass, 20.0f,0.0f,10.0f, 100.0f);
+
     gfx_cube(t_stone, 5.0f,5.0f,5.0f);
 
     window_swap_buffers();

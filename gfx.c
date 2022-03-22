@@ -25,13 +25,13 @@ typedef struct
 static Object quad = {};
 static Object cube = {};
 
-void gfx_quad(GLuint texture, float x, float y, float z)
+void gfx_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez)
 {
     glUseProgram(program);
 
     Vector3f pos = {x,y,z};
-    Vector3f rot = {0.0f,0.0f,0.0f};
-    Vector3f sca = {1.0f,1.0f,1.0f};
+    Vector3f rot = {rotx,roty,rotz};
+    Vector3f sca = {scalex, scaley, scalez};
 
     Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
 
@@ -197,8 +197,8 @@ void gfx_init(int width, int height)
     glClearColor(0.20f, 0.20f, 0.20f, 0.0f);
 
     glFrontFace(GL_CW);
-    glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
