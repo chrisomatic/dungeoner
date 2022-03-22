@@ -18,7 +18,6 @@ typedef struct
 {
     GLuint vbo;
     GLuint ibo;
-    GLuint program;
     GLuint texture;
 } Object;
 
@@ -226,14 +225,6 @@ void gfx_init(int width, int height)
     init_quad();
     init_cube();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
     glUniform1i(glGetUniformLocation(program, "sampler"), 0);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
 }

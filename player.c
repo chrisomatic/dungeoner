@@ -52,7 +52,7 @@ static void update_player_accel()
         if(player.jump && !spectator)
         {
             LOGI("Jump");
-            accel->y += 75.0f;
+            accel->y += 50.0f;
         }
 
         if(player.forward)

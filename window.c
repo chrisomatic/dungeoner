@@ -173,8 +173,10 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
                     player_update_camera();
                 }
-                else if(player.camera.mode == CAMERA_MODE_FREE)
+                else if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
+                {
                     player.camera.mode = CAMERA_MODE_FREE;
+                }
 
                 LOGI("Camera mode: %d",player.camera.mode);
                 break;
