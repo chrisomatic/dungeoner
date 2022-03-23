@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 #include "3dmath.h"
+#include "physics.h"
+#include "projectile.h"
 
 typedef enum
 {
@@ -12,7 +14,7 @@ typedef enum
 
 typedef struct
 {
-    Vector3f position;
+    Vector3f pos;
     Vector3f target;
     Vector3f up;
 
@@ -25,12 +27,9 @@ typedef struct
 typedef struct
 {
     float height;
-    float mass;
     float speed_factor;
 
-    Vector3f accel;
-    Vector3f velocity;
-    Vector3f position;
+    PhysicsObj phys;
 
     float angle_h;
     float angle_v;
@@ -43,9 +42,11 @@ typedef struct
     bool left;
     bool right;
     bool jump;
-    bool jumped;
-    bool is_in_air;
     bool run;
+    bool left_click;
+
+    Projectile projectiles[10];
+    int projectile_count;
 } Player;
 
 extern Player player;

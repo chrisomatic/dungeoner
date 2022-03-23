@@ -260,7 +260,7 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     get_rotation_transform(&rotation_trans, rotation);
     get_translate_transform(&translate_trans, pos);
     get_perspective_transform(&perspective_trans);
-    get_translate_transform(&camera_translate_trans, &player.camera.position);
+    get_translate_transform(&camera_translate_trans, &player.camera.pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
 
     memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));

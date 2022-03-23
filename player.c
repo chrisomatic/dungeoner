@@ -7,162 +7,16 @@
 #include "settings.h"
 #include "player.h"
 #include "3dmath.h"
+#include "physics.h"
 #include "log.h"
+#include "gfx.h"
 
 Player player = {0};
 
-#define GRAVITY_EARTH 9.80
-#define GRAVITY_SPECIAL 2.00
-
-#define GRAVITY GRAVITY_SPECIAL
-#define FRICTION 0.01
-
-#define PLAYER_IN_AIR    player.position.y > 0.0
-#define PLAYER_ON_GROUND player.position.y == 0.0
+#define PLAYER_ON_GROUND player.phys.pos.y == 0.0
 
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
-
-static void update_player_accel()
-{
-    Vector3f* accel = &player.accel;
-
-    // zero out prior accel
-    accel->x = 0.0f;
-    accel->y = 0.0f;
-    accel->z = 0.0f;
-
-    bool spectator = (player.camera.mode == CAMERA_MODE_FREE);
-
-    if(!spectator)
-        accel->y -= GRAVITY;
-
-    if(spectator || PLAYER_ON_GROUND)
-    {
-        if(!spectator)
-            accel->y += GRAVITY; // ground normal
-
-        // where the player is looking
-        Vector3f target = {
-            player.camera.target.x,
-            player.camera.target.y,
-            player.camera.target.z
-        };
-
-        if(player.jump && !spectator)
-        {
-            LOGI("Jump");
-            accel->y += 50.0f;
-        }
-
-        if(player.forward)
-        {
-            accel->x -= target.x;
-            accel->y -= spectator ? target.y : 0.0f;
-            accel->z -= target.z;
-        }
-
-        if(player.back)
-        {
-            accel->x += target.x;
-            accel->y += spectator ? target.y : 0.0f;
-            accel->z += target.z;
-        }
-
-        if(player.left)
-        {
-            Vector3f left = {0};
-            cross(player.camera.up, target, &left);
-            normalize(&left);
-
-            subtract(accel,left);
-        }
-
-        if(player.right)
-        {
-            Vector3f right = {0};
-            cross(player.camera.up, target, &right);
-            normalize(&right);
-
-            add(accel,right);
-        }
-    }
-
-    accel->x *= g_delta_t;
-    accel->y *= g_delta_t;
-    accel->z *= g_delta_t;
-
-    if(!spectator && PLAYER_ON_GROUND && accel->y <= 0.0 && player.velocity.x != 0.0f && player.velocity.z != 0.0f) // on ground and moving
-    {
-        // kinetic friction
-        float mu_k = 0.2*g_delta_t;
-        float normal = player.mass * GRAVITY;
-        float friction_magn = normal * mu_k;
-
-        Vector3f vel = {player.velocity.x, 0.0f, player.velocity.z};
-        normalize(&vel); // important
-
-        float friction_x = vel.x*friction_magn*g_delta_t;
-        float friction_z = vel.z*friction_magn*g_delta_t;
-
-        if(friction_x <= 0.0f)
-            friction_x = MAX(friction_x,player.velocity.x);
-        else
-            friction_x = MIN(friction_x,player.velocity.x);
-
-        if(friction_z <= 0.0f)
-            friction_z = MAX(friction_z,player.velocity.z);
-        else
-            friction_z = MIN(friction_z,player.velocity.z);
-
-        Vector3f friction = {-1*friction_x, 0.0f,-1*friction_z};
-
-        add(accel,friction);
-    }
-}
-
-static void update_player_velocity()
-{
-    player.velocity.x += player.accel.x;
-    player.velocity.y += player.accel.y;
-    player.velocity.z += player.accel.z;
-
-    if(PLAYER_ON_GROUND && player.velocity.y < 0.0)
-    {
-        // hit the ground
-        LOGI("Land!");
-        player.velocity.y = -0.2f*player.velocity.y;
-        if(player.velocity.y < 0.006) player.velocity.y = 0;
-    }
-    
-    Vector3f ground_velocity = {
-        player.velocity.x,
-        0.0f,
-        player.velocity.z
-    };
-
-    float magnitude = magn(ground_velocity);
-
-    float speed_cap = 0.5;
-
-    if(player.run)
-        speed_cap *= 2.0;
-    
-    if(PLAYER_ON_GROUND && magnitude >= speed_cap)
-    {
-        normalize(&ground_velocity);
-
-        player.velocity.x = ground_velocity.x*speed_cap;
-        player.velocity.z = ground_velocity.z*speed_cap;
-    }
-}
-
-static void update_player_position()
-{
-    add(&player.position, player.velocity);
-    if(player.position.y < 0.0f)
-        player.position.y = 0.0f;
-}
 
 static void update_camera_rotation()
 {
@@ -193,12 +47,92 @@ static void update_camera_rotation()
     //printf("Up: %f %f %f\n", camera.up.x, camera.up.y, camera.up.z);
 }
 
+static void update_player_physics()
+{
+    Vector3f* accel = &player.phys.accel;
+    Vector3f* vel = &player.phys.vel;
+
+    PhysicsObj* phys = &player.phys;
+
+    // zero out prior accel
+    physics_begin(phys);
+
+    bool spectator = (player.camera.mode == CAMERA_MODE_FREE);
+
+    if(spectator || PLAYER_ON_GROUND)
+    {
+        // where the player is looking
+        Vector3f target = {
+            player.camera.target.x,
+            player.camera.target.y,
+            player.camera.target.z
+        };
+
+        if(player.jump && !spectator)
+        {
+            physics_add_force_y(phys,50.0);
+        }
+
+        if(player.forward)
+        {
+            physics_add_force(phys,-target.x,spectator ? -target.y : 0.0,-target.z);
+        }
+
+        if(player.back)
+        {
+            physics_add_force(phys,target.x,spectator ? target.y : 0.0,target.z);
+        }
+
+        if(player.left)
+        {
+            Vector3f left = {0};
+            cross(player.camera.up, target, &left);
+            normalize(&left);
+
+            physics_add_force(phys,-left.x,-left.y,-left.z);
+        }
+
+        if(player.right)
+        {
+            Vector3f right = {0};
+            cross(player.camera.up, target, &right);
+            normalize(&right);
+
+            physics_add_force(phys,right.x,right.y,right.z);
+        }
+    }
+
+    physics_simulate(phys);
+}
+
+static void player_spawn_projectile()
+{
+    player.projectiles[player.projectile_count].phys.pos.x = -player.phys.pos.x;
+    player.projectiles[player.projectile_count].phys.pos.y = -1*(player.height + player.phys.pos.y);
+    player.projectiles[player.projectile_count].phys.pos.z = -player.phys.pos.z;
+
+    PhysicsObj* phys = &player.projectiles[player.projectile_count].phys;
+
+    float force = 50.0;
+
+    physics_begin(phys);
+    physics_add_force(phys, 
+            force*player.camera.target.x, 
+            force*player.camera.target.y,
+            force*player.camera.target.z
+            );
+    physics_simulate(phys);
+    physics_print(phys, true);
+
+    player.projectile_count++;
+}
+
 void player_init()
 {
     memset(&player,0,sizeof(Player));
 
     player.height = 1.76f; // meters
-    player.mass = 62.0f; // kg
+    player.phys.mass = 62.0f; // kg
     player.speed_factor = 1.0f;
 
     Vector3f h_target = {player.camera.target.x,0.0f,player.camera.target.z};
@@ -225,40 +159,52 @@ void player_init()
     player.camera.cursor_y = view_height / 2.0f;
 
     // initialize player camera
-    player.camera.position.x = 0.0f;
-    player.camera.position.y = 0.0f;
-    player.camera.position.z = 0.0f;
+    player.camera.pos.x = 0.0f;
+    player.camera.pos.y = 0.0f;
+    player.camera.pos.z = 0.0f;
     player.camera.target.z   = 1.0f;
     player.camera.up.y       = 1.0f;
+    player.projectile_count = 0;
 
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 }
 
-
 void player_update_camera()
 {
-    copy_vector(&player.camera.position,player.position);
-    player.camera.position.y += player.height; // put camera in head of player
+    copy_vector(&player.camera.pos,player.phys.pos);
+    player.camera.pos.y += player.height; // put camera in head of player
 }
 
 void player_update()
 {
     update_camera_rotation();
-
-    update_player_accel();
-    update_player_velocity();
-    update_player_position();
-
-    if(player.velocity.x != 0 || player.velocity.y != 0 || player.velocity.z != 0)
+    update_player_physics();
+    
+    if(player.left_click)
     {
-        LOGI("A: %f %f %f, V: %f %f %f, P: %f %f %f",
-            player.accel.x, player.accel.y, player.accel.z,
-            player.velocity.x, player.velocity.y, player.velocity.z,
-            player.position.x, player.position.y, player.position.z
-            );
+        player.left_click = false;
+        player_spawn_projectile();
     }
 
+    for(int i = 0; i < player.projectile_count; ++i)
+    {
+        physics_begin(&player.projectiles[i].phys);
+        physics_simulate(&player.projectiles[i].phys);
+        physics_print(&player.projectiles[i].phys, false);
+    }
+
+    physics_print(&player.phys, false);
+
     player_update_camera();
+}
+
+void player_draw()
+{
+    for(int i = 0; i < player.projectile_count; ++i)
+    {
+        PhysicsObj* phys = &player.projectiles[i].phys;
+        gfx_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z);
+    }
 }
 
 void player_update_angle(int cursor_x, int cursor_y)
@@ -282,3 +228,4 @@ void player_update_angle(int cursor_x, int cursor_y)
     else if(player.angle_v < -90)
         player.angle_v = -90.0f;
 }
+

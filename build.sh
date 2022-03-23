@@ -3,7 +3,9 @@ gcc main.c \
     3dmath.c \
     gfx.c \
     level.c \
+    physics.c \
     player.c \
+    projectile.c \
     shader.c \
     timer.c \
     util.c \

@@ -140,6 +140,8 @@ void render()
 
     gfx_cube(t_stone,5.0f,-20.0f,20.0f);
 
+    player_draw();
+
     window_swap_buffers();
 }
 

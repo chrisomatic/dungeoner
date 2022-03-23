@@ -14,15 +14,8 @@ static GLuint vao;
 // textures
 int show_wireframe = 0;
 
-typedef struct
-{
-    GLuint vbo;
-    GLuint ibo;
-    GLuint texture;
-} Object;
-
-static Object quad = {};
-static Object cube = {};
+static Mesh quad = {};
+static Mesh cube = {};
 
 void gfx_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez)
 {
