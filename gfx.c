@@ -67,13 +67,13 @@ void gfx_quad(GLuint texture, float x, float y, float z, float rotx, float roty,
     glUseProgram(0);
 }
 
-void gfx_cube(GLuint texture, float x, float y, float z)
+void gfx_cube(GLuint texture, float x, float y, float z, float scale)
 {
     glUseProgram(program);
 
     Vector3f pos = {x,y,z};
     Vector3f rot = {0.0f,0.0f,0.0f};
-    Vector3f sca = {1.0f,1.0f,1.0f};
+    Vector3f sca = {scale,scale,scale};
 
     Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
 

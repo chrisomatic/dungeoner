@@ -54,6 +54,8 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
+    float accel_force = 60.0;
+
     // zero out prior accel
     physics_begin(phys);
 
@@ -70,17 +72,23 @@ static void update_player_physics()
 
         if(player.jump && !spectator)
         {
-            physics_add_force_y(phys,50.0);
+            physics_add_force_y(phys,2000.0);
         }
 
         if(player.forward)
         {
-            physics_add_force(phys,-target.x,spectator ? -target.y : 0.0,-target.z);
+            Vector3f forward = {-target.x,spectator ? -target.y : 0.0,-target.z};
+            mult(&forward,accel_force);
+
+            physics_add_force(phys,forward.x,forward.y,forward.z);
         }
 
         if(player.back)
         {
-            physics_add_force(phys,target.x,spectator ? target.y : 0.0,target.z);
+            Vector3f back = {target.x,spectator ? target.y : 0.0,target.z};
+            mult(&back,accel_force);
+
+            physics_add_force(phys,back.x,back.y,back.z);
         }
 
         if(player.left)
@@ -89,7 +97,9 @@ static void update_player_physics()
             cross(player.camera.up, target, &left);
             normalize(&left);
 
-            physics_add_force(phys,-left.x,-left.y,-left.z);
+            mult(&left,-accel_force);
+
+            physics_add_force(phys,left.x,left.y,left.z);
         }
 
         if(player.right)
@@ -97,6 +107,8 @@ static void update_player_physics()
             Vector3f right = {0};
             cross(player.camera.up, target, &right);
             normalize(&right);
+
+            mult(&right,accel_force);
 
             physics_add_force(phys,right.x,right.y,right.z);
         }
@@ -108,21 +120,21 @@ static void update_player_physics()
 static void player_spawn_projectile()
 {
     player.projectiles[player.projectile_count].phys.pos.x = -player.phys.pos.x;
-    player.projectiles[player.projectile_count].phys.pos.y = -1*(player.height + player.phys.pos.y);
+    player.projectiles[player.projectile_count].phys.pos.y = -10-player.phys.pos.y;
     player.projectiles[player.projectile_count].phys.pos.z = -player.phys.pos.z;
 
     PhysicsObj* phys = &player.projectiles[player.projectile_count].phys;
 
-    float force = 50.0;
+    float force = 1500.0;
 
     physics_begin(phys);
     physics_add_force(phys, 
-            force*player.camera.target.x, 
-            force*player.camera.target.y,
-            force*player.camera.target.z
+            player.phys.accel.x + 2*force*player.camera.target.x, 
+            player.phys.accel.y + 10*force*player.camera.target.y,
+            player.phys.accel.z + 2*force*player.camera.target.z
             );
     physics_simulate(phys);
-    physics_print(phys, true);
+    //physics_print(phys, true);
 
     player.projectile_count++;
 }
@@ -180,20 +192,24 @@ void player_update()
     update_camera_rotation();
     update_player_physics();
     
-    if(player.left_click)
+    bool projectile_spawned = false;
+
+    if(player.attack)
     {
-        player.left_click = false;
+        player.attack = false;
         player_spawn_projectile();
+        projectile_spawned = true;
     }
 
     for(int i = 0; i < player.projectile_count; ++i)
     {
-        physics_begin(&player.projectiles[i].phys);
+        if(!projectile_spawned)
+            physics_begin(&player.projectiles[i].phys);
         physics_simulate(&player.projectiles[i].phys);
-        physics_print(&player.projectiles[i].phys, false);
+        //physics_print(&player.projectiles[i].phys, false);
     }
 
-    physics_print(&player.phys, false);
+    //physics_print(&player.phys, false);
 
     player_update_camera();
 }
@@ -203,7 +219,7 @@ void player_draw()
     for(int i = 0; i < player.projectile_count; ++i)
     {
         PhysicsObj* phys = &player.projectiles[i].phys;
-        gfx_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z);
+        gfx_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2f);
     }
 }
 

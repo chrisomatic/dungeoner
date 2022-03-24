@@ -6,7 +6,7 @@
 #define GRAVITY_EARTH 9.80
 #define GRAVITY_SPECIAL 2.00
 
-#define GRAVITY GRAVITY_SPECIAL
+#define GRAVITY GRAVITY_EARTH*10
 
 typedef struct
 {

@@ -43,9 +43,9 @@ typedef struct
     bool right;
     bool jump;
     bool run;
-    bool left_click;
+    bool attack;
 
-    Projectile projectiles[10];
+    Projectile projectiles[100];
     int projectile_count;
 } Player;
 

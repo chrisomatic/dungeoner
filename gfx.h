@@ -14,5 +14,4 @@ typedef struct
 void gfx_init(int width, int height);
 
 void gfx_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez);
-void gfx_cube(GLuint texture, float x, float y, float z);
-
+void gfx_cube(GLuint texture, float x, float y, float z, float scale);

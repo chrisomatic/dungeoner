@@ -118,6 +118,12 @@ void add(Vector3f* a, Vector3f b)
     a->z = a->z + b.z;
 }
 
+void mult(Vector3f* a, float c)
+{
+    a->x *= c;
+    a->y *= c;
+    a->z *= c;
+}
 
 void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm)
 {
@@ -262,6 +268,9 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &player.camera.pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
+
+    // flip coordinate system
+    translate_trans.m[1][3] *= -1;
 
     memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
 

@@ -137,7 +137,7 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         if(mode == GLFW_CURSOR_NORMAL)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        player.left_click = true;
+        player.attack = true;
     }
 }
 
