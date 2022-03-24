@@ -9,9 +9,8 @@
 
 #include "gfx.h"
 
-static GLuint vao;
+GLuint vao;
 
-// textures
 int show_wireframe = 0;
 
 static Mesh quad = {};

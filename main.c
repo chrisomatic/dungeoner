@@ -15,6 +15,7 @@
 #include "timer.h"
 #include "player.h"
 #include "level.h"
+#include "model.h"
 #include "util.h"
 #include "log.h"
 
@@ -109,6 +110,9 @@ void init()
     LOGI(" - Player.");
     player_init();
 
+    LOGI(" - Models.");
+    model_import("models/human.obj");
+
     LOGI(" - Textures.");
     t_stone = load_texture("textures/stonewall.jpg");
     t_grass = load_texture("textures/grass.png");
@@ -139,6 +143,7 @@ void render()
     GFX_QUAD_HORZ(t_grass, 20.0f,0.0f,10.0f, 100.0f);
 
     gfx_cube(t_stone,5.0f,20.0f,20.0f, 1.0f);
+    model_draw(10.0,1.0,10.0,-1.0);
 
     player_draw();
 

@@ -11,6 +11,9 @@ typedef struct
     GLuint ibo;
 } Mesh;
 
+extern int show_wireframe;
+extern GLuint vao;
+
 void gfx_init(int width, int height);
 
 void gfx_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez);
