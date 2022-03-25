@@ -262,11 +262,18 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     Matrix camera_translate_trans = {0};
     Matrix camera_rotate_trans    = {0};
 
+    Camera* cam = &player.camera;
+    Vector3f camera_pos = {
+        cam->phys.pos.x + cam->offset.x,
+        cam->phys.pos.y + cam->offset.y,
+        cam->phys.pos.z + cam->offset.z
+    };
+
     get_scale_transform(&scale_trans, scale);
     get_rotation_transform(&rotation_trans, rotation);
     get_translate_transform(&translate_trans, pos);
     get_perspective_transform(&perspective_trans);
-    get_translate_transform(&camera_translate_trans, &player.camera.pos);
+    get_translate_transform(&camera_translate_trans, &camera_pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
 
     // flip coordinate system

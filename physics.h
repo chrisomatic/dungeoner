@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "3dmath.h"
 
-#define GRAVITY_EARTH 9.80
+#define GRAVITY_EARTH 9.81
 #define GRAVITY_SPECIAL 2.00
 
 #define GRAVITY GRAVITY_EARTH*10
@@ -24,6 +24,9 @@ void physics_add_force(PhysicsObj* phys, float force_x, float force_y, float for
 void physics_add_force_x(PhysicsObj* phys, float force_y);
 void physics_add_force_y(PhysicsObj* phys, float force_y);
 void physics_add_force_z(PhysicsObj* phys, float force_y);
+
+void physics_add_gravity(PhysicsObj* phys);
+void physics_add_kinetic_friction(PhysicsObj* phys);
 
 void physics_print(PhysicsObj* phys, bool force);
 

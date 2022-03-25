@@ -165,6 +165,20 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
             case GLFW_KEY_LEFT_SHIFT:
                 player.run = true;
                 break;
+            case GLFW_KEY_P:
+                if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
+                {
+                    player.camera.mode = CAMERA_MODE_THIRD_PERSON;
+                }
+                else if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
+                {
+                    player.camera.mode = CAMERA_MODE_FIRST_PERSON;
+                    player.camera.offset.x = 0.0f;
+                    player.camera.offset.y = 0.0f;
+                    player.camera.offset.z = 0.0f;
+                }
+                LOGI("Camera mode: %d",player.camera.mode);
+                break;
             case GLFW_KEY_TAB:
                 show_wireframe = !show_wireframe;
                 LOGI("Wireframe: %d",show_wireframe);

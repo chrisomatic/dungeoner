@@ -32,6 +32,13 @@ double g_delta_t = 0.0f;
 
 GLuint t_stone;
 GLuint t_grass;
+GLuint t_sky;
+
+// =========================
+// Meshes
+// =========================
+
+Mesh m_human;
 
 // =========================
 // Function Prototypes
@@ -81,6 +88,7 @@ void start_game()
         render();
 
         timer_wait_for_frame(&game_timer);
+        window_swap_buffers();
         t1 = timer_get_time();
     }
 
@@ -111,12 +119,23 @@ void init()
     player_init();
 
     LOGI(" - Models.");
-    model_import("models/human.obj");
+    model_import(&m_human,"models/human_small.obj");
 
     LOGI(" - Textures.");
     t_stone = load_texture("textures/stonewall.jpg");
     t_grass = load_texture("textures/grass.png");
-    
+
+    char* cube[] = {
+        "textures/skybox/right.jpg",
+        "textures/skybox/left.jpg",
+        "textures/skybox/top.jpg",
+        "textures/skybox/bottom.jpg",
+        "textures/skybox/front.jpg",
+        "textures/skybox/back.jpg",
+    };
+
+    t_sky = load_texture_cube(cube, 6);
+
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
@@ -137,16 +156,15 @@ void render()
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    player_draw();
+
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
     GFX_QUAD_HORZ(t_grass, 20.0f,0.0f,10.0f, 100.0f);
 
-    gfx_cube(t_stone,5.0f,20.0f,20.0f, 1.0f);
-    model_draw(10.0,1.0,10.0,-1.0);
+    gfx_draw_cube(t_stone,5.0f,20.0f,20.0f, 1.0f);
 
-    player_draw();
-
-    window_swap_buffers();
+    gfx_draw_sky();
 }
 

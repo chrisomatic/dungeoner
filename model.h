@@ -1,4 +1,5 @@
 #pragma once
 
-bool model_import(const char* obj_filepath);
-void model_draw(float x, float y, float z, float scale);
+#include "gfx.h"
+
+bool model_import(Mesh* ret_mesh, const char* obj_filepath);

@@ -4,11 +4,8 @@
 #include "3dmath.h"
 #include "log.h"
 #include "model.h"
-#include "gfx.h"
 #include "util.h"
 #include "shader.h"
-
-static Mesh model;
 
 Vertex vertices[1000] = {0};
 uint32_t indices[5000] = {0};
@@ -16,7 +13,7 @@ uint32_t indices[5000] = {0};
 int vertex_count = 0;
 int index_count = 0;
 
-bool model_import(const char* obj_filepath)
+bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 {
     FILE* fp = fopen(obj_filepath, "r");
     if(!fp)
@@ -56,32 +53,27 @@ bool model_import(const char* obj_filepath)
             int res = sscanf(line,"vn %f %f %f",&v1, &v2, &v3);
             if(res > 0)
             {
-                printf("@TODO: vertex normals\n");
+                //printf("@TODO: vertex normals\n");
             }
         }
         else if(STR_EQUAL(type, "f "))
         {
-            uint32_t v1,v2,v3,v4;
-            uint32_t vn1, vn2, vn3, vn4;
-            int res = sscanf(line,"f %d//%d %d//%d %d//%d %d//%d",&v1, &vn1, &v2, &vn2, &v3, &vn3, &v4, &vn4);
+            uint32_t v1,v2,v3;
+            uint32_t vn1, vn2, vn3;
+            int res = sscanf(line,"f %d//%d %d//%d %d//%d",&v1, &vn1, &v2, &vn2, &v3, &vn3);
 
             if(res > 0)
             {
-                // tri1
-                indices[index_count+0] = v3;
-                indices[index_count+1] = v2;
-                indices[index_count+2] = v1;
-
-                // tri2
-                //indices[index_count+3] = v1;
-                //indices[index_count+4] = v2;
-                //indices[index_count+5] = v3;
+                indices[index_count+0] = v1-1;
+                indices[index_count+1] = v2-1;
+                indices[index_count+2] = v3-1;
 
                 index_count += 3;
             }
         }
     }
 
+    /*
     printf("Vertices (%d):\n", vertex_count);
     for(int i = 0; i < vertex_count; ++i)
     {
@@ -90,74 +82,16 @@ bool model_import(const char* obj_filepath)
 
     printf("\n");
     printf("Indices (%d):\n", index_count);
-    for(int i = 0; i < index_count; i +=6)
+    for(int i = 0; i < index_count; i +=3)
     {
         //printf(" %d %d %d %d %d %d\n",indices[i+0], indices[i+1], indices[i+2], indices[i+3], indices[i+4], indices[i+5]);
         printf(" %d %d %d\n",indices[i+0], indices[i+1], indices[i+2]);
     }
+    */
 
     fclose(fp);
 
- 	glGenBuffers(1, &model.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertex_count*sizeof(Vertex), vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1,&model.ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count*sizeof(uint32_t), indices, GL_STATIC_DRAW);
+    gfx_create_mesh(ret_mesh, vertices, vertex_count, indices, index_count);
 
     return true;
-}
-
-void model_draw(float x, float y, float z, float scale)
-{
-    glUseProgram(program);
-
-    Vector3f pos = {x,y,z};
-    Vector3f rot = {0.0f,0.0f,0.0f};
-    Vector3f sca = {scale,scale,scale};
-
-    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
-
-    shader_set_mat4(program,"wvp",wvp);
-
-    /*
-    if(texture)
-    {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-    }
-    else
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    */
-
-    glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,model.ibo);
-
-    if(show_wireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
-    glDrawElements(GL_TRIANGLES,index_count,GL_UNSIGNED_INT,0);
-
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-
-    glBindTexture(GL_TEXTURE_2D,0);
-    glUseProgram(0);
-
 }

@@ -61,6 +61,10 @@ static void update_player_physics()
 
     bool spectator = (player.camera.mode == CAMERA_MODE_FREE);
 
+
+    if(!spectator)
+        physics_add_gravity(phys);
+
     if(spectator || PLAYER_ON_GROUND)
     {
         // where the player is looking
@@ -70,6 +74,8 @@ static void update_player_physics()
             player.camera.target.z
         };
 
+        physics_add_kinetic_friction(phys);
+
         if(player.jump && !spectator)
         {
             physics_add_force_y(phys,2000.0);
@@ -78,6 +84,7 @@ static void update_player_physics()
         if(player.forward)
         {
             Vector3f forward = {-target.x,spectator ? -target.y : 0.0,-target.z};
+            normalize(&forward);
             mult(&forward,accel_force);
 
             physics_add_force(phys,forward.x,forward.y,forward.z);
@@ -86,6 +93,7 @@ static void update_player_physics()
         if(player.back)
         {
             Vector3f back = {target.x,spectator ? target.y : 0.0,target.z};
+            normalize(&back);
             mult(&back,accel_force);
 
             physics_add_force(phys,back.x,back.y,back.z);
@@ -171,9 +179,7 @@ void player_init()
     player.camera.cursor_y = view_height / 2.0f;
 
     // initialize player camera
-    player.camera.pos.x = 0.0f;
-    player.camera.pos.y = 0.0f;
-    player.camera.pos.z = 0.0f;
+    memset(&player.camera.phys, 0, sizeof(PhysicsObj));
     player.camera.target.z   = 1.0f;
     player.camera.up.y       = 1.0f;
     player.projectile_count = 0;
@@ -183,8 +189,21 @@ void player_init()
 
 void player_update_camera()
 {
-    copy_vector(&player.camera.pos,player.phys.pos);
-    player.camera.pos.y += player.height; // put camera in head of player
+    copy_vector(&player.camera.phys.pos,player.phys.pos);
+    player.camera.phys.pos.y += player.height; // put camera in head of player
+
+    if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
+    {
+        player.camera.offset.x = 3.0f*player.camera.target.x;
+        player.camera.offset.y = 3.0f*player.camera.target.y + 0.5f;
+        player.camera.offset.z = 3.0f*player.camera.target.z;
+    }
+    else if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
+    {
+        player.camera.offset.x = 0.0;
+        player.camera.offset.y = 0.0;
+        player.camera.offset.z = 0.0;
+    }
 }
 
 void player_update()
@@ -193,6 +212,8 @@ void player_update()
     update_player_physics();
     
     bool projectile_spawned = false;
+
+    physics_print(&player.phys, false);
 
     if(player.attack)
     {
@@ -205,21 +226,29 @@ void player_update()
     {
         if(!projectile_spawned)
             physics_begin(&player.projectiles[i].phys);
+        physics_add_gravity(&player.projectiles[i].phys);
+        physics_add_kinetic_friction(&player.projectiles[i].phys);
         physics_simulate(&player.projectiles[i].phys);
         //physics_print(&player.projectiles[i].phys, false);
     }
-
-    //physics_print(&player.phys, false);
 
     player_update_camera();
 }
 
 void player_draw()
 {
+    if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
+    {
+        Vector3f pos = {-player.phys.pos.x, player.phys.pos.y, -player.phys.pos.z};
+        Vector3f rot = {0.0,90.0-player.angle_h,0.0};
+        Vector3f sca = {-1.0,-1.0,-1.0};
+
+        gfx_draw_mesh(&m_human,t_grass,&pos, &rot, &sca);
+    }
     for(int i = 0; i < player.projectile_count; ++i)
     {
         PhysicsObj* phys = &player.projectiles[i].phys;
-        gfx_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2f);
+        gfx_draw_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2f);
     }
 }
 

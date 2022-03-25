@@ -3,8 +3,11 @@
 #define MAX_SHADER_LEN 2048
 #define INVALID_UNIFORM_LOCATION 0xFFFFFFFF
 
-extern GLuint program;
+extern GLuint program_basic;
+extern GLuint program_sky;
+
 extern GLuint sampler;
+extern GLuint sampler_sky;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);

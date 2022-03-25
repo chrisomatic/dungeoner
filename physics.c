@@ -30,8 +30,7 @@ void physics_add_force_z(PhysicsObj* phys, float force_z)
 {
     phys->accel.z += force_z;
 }
-
-void physics_simulate(PhysicsObj* phys)
+void physics_add_gravity(PhysicsObj* phys)
 {
     // apply gravity
     physics_add_force_y(phys,-GRAVITY);
@@ -41,7 +40,9 @@ void physics_simulate(PhysicsObj* phys)
         // ground normal
         physics_add_force_y(phys,GRAVITY);
     }
-
+}
+void physics_add_kinetic_friction(PhysicsObj* phys)
+{
     if(phys->pos.y == 0.0 && phys->accel.y <= 0.0 && phys->vel.x != 0.0f && phys->vel.z != 0.0f) // on ground and moving
     {
         // apply kinetic friction
@@ -64,7 +65,10 @@ void physics_simulate(PhysicsObj* phys)
 
         physics_add_force(phys,friction.x, friction.y, friction.z);
     }
+}
 
+void physics_simulate(PhysicsObj* phys)
+{
     // update velocity
     // v1 = v0 + a*t
     phys->vel.x += (phys->accel.x*g_delta_t);

@@ -9,25 +9,28 @@
 #include "shader.h"
 #include "log.h"
 
-GLuint program;
+GLuint program_basic;
+GLuint program_sky;
+
 GLuint sampler;
+GLuint sampler_sky;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
 void shader_load_all()
 {
-    shader_build_program(&program,
-        "shaders/basic.vert.glsl",
-        "shaders/basic.frag.glsl"
-    );
+    shader_build_program(&program_basic,"shaders/basic.vert.glsl","shaders/basic.frag.glsl");
+    shader_build_program(&program_sky,"shaders/skybox.vert.glsl","shaders/skybox.frag.glsl");
 
     // Get uniform locations
-    sampler = glGetUniformLocation(program, "sampler");
+    sampler = glGetUniformLocation(program_basic, "sampler");
+    sampler_sky = glGetUniformLocation(program_sky, "skybox");
 }
 
 void shader_deinit()
 {
-    glDeleteProgram(program);
+    glDeleteProgram(program_basic);
+    glDeleteProgram(program_sky);
 }
 
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path)
