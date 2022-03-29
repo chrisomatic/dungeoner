@@ -13,17 +13,15 @@
 
 Player player = {0};
 
-#define PLAYER_ON_GROUND player.phys.pos.y == 0.0
-
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
 
 static void update_camera_rotation()
 {
-    const Vector3f v_axis = {0.0f, 1.0f, 0.0f};
+    const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis
-    Vector3f view = {1.0f, 0.0f, 0.0f};
+    Vector3f view = {1.0, 0.0, 0.0};
     rotate(&view, v_axis, player.angle_h);
     normalize(&view);
 
@@ -54,18 +52,32 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 60.0;
+    float accel_force = 5.0;
+    phys->max_linear_speed = player.walk_speed;
+
+    if(player.run)
+    {
+        accel_force = 8.0;
+        phys->max_linear_speed *= player.run_factor;
+    }
+
+    if(player.spectator)
+    {
+        accel_force = 15.0;
+        phys->max_linear_speed = 60.0;
+    }
 
     // zero out prior accel
     physics_begin(phys);
 
-    bool spectator = (player.camera.mode == CAMERA_MODE_FREE);
-
-
-    if(!spectator)
+    if(!player.spectator)
         physics_add_gravity(phys);
 
-    if(spectator || PLAYER_ON_GROUND)
+    //phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+
+    //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground_height);
+
+    if(player.spectator || phys->pos.y <= phys->ground_height)
     {
         // where the player is looking
         Vector3f target = {
@@ -76,14 +88,14 @@ static void update_player_physics()
 
         physics_add_kinetic_friction(phys);
 
-        if(player.jump && !spectator)
+        if(player.jump && !player.spectator)
         {
-            physics_add_force_y(phys,2000.0);
+            physics_add_force_y(phys,350.0);
         }
 
         if(player.forward)
         {
-            Vector3f forward = {-target.x,spectator ? -target.y : 0.0,-target.z};
+            Vector3f forward = {-target.x,player.spectator ? -target.y : 0.0,-target.z};
             normalize(&forward);
             mult(&forward,accel_force);
 
@@ -92,7 +104,7 @@ static void update_player_physics()
 
         if(player.back)
         {
-            Vector3f back = {target.x,spectator ? target.y : 0.0,target.z};
+            Vector3f back = {target.x,player.spectator ? target.y : 0.0,target.z};
             normalize(&back);
             mult(&back,accel_force);
 
@@ -130,6 +142,8 @@ static void player_spawn_projectile()
     player.projectiles[player.projectile_count].phys.pos.x = -player.phys.pos.x;
     player.projectiles[player.projectile_count].phys.pos.y = -10-player.phys.pos.y;
     player.projectiles[player.projectile_count].phys.pos.z = -player.phys.pos.z;
+    player.projectiles[player.projectile_count].phys.mass  = 10.0;
+    player.projectiles[player.projectile_count].phys.max_linear_speed = 50.0;
 
     PhysicsObj* phys = &player.projectiles[player.projectile_count].phys;
 
@@ -151,37 +165,40 @@ void player_init()
 {
     memset(&player,0,sizeof(Player));
 
-    player.height = 1.76f; // meters
-    player.phys.mass = 62.0f; // kg
-    player.speed_factor = 1.0f;
+    player.height = 1.76; // meters
+    player.phys.mass = 62.0; // kg
+    player.phys.max_linear_speed = 5.0; // m/s
+    player.run_factor = 2.0;
+    player.walk_speed = 5.0; // m/s
+    player.spectator = false;
 
-    Vector3f h_target = {player.camera.target.x,0.0f,player.camera.target.z};
+    Vector3f h_target = {player.camera.target.x,0.0,player.camera.target.z};
     normalize(&h_target);
 
-    if(h_target.z >= 0.0f)
+    if(h_target.z >= 0.0)
     {
-        if(h_target.x >= 0.0f)
-            player.angle_h = 360.0f - DEG(asin(h_target.z));
+        if(h_target.x >= 0.0)
+            player.angle_h = 360.0 - DEG(asin(h_target.z));
         else
-            player.angle_h = 180.0f + DEG(asin(h_target.z));
+            player.angle_h = 180.0 + DEG(asin(h_target.z));
     }
     else
     {
-        if(h_target.x >= 0.0f)
+        if(h_target.x >= 0.0)
             player.angle_h = DEG(asin(-h_target.z));
         else
-            player.angle_h = 180.0f - DEG(asin(-h_target.z));
+            player.angle_h = 180.0 - DEG(asin(-h_target.z));
     }
 
     player.angle_v = -DEG(asin(player.camera.target.y));
 
-    player.camera.cursor_x = view_width / 2.0f;
-    player.camera.cursor_y = view_height / 2.0f;
+    player.camera.cursor_x = view_width / 2.0;
+    player.camera.cursor_y = view_height / 2.0;
 
     // initialize player camera
     memset(&player.camera.phys, 0, sizeof(PhysicsObj));
-    player.camera.target.z   = 1.0f;
-    player.camera.up.y       = 1.0f;
+    player.camera.target.z   = 1.0;
+    player.camera.up.y       = 1.0;
     player.projectile_count = 0;
 
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
@@ -194,9 +211,9 @@ void player_update_camera()
 
     if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
     {
-        player.camera.offset.x = 3.0f*player.camera.target.x;
-        player.camera.offset.y = 3.0f*player.camera.target.y + 0.5f;
-        player.camera.offset.z = 3.0f*player.camera.target.z;
+        player.camera.offset.x = 3.0*player.camera.target.x;
+        player.camera.offset.y = 3.0*player.camera.target.y + 0.5;
+        player.camera.offset.z = 3.0*player.camera.target.z;
     }
     else if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
     {
@@ -248,7 +265,7 @@ void player_draw()
     for(int i = 0; i < player.projectile_count; ++i)
     {
         PhysicsObj* phys = &player.projectiles[i].phys;
-        gfx_draw_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2f);
+        gfx_draw_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2);
     }
 }
 
@@ -260,8 +277,8 @@ void player_update_angle(int cursor_x, int cursor_y)
     prior_cursor_x = cursor_x;
     prior_cursor_y = cursor_y;
 
-    player.angle_h += (float)delta_x / 16.0f;
-    player.angle_v += (float)delta_y / 16.0f;
+    player.angle_h += (float)delta_x / 16.0;
+    player.angle_v += (float)delta_y / 16.0;
 
     if(player.angle_h > 360)
         player.angle_h -= 360.0f;
@@ -269,8 +286,8 @@ void player_update_angle(int cursor_x, int cursor_y)
         player.angle_h += 360.f;
 
     if(player.angle_v > 90)
-        player.angle_v = 90.0f;
+        player.angle_v = 90.0;
     else if(player.angle_v < -90)
-        player.angle_v = -90.0f;
+        player.angle_v = -90.0;
 }
 

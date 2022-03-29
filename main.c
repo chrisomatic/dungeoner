@@ -38,6 +38,7 @@ GLuint t_sky;
 // Meshes
 // =========================
 
+Mesh m_terrain;
 Mesh m_human;
 
 // =========================
@@ -118,6 +119,9 @@ void init()
     LOGI(" - Player.");
     player_init();
 
+    LOGI(" - Terrain.");
+    terrain_build(&m_terrain, "textures/height_map.png");
+
     LOGI(" - Models.");
     model_import(&m_human,"models/human_small.obj");
 
@@ -158,13 +162,13 @@ void render()
 
     player_draw();
 
+    terrain_draw();
+    gfx_draw_sky();
+
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
-    GFX_QUAD_HORZ(t_grass, 20.0f,0.0f,10.0f, 100.0f);
 
     gfx_draw_cube(t_stone,5.0f,20.0f,20.0f, 1.0f);
-
-    gfx_draw_sky();
 }
 

@@ -4,13 +4,15 @@
 #include "3dmath.h"
 
 #define GRAVITY_EARTH 9.81
-#define GRAVITY_SPECIAL 2.00
 
-#define GRAVITY GRAVITY_EARTH*10
+#define GRAVITY GRAVITY_EARTH
+#define TERMINAL_VEL 60.0
 
 typedef struct
 {
     float mass;
+    float max_linear_speed;
+    float ground_height;
 
     Vector3f pos;
     Vector3f vel;

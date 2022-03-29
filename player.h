@@ -9,7 +9,6 @@ typedef enum
 {
     CAMERA_MODE_FIRST_PERSON,
     CAMERA_MODE_THIRD_PERSON,
-    CAMERA_MODE_FREE,
 } CameraMode;
 
 typedef struct
@@ -20,6 +19,7 @@ typedef struct
     Vector3f offset; // used for third-person
 
     CameraMode mode;
+    bool spectator;
 
     double cursor_x;
     double cursor_y;
@@ -28,7 +28,8 @@ typedef struct
 typedef struct
 {
     float height;
-    float speed_factor;
+    float walk_speed;
+    float run_factor;
 
     PhysicsObj phys;
 

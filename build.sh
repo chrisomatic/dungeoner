@@ -8,6 +8,7 @@ gcc main.c \
     player.c \
     projectile.c \
     shader.c \
+    terrain.c \
     timer.c \
     util.c \
     window.c \

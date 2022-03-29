@@ -4,6 +4,16 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "util/stb_image.h"
 
+unsigned char* util_load_image(const char* image_path, int *x, int *y, int *n, int d)
+{
+    return stbi_load(image_path, x, y, n, d);
+}
+
+void util_unload_image(unsigned char* image_data)
+{
+    return stbi_image_free(image_data);
+}
+
 GLuint load_texture(const char* texture_path)
 {
     int x,y,n;

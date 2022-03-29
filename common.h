@@ -11,4 +11,5 @@ extern GLuint t_stone;
 extern GLuint t_grass;
 extern GLuint t_sky;
 
+extern Mesh m_terrain;
 extern Mesh m_human;

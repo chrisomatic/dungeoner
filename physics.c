@@ -1,5 +1,6 @@
 #include "common.h"
 #include "log.h"
+#include "terrain.h"
 #include "physics.h"
 
 void physics_begin(PhysicsObj* phys)
@@ -35,7 +36,7 @@ void physics_add_gravity(PhysicsObj* phys)
     // apply gravity
     physics_add_force_y(phys,-GRAVITY);
 
-    if(phys->pos.y == 0.0)
+    if(phys->pos.y == phys->ground_height)
     {
         // ground normal
         physics_add_force_y(phys,GRAVITY);
@@ -43,12 +44,11 @@ void physics_add_gravity(PhysicsObj* phys)
 }
 void physics_add_kinetic_friction(PhysicsObj* phys)
 {
-    if(phys->pos.y == 0.0 && phys->accel.y <= 0.0 && phys->vel.x != 0.0f && phys->vel.z != 0.0f) // on ground and moving
+    if(phys->pos.y == phys->ground_height && (phys->vel.x != 0.0f || phys->vel.z != 0.0f)) // on ground and moving
     {
         // apply kinetic friction
         float mu_k = 0.25;
-        float normal = GRAVITY;
-        float friction_magn = normal * mu_k;
+        float friction_magn = GRAVITY * mu_k;
 
         Vector3f ground_vel = {phys->vel.x, 0.0f, phys->vel.z};
         normalize(&ground_vel);
@@ -71,46 +71,79 @@ void physics_simulate(PhysicsObj* phys)
 {
     // update velocity
     // v1 = v0 + a*t
-    phys->vel.x += (phys->accel.x*g_delta_t);
-    phys->vel.y += (phys->accel.y*g_delta_t);
-    phys->vel.z += (phys->accel.z*g_delta_t);
 
-    if(phys->pos.y == 0.0 && phys->vel.y < 0.0)
+    phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+
+    Vector v0 = {phys->vel.x, phys->vel.y, phys->vel.z};
+
+    phys->vel.x = v0.x + (phys->accel.x*g_delta_t);
+    phys->vel.y = v0.y + (phys->accel.y*g_delta_t);
+    phys->vel.z = v0.z + (phys->accel.z*g_delta_t);
+
+    Vector3f ground_vel = {phys->vel.x,0.0,phys->vel.z};
+    if(magn(ground_vel) > phys->max_linear_speed)
     {
-        // hit the ground
-        phys->vel.y = -0.2f*phys->vel.y; // cause some bounce
-        if(phys->vel.y < 0.006) phys->vel.y = 0.0;
+        normalize(&ground_vel);
+        ground_vel.x *= phys->max_linear_speed;
+        ground_vel.z *= phys->max_linear_speed;
+        phys->vel.x = ground_vel.x;
+        phys->vel.z = ground_vel.z;
     }
 
-    if(ABS(phys->vel.x) < 0.0001) phys->vel.x == 0.0;
-    if(ABS(phys->vel.y) < 0.0001) phys->vel.y == 0.0;
-    if(ABS(phys->vel.z) < 0.0001) phys->vel.z == 0.0;
+    if(ABS(phys->vel.y) > TERMINAL_VEL)
+    {
+        phys->vel.y = phys->vel.y > 0 ? TERMINAL_VEL : -TERMINAL_VEL;
+    }
+
+    //printf("phys x: %f, z: %f\n",phys->pos.x, phys->pos.z);
 
     // update position
-    // x1 = x0 + v*t
-    phys->pos.x += (phys->vel.x*g_delta_t);
-    phys->pos.y += (phys->vel.y*g_delta_t);
-    phys->pos.z += (phys->vel.z*g_delta_t);
+    // d = ((v0-vf)/2.0)*t
+    phys->pos.x += ((phys->vel.x + v0.x)/2.0)*g_delta_t;
+    phys->pos.y += ((phys->vel.y + v0.y)/2.0)*g_delta_t;
+    phys->pos.z += ((phys->vel.z + v0.z)/2.0)*g_delta_t;
 
-    if(phys->pos.y < 0.0f)
-        phys->pos.y = 0.0f;
+    //printf("pos.y: %f, ground_height: %f, vel.y: %f\n",phys->pos.y, phys->ground_height, phys->vel.y);
+    if(phys->pos.y <= phys->ground_height && phys->vel.y < 0.0)
+    {
+        // hit the ground
+        if(ABS(phys->vel.y) > 0.25)
+        {
+            phys->vel.y = -0.10*phys->vel.y; // cause some bounce
+        }
+        else
+        {
+            phys->vel.y = 0.0;
+        }
+    }
+
+    if(phys->pos.y < phys->ground_height)
+    {
+        phys->pos.y = phys->ground_height;
+        //phys->vel.y = 0.0f;
+    }
+
+    if(ABS(phys->vel.x) < 0.00001) phys->vel.x = 0.0;
+    if(ABS(phys->vel.y) < 0.00001) phys->vel.y = 0.0;
+    if(ABS(phys->vel.z) < 0.00001) phys->vel.z = 0.0;
+
 }
 
 void physics_print(PhysicsObj* phys, bool force)
 {
     if(force || phys->vel.x != 0 || phys->vel.y != 0 || phys->vel.z != 0)
     {
-        /*
-        LOGI("A: %f %f %f, V: %f %f %f, P: %f %f %f",
+        LOGI("A: %6.4f %6.4f %6.4f  V: %6.4f %6.4f %6.4f  P: %6.4f %6.4f %6.4f",
             phys->accel.x, phys->accel.y, phys->accel.z,
             phys->vel.x, phys->vel.y, phys->vel.z,
             phys->pos.x, phys->pos.y, phys->pos.z
             );
-        */
+        /*
         LOGI("A: %f V: %f P: %f",
             magn(phys->accel),
             magn(phys->vel),
             magn(phys->pos)
             );
+        */
     }
 }

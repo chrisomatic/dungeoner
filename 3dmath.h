@@ -48,6 +48,8 @@ void rotate(Vector* v, const Vector axis, float angle);
 void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm);
 void normalize(Vector* v);
 
+float barry_centric(Vector3f p1, Vector3f p2, Vector3f p3, Vector2f pos);
+
 void subtract(Vector3f* a, Vector3f b);
 void add(Vector3f* a, Vector3f b);
 void mult(Vector3f* a, float c);
