@@ -42,12 +42,41 @@ void physics_add_gravity(PhysicsObj* phys)
         physics_add_force_y(phys,GRAVITY);
     }
 }
-void physics_add_kinetic_friction(PhysicsObj* phys)
+
+void physics_add_air_friction(PhysicsObj* phys, float mu)
+{
+    if(phys->vel.x != 0.0f || phys->vel.y != 0.0f || phys->vel.z != 0.0f) // moving
+    {
+        // apply friction
+        float mu_k = mu;
+        float friction_magn = GRAVITY * mu_k;
+
+        Vector3f vel = {phys->vel.x, phys->vel.y, phys->vel.z};
+        normalize(&vel);
+
+        float friction_x = vel.x*friction_magn;
+        float friction_y = vel.y*friction_magn;
+        float friction_z = vel.z*friction_magn;
+
+        // truncate friction vector if slowing to a stop (don't overshoot)
+        friction_x = friction_x <= 0.0f ? MAX(friction_x,phys->vel.x/g_delta_t) : MIN(friction_x, phys->vel.x/g_delta_t);
+        friction_y = friction_y <= 0.0f ? MAX(friction_y,phys->vel.y/g_delta_t) : MIN(friction_y, phys->vel.y/g_delta_t);
+        friction_z = friction_z <= 0.0f ? MAX(friction_z,phys->vel.z/g_delta_t) : MIN(friction_z, phys->vel.z/g_delta_t);
+
+        Vector3f friction = {-1*friction_x, -1*friction_y,-1*friction_z};
+        //printf("friction: %f %f %f\n",friction.x, friction.y, friction.z);
+
+        physics_add_force(phys,friction.x, friction.y, friction.z);
+    }
+
+}
+
+void physics_add_kinetic_friction(PhysicsObj* phys, float mu)
 {
     if(phys->pos.y == phys->ground_height && (phys->vel.x != 0.0f || phys->vel.z != 0.0f)) // on ground and moving
     {
         // apply kinetic friction
-        float mu_k = 0.25;
+        float mu_k = mu;
         float friction_magn = GRAVITY * mu_k;
 
         Vector3f ground_vel = {phys->vel.x, 0.0f, phys->vel.z};

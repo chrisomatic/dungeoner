@@ -3,6 +3,7 @@ gcc main.c \
     3dmath.c \
     gfx.c \
     level.c \
+    light.c \
     model.c \
     physics.c \
     player.c \

@@ -18,6 +18,9 @@ GLuint load_texture(const char* texture_path)
 {
     int x,y,n;
     unsigned char* data;  
+
+    //stbi_set_flip_vertically_on_load(1);
+
     data = stbi_load(texture_path, &x, &y, &n, 0);
 
     if(!data)
@@ -63,6 +66,8 @@ GLuint load_texture_cube(char* cube_file_paths[], int num_file_paths)
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 
     printf("Generating cubemap texture.\n");
+    
+    stbi_set_flip_vertically_on_load(1);
 
     for(unsigned int i = 0; i < num_file_paths; i++)
     {

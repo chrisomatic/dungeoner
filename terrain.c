@@ -122,7 +122,6 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     {
         for(int i = 0; i < x; ++i)
         {
-
             int index = (j*x)+i;
 
             float height = (*curr_height/255.0f)*TERRAIN_HEIGHT_SCALE;
@@ -131,7 +130,6 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             terrain_vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
             terrain_vertices[index].position.y = -terrain.height_values[index];
             terrain_vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
-
 
             terrain_vertices[index].tex_coord.x = i/4.0f;
             terrain_vertices[index].tex_coord.y = j/4.0f;
@@ -147,14 +145,25 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
         if((i/6) > 0 && (i/6) % (x-1) == 0)
             index += 6;
 
+        // triangle 1
         terrain_indices[i]   = (index / 6);
         terrain_indices[i+1] = terrain_indices[i] + x;
         terrain_indices[i+2] = terrain_indices[i] + 1;
+
+        // triangle 2
         terrain_indices[i+3] = terrain_indices[i+1];
         terrain_indices[i+4] = terrain_indices[i+1] + 1;
         terrain_indices[i+5] = terrain_indices[i+2];
 
         index+=6;
+    }
+
+    calc_vertex_normals(terrain_indices, num_indices, terrain_vertices, num_vertices);
+
+    for(int i = 0; i < num_vertices; ++i)
+    {
+        terrain_vertices[i].normal.y *= -1.0;
+        printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
     }
 
     gfx_create_mesh(ret_mesh, terrain_vertices, num_vertices, terrain_indices, num_indices);

@@ -8,6 +8,7 @@
 #include "util.h"
 #include "log.h"
 #include "player.h"
+#include "light.h"
 #include "gfx.h"
 
 GLuint vao;
@@ -43,10 +44,10 @@ void gfx_draw_sky()
 
     Vector3f pos = {
         -player.camera.phys.pos.x-player.camera.offset.x,
-        +player.camera.phys.pos.y+player.camera.offset.y,
+        -player.camera.phys.pos.y-player.camera.offset.y,
         -player.camera.phys.pos.z-player.camera.offset.z
     };
-    Vector3f rot = {0.0f,0.0f,180.0f};
+    Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {1.0,1.0,1.0};
 
     Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
@@ -70,8 +71,16 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
     glUseProgram(program_basic);
 
     Matrix* wvp = get_wvp_transform(pos,rot,sca);
+    Matrix* world = get_world_transform(pos,rot,sca);
 
+    shader_set_int(program_basic,"sampler",0);
+    shader_set_int(program_basic,"wireframe",show_wireframe);
     shader_set_mat4(program_basic,"wvp",wvp);
+    shader_set_mat4(program_basic,"world",world);
+    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
 
     if(texture)
     {
@@ -86,10 +95,12 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,mesh->ibo);
 
@@ -106,6 +117,7 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     glBindTexture(GL_TEXTURE_2D,0);
     glUseProgram(0);
@@ -170,8 +182,14 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     Vector3f sca = {scale,scale,scale};
 
     Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
+    Matrix* world = get_world_transform(&pos,&rot,&sca);
 
     shader_set_mat4(program_basic,"wvp",wvp);
+    shader_set_mat4(program_basic,"world",world);
+    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
 
     if(texture)
     {
@@ -353,6 +371,4 @@ void gfx_init(int width, int height)
     init_quad();
     init_cube();
     init_skybox();
-
-    glUniform1i(glGetUniformLocation(program_basic, "sampler"), 0);
 }

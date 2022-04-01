@@ -19,7 +19,9 @@ typedef struct
     Vector3f offset; // used for third-person
 
     CameraMode mode;
-    bool spectator;
+
+    float angle_h;
+    float angle_v;
 
     double cursor_x;
     double cursor_y;
@@ -55,5 +57,6 @@ extern Player player;
 
 void player_init();
 void player_update();
-void player_update_angle(int cursor_x, int cursor_y);
-void player_update_camera();
+void player_draw();
+void player_update_camera_angle(int cursor_x, int cursor_y);
+void player_snap_camera();

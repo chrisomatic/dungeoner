@@ -8,10 +8,15 @@
 #include "shader.h"
 
 Vertex vertices[1000] = {0};
+Vector2f tex_coords[1000] = {0};
+Vector3f normals[1000] = {0};
+
 uint32_t indices[5000] = {0};
 
 int vertex_count = 0;
 int index_count = 0;
+int tex_coord_count = 0;
+int normal_count = 0;
 
 bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 {
@@ -42,7 +47,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 vertices[vertex_count].position.x = v1;
-                vertices[vertex_count].position.y = v2;
+                vertices[vertex_count].position.y = -v2;
                 vertices[vertex_count].position.z = v3;
                 vertex_count++;
             }
@@ -53,20 +58,53 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             int res = sscanf(line,"vn %f %f %f",&v1, &v2, &v3);
             if(res > 0)
             {
-                //printf("@TODO: vertex normals\n");
+                normals[normal_count].x = v1;
+                normals[normal_count].y = v2;
+                normals[normal_count].z = v3;
+                normal_count++;
+            }
+        }
+        else if(STR_EQUAL(type, "vt"))
+        {
+            float v1,v2;
+            int res = sscanf(line,"vt %f %f",&v1, &v2);
+            if(res > 0)
+            {
+                tex_coords[tex_coord_count].x = v1;
+                tex_coords[tex_coord_count].y = v2;
+                tex_coord_count++;
             }
         }
         else if(STR_EQUAL(type, "f "))
         {
             uint32_t v1,v2,v3;
+            uint32_t vt1, vt2, vt3;
             uint32_t vn1, vn2, vn3;
-            int res = sscanf(line,"f %d//%d %d//%d %d//%d",&v1, &vn1, &v2, &vn2, &v3, &vn3);
+
+            int res = sscanf(line,"f %d/%d/%d %d/%d/%d %d/%d/%d",&v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
 
             if(res > 0)
             {
                 indices[index_count+0] = v1-1;
-                indices[index_count+1] = v2-1;
-                indices[index_count+2] = v3-1;
+                indices[index_count+1] = v3-1;
+                indices[index_count+2] = v2-1;
+
+                vertices[v1-1].tex_coord.x = tex_coords[vt1-1].x;
+                vertices[v1-1].tex_coord.y = 1.0 - tex_coords[vt1-1].y;
+                vertices[v2-1].tex_coord.x = tex_coords[vt2-1].x;
+                vertices[v2-1].tex_coord.y = 1.0 - tex_coords[vt2-1].y;
+                vertices[v3-1].tex_coord.x = tex_coords[vt3-1].x;
+                vertices[v3-1].tex_coord.y = 1.0 - tex_coords[vt3-1].y;
+
+                vertices[v1-1].normal.x = normals[vn1-1].x;
+                vertices[v1-1].normal.y = 1.0 - normals[vn1-1].y;
+                vertices[v1-1].normal.z = normals[vn1-1].z;
+                vertices[v2-1].normal.x = normals[vn2-1].x;
+                vertices[v2-1].normal.y = 1.0 - normals[vn2-1].y;
+                vertices[v2-1].normal.z = normals[vn2-1].z;
+                vertices[v3-1].normal.x = normals[vn3-1].x;
+                vertices[v3-1].normal.y = 1.0 - normals[vn3-1].y;
+                vertices[v3-1].normal.z = normals[vn3-1].z;
 
                 index_count += 3;
             }
@@ -78,6 +116,12 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
     for(int i = 0; i < vertex_count; ++i)
     {
         printf("  %f %f %f\n",vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+    }
+
+    printf("Tex Coords (%d):\n", tex_coord_count);
+    for(int i = 0; i < tex_coord_count; ++i)
+    {
+        printf("  %f %f\n",vertices[i].tex_coord.x, vertices[i].tex_coord.y);
     }
 
     printf("\n");

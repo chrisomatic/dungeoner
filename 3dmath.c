@@ -25,9 +25,9 @@ static void conjugate_q(Quaternion q, Quaternion* ret)
 static void multiply_q_v3f(Quaternion q, Vector3f v, Quaternion* ret)
 {
     ret->w = - (q.x * v.x) - (q.y * v.y) - (q.z * v.z);
-    ret->x =   (q.w * v.x) + (q.y * v.z) - (q.z * v.y);
-    ret->y =   (q.w * v.y) + (q.z * v.x) - (q.x * v.z);
-    ret->z =   (q.w * v.z) + (q.x * v.y) - (q.y * v.x);
+    ret->x = + (q.w * v.x) + (q.y * v.z) - (q.z * v.y);
+    ret->y = + (q.w * v.y) + (q.z * v.x) - (q.x * v.z);
+    ret->z = + (q.w * v.z) + (q.x * v.y) - (q.y * v.x);
 }
 
 static void multiply_q(Quaternion a,Quaternion b, Quaternion* ret)
@@ -142,6 +142,33 @@ void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm)
 
     cross(b, c, norm);
     normalize(norm);
+}
+
+void calc_vertex_normals(const uint32_t* indices, uint32_t index_count, Vertex* vertices, uint32_t vertex_count)
+{
+    for (int i = 0; i < index_count; i += 3)
+    {
+        uint32_t i0 = indices[i + 0];
+        uint32_t i1 = indices[i + 1];
+        uint32_t i2 = indices[i + 2];
+
+        Vector3f p0 = vertices[i0].position;
+        Vector3f p1 = vertices[i1].position;
+        Vector3f p2 = vertices[i2].position;
+
+        Vector3f n;
+
+        normal(p0,p1,p2,&n);
+
+        add(&vertices[i0].normal, n);
+        add(&vertices[i1].normal, n);
+        add(&vertices[i2].normal, n);
+    }
+
+    for (int i = 0 ; i < vertex_count ; ++i)
+    {
+        normalize(&vertices[i].normal);
+    }
 }
 
 void dot_product_mat(Matrix a, Matrix b, Matrix* result)
@@ -261,6 +288,7 @@ void get_camera_transform(Matrix* mat, Vector3f target, Vector3f up)
     mat->m[3][3] = 1.0f;
 }
 
+static Matrix world_trans = {0};
 static Matrix wvp_trans = {0};
 
 Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
@@ -282,12 +310,11 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     get_scale_transform(&scale_trans, scale);
     get_rotation_transform(&rotation_trans, rotation);
     get_translate_transform(&translate_trans, pos);
+
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &camera_pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
 
-    // flip coordinate system
-    translate_trans.m[1][3] *= -1;
 
     memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
 
@@ -299,6 +326,25 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     dot_product_mat(wvp_trans, scale_trans,            &wvp_trans);
 
     return &wvp_trans;
+}
+
+Matrix* get_world_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
+{
+    Matrix scale_trans            = {0};
+    Matrix rotation_trans         = {0};
+    Matrix translate_trans        = {0};
+
+    get_scale_transform(&scale_trans, scale);
+    get_rotation_transform(&rotation_trans, rotation);
+    get_translate_transform(&translate_trans, pos);
+
+    memcpy(&world_trans,&identity_matrix,sizeof(Matrix));
+
+    dot_product_mat(world_trans, translate_trans, &world_trans);
+    dot_product_mat(world_trans, rotation_trans,  &world_trans);
+    dot_product_mat(world_trans, scale_trans,     &world_trans);
+
+    return &world_trans;
 }
 
 void print_matrix(Matrix* mat)

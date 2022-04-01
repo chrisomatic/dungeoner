@@ -21,8 +21,8 @@ static void update_camera_rotation()
     const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis
-    Vector3f view = {1.0, 0.0, 0.0};
-    rotate(&view, v_axis, player.angle_h);
+    Vector3f view = {0.0, 0.0, 1.0};
+    rotate(&view, v_axis, player.camera.angle_h);
     normalize(&view);
 
     // Rotate the view vector by the vertical angle around the horizontal axis
@@ -30,7 +30,7 @@ static void update_camera_rotation()
 
     cross(v_axis, view, &h_axis);
     normalize(&h_axis);
-    rotate(&view, h_axis, player.angle_v);
+    rotate(&view, h_axis, player.camera.angle_v);
 
     copy_vector(&player.camera.target,view);
     normalize(&player.camera.target);
@@ -63,6 +63,7 @@ static void update_player_physics()
 
     if(player.spectator)
     {
+        phys = &player.camera.phys;
         accel_force = 15.0;
         phys->max_linear_speed = 60.0;
     }
@@ -86,7 +87,14 @@ static void update_player_physics()
             player.camera.target.z
         };
 
-        physics_add_kinetic_friction(phys);
+        if(player.spectator)
+        {
+            physics_add_air_friction(phys, 0.25);
+        }
+        else
+        {
+            physics_add_kinetic_friction(phys, 0.25);
+        }
 
         if(player.jump && !player.spectator)
         {
@@ -178,36 +186,39 @@ void player_init()
     if(h_target.z >= 0.0)
     {
         if(h_target.x >= 0.0)
-            player.angle_h = 360.0 - DEG(asin(h_target.z));
+            player.camera.angle_h = 360.0 - DEG(asin(h_target.z));
         else
-            player.angle_h = 180.0 + DEG(asin(h_target.z));
+            player.camera.angle_h = 180.0 + DEG(asin(h_target.z));
     }
     else
     {
         if(h_target.x >= 0.0)
-            player.angle_h = DEG(asin(-h_target.z));
+            player.camera.angle_h = DEG(asin(-h_target.z));
         else
-            player.angle_h = 180.0 - DEG(asin(-h_target.z));
+            player.camera.angle_h = 180.0 - DEG(asin(-h_target.z));
     }
 
-    player.angle_v = -DEG(asin(player.camera.target.y));
+    player.camera.angle_v = -DEG(asin(player.camera.target.y));
 
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;
 
     // initialize player camera
     memset(&player.camera.phys, 0, sizeof(PhysicsObj));
-    player.camera.target.z   = 1.0;
+    player.camera.target.z   = -1.0;
     player.camera.up.y       = 1.0;
     player.projectile_count = 0;
 
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 }
 
-void player_update_camera()
+void player_snap_camera()
 {
     copy_vector(&player.camera.phys.pos,player.phys.pos);
     player.camera.phys.pos.y += player.height; // put camera in head of player
+
+    player.camera.angle_h = player.angle_h;
+    player.camera.angle_v = player.angle_v;
 
     if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
     {
@@ -244,23 +255,26 @@ void player_update()
         if(!projectile_spawned)
             physics_begin(&player.projectiles[i].phys);
         physics_add_gravity(&player.projectiles[i].phys);
-        physics_add_kinetic_friction(&player.projectiles[i].phys);
+        physics_add_kinetic_friction(&player.projectiles[i].phys, 0.25);
         physics_simulate(&player.projectiles[i].phys);
         //physics_print(&player.projectiles[i].phys, false);
     }
 
-    player_update_camera();
+    if(!player.spectator)
+    {
+        player_snap_camera();
+    }
 }
 
 void player_draw()
 {
-    if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
+    if(player.camera.mode == CAMERA_MODE_THIRD_PERSON || player.spectator)
     {
-        Vector3f pos = {-player.phys.pos.x, player.phys.pos.y, -player.phys.pos.z};
-        Vector3f rot = {0.0,90.0-player.angle_h,0.0};
-        Vector3f sca = {-1.0,-1.0,-1.0};
+        Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z};
+        Vector3f rot = {0.0,-player.angle_h,0.0};
+        Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&m_human,t_grass,&pos, &rot, &sca);
+        gfx_draw_mesh(&m_human,t_outfit,&pos, &rot, &sca);
     }
     for(int i = 0; i < player.projectile_count; ++i)
     {
@@ -269,7 +283,7 @@ void player_draw()
     }
 }
 
-void player_update_angle(int cursor_x, int cursor_y)
+void player_update_camera_angle(int cursor_x, int cursor_y)
 {
     int delta_x = prior_cursor_x - cursor_x;
     int delta_y = prior_cursor_y - cursor_y;
@@ -277,17 +291,23 @@ void player_update_angle(int cursor_x, int cursor_y)
     prior_cursor_x = cursor_x;
     prior_cursor_y = cursor_y;
 
-    player.angle_h += (float)delta_x / 16.0;
-    player.angle_v += (float)delta_y / 16.0;
+    player.camera.angle_h += (float)delta_x / 16.0;
+    player.camera.angle_v += (float)delta_y / 16.0;
 
-    if(player.angle_h > 360)
-        player.angle_h -= 360.0f;
-    else if(player.angle_h < 0)
-        player.angle_h += 360.f;
+    if(player.camera.angle_h > 360)
+        player.camera.angle_h -= 360.0f;
+    else if(player.camera.angle_h < 0)
+        player.camera.angle_h += 360.f;
 
-    if(player.angle_v > 90)
-        player.angle_v = 90.0;
-    else if(player.angle_v < -90)
-        player.angle_v = -90.0;
+    if(player.camera.angle_v > 90)
+        player.camera.angle_v = 90.0;
+    else if(player.camera.angle_v < -90)
+        player.camera.angle_v = -90.0;
+
+    if(!player.spectator)
+    {
+        player.angle_h = player.camera.angle_h;
+        player.angle_v = player.camera.angle_v;
+    }
 }
 

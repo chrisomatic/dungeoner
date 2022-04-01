@@ -126,7 +126,7 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 {
     int mode = glfwGetInputMode(window,GLFW_CURSOR);
     if(mode == GLFW_CURSOR_DISABLED)
-        player_update_angle(xpos, ypos);
+        player_update_camera_angle(xpos, ypos);
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -185,7 +185,8 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_M:
                 player.spectator = !player.spectator;
-                player_update_camera();
+                if(!player.spectator)
+                    player_snap_camera();
                 LOGI("Camera mode: %d",player.camera.mode);
                 break;
             case GLFW_KEY_ESCAPE:

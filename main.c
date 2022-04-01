@@ -13,8 +13,10 @@
 #include "window.h"
 #include "shader.h"
 #include "timer.h"
+#include "terrain.h"
 #include "player.h"
 #include "level.h"
+#include "light.h"
 #include "model.h"
 #include "util.h"
 #include "log.h"
@@ -33,6 +35,7 @@ double g_delta_t = 0.0f;
 GLuint t_stone;
 GLuint t_grass;
 GLuint t_sky;
+GLuint t_outfit;
 
 // =========================
 // Meshes
@@ -123,17 +126,21 @@ void init()
     terrain_build(&m_terrain, "textures/height_map.png");
 
     LOGI(" - Models.");
-    model_import(&m_human,"models/human_small.obj");
+    model_import(&m_human,"models/human2.obj");
+
+    LOGI(" - Light.");
+    light_init();
 
     LOGI(" - Textures.");
     t_stone = load_texture("textures/stonewall.jpg");
     t_grass = load_texture("textures/grass.png");
+    t_outfit = load_texture("textures/outfit.png");
 
     char* cube[] = {
         "textures/skybox/right.jpg",
         "textures/skybox/left.jpg",
-        "textures/skybox/top.jpg",
         "textures/skybox/bottom.jpg",
+        "textures/skybox/top.jpg",
         "textures/skybox/front.jpg",
         "textures/skybox/back.jpg",
     };
