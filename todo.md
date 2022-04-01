@@ -1,7 +1,7 @@
 # TODO
 
-[ ] add sunlight
-[ ] add simple fog
+[x] add sunlight
+[x] add simple fog
 [ ] fix terrain collision
 [ ] figure out negative axes situation
 [ ] add blend map for terrain

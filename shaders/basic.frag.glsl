@@ -3,6 +3,7 @@
 uniform sampler2D sampler;
 in vec2 tex_coord0;
 in vec3 normal0;
+in float visibility;
 
 out vec4 frag_color;
 
@@ -16,6 +17,7 @@ struct DirectionalLight
 
 uniform DirectionalLight dl;
 uniform int wireframe;
+uniform vec3 sky_color;
 
 void main() {
 
@@ -41,11 +43,9 @@ void main() {
 
         vec4 base_color = vec4(0.5,0.5,0.5,1.0);
 
-        //if(sampler)
-        //{
         base_color = texture2D(sampler,tex_coord0.xy);
-        //}
-        //frag_color = base_color;
-        frag_color = base_color * (ambient_color + diffuse_color);
+
+        vec4 out_color = base_color * (ambient_color + diffuse_color);
+        frag_color = mix(vec4(sky_color,1.0), out_color, visibility);
     }
 }

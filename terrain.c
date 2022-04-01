@@ -163,7 +163,7 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     for(int i = 0; i < num_vertices; ++i)
     {
         terrain_vertices[i].normal.y *= -1.0;
-        printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
+        //printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
     }
 
     gfx_create_mesh(ret_mesh, terrain_vertices, num_vertices, terrain_indices, num_indices);

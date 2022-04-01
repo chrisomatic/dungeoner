@@ -70,17 +70,20 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
 {
     glUseProgram(program_basic);
 
-    Matrix* wvp = get_wvp_transform(pos,rot,sca);
+    Matrix* wv    = get_wv_transform(pos,rot,sca);
+    Matrix* wvp   = get_wvp_transform(pos,rot,sca);
     Matrix* world = get_world_transform(pos,rot,sca);
 
     shader_set_int(program_basic,"sampler",0);
     shader_set_int(program_basic,"wireframe",show_wireframe);
+    shader_set_mat4(program_basic,"wv",wv);
     shader_set_mat4(program_basic,"wvp",wvp);
     shader_set_mat4(program_basic,"world",world);
     shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
     shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
     shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
     shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+    shader_set_vec3(program_basic,"sky_color",0.7, 0.8, 0.9);
 
     if(texture)
     {
@@ -354,7 +357,7 @@ void gfx_init(int width, int height)
 {
     LOGI("GL version: %s",glGetString(GL_VERSION));
 
-    glClearColor(0.20f, 0.20f, 0.20f, 0.0f);
+    glClearColor(0.80f, 0.85f, 0.90f, 0.0f);
 
     glFrontFace(GL_CW);
     //glCullFace(GL_BACK);

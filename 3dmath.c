@@ -289,7 +289,40 @@ void get_camera_transform(Matrix* mat, Vector3f target, Vector3f up)
 }
 
 static Matrix world_trans = {0};
+static Matrix wv_trans = {0};
 static Matrix wvp_trans = {0};
+
+Matrix* get_wv_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
+{
+    Matrix scale_trans            = {0};
+    Matrix rotation_trans         = {0};
+    Matrix translate_trans        = {0};
+    Matrix camera_translate_trans = {0};
+    Matrix camera_rotate_trans    = {0};
+
+    Camera* cam = &player.camera;
+    Vector3f camera_pos = {
+        cam->phys.pos.x + cam->offset.x,
+        cam->phys.pos.y + cam->offset.y,
+        cam->phys.pos.z + cam->offset.z
+    };
+
+    get_scale_transform(&scale_trans, scale);
+    get_rotation_transform(&rotation_trans, rotation);
+    get_translate_transform(&translate_trans, pos);
+    get_translate_transform(&camera_translate_trans, &camera_pos);
+    get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
+
+    memcpy(&wv_trans,&identity_matrix,sizeof(Matrix));
+
+    dot_product_mat(wv_trans, camera_rotate_trans,    &wv_trans);
+    dot_product_mat(wv_trans, camera_translate_trans, &wv_trans);
+    dot_product_mat(wv_trans, translate_trans,        &wv_trans);
+    dot_product_mat(wv_trans, rotation_trans,         &wv_trans);
+    dot_product_mat(wv_trans, scale_trans,            &wv_trans);
+
+    return &wv_trans;
+}
 
 Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
 {
@@ -310,11 +343,9 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     get_scale_transform(&scale_trans, scale);
     get_rotation_transform(&rotation_trans, rotation);
     get_translate_transform(&translate_trans, pos);
-
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &camera_pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
-
 
     memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
 

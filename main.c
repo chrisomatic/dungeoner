@@ -170,7 +170,7 @@ void render()
     player_draw();
 
     terrain_draw();
-    gfx_draw_sky();
+    //gfx_draw_sky();
 
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);

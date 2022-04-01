@@ -59,6 +59,8 @@ void add(Vector3f* a, Vector3f b);
 void mult(Vector3f* a, float c);
 void dot_product_mat(Matrix a, Matrix b, Matrix* result);
 
+Matrix* get_wv_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale);
 Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale);
 Matrix* get_world_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale);
+
 void print_matrix(Matrix* mat);
