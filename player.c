@@ -52,12 +52,12 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 5.0;
+    float accel_force = 8.0;
     phys->max_linear_speed = player.walk_speed;
 
     if(player.run)
     {
-        accel_force = 8.0;
+        accel_force = 12.0;
         phys->max_linear_speed *= player.run_factor;
     }
 
@@ -89,11 +89,11 @@ static void update_player_physics()
 
         if(player.spectator)
         {
-            physics_add_air_friction(phys, 0.25);
+            physics_add_air_friction(phys, 0.80);
         }
         else
         {
-            physics_add_kinetic_friction(phys, 0.25);
+            physics_add_kinetic_friction(phys, 0.50);
         }
 
         if(player.jump && !player.spectator)
@@ -172,12 +172,17 @@ static void player_spawn_projectile()
 void player_init()
 {
     memset(&player,0,sizeof(Player));
+    
+    // initialize player camera
+    memset(&player.camera.phys, 0, sizeof(PhysicsObj));
+    player.camera.target.z   = 1.0;
+    player.camera.up.y       = 1.0;
 
     player.height = 1.76; // meters
     player.phys.mass = 62.0; // kg
-    player.phys.max_linear_speed = 5.0; // m/s
+    player.phys.max_linear_speed = 8.0; // m/s
     player.run_factor = 2.0;
-    player.walk_speed = 5.0; // m/s
+    player.walk_speed = 8.0; // m/s
     player.spectator = false;
 
     Vector3f h_target = {player.camera.target.x,0.0,player.camera.target.z};
@@ -203,10 +208,6 @@ void player_init()
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;
 
-    // initialize player camera
-    memset(&player.camera.phys, 0, sizeof(PhysicsObj));
-    player.camera.target.z   = -1.0;
-    player.camera.up.y       = 1.0;
     player.projectile_count = 0;
 
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
@@ -238,6 +239,8 @@ void player_update()
 {
     update_camera_rotation();
     update_player_physics();
+
+    //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     
     bool projectile_spawned = false;
 

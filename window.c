@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "player.h"
+#include "gfx.h"
 #include "settings.h"
 #include "window.h"
 #include "log.h"
@@ -164,6 +165,9 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_LEFT_SHIFT:
                 player.run = true;
+                break;
+            case GLFW_KEY_F:
+                show_fog = !show_fog;
                 break;
             case GLFW_KEY_P:
                 if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)

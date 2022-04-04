@@ -13,9 +13,6 @@
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
 #define TERRAIN_HEIGHT_SCALE 10.0f // distance between vertices in y direction
 
-GLuint terrain_vbo;
-GLuint terrain_ibo;
-
 struct
 {
     unsigned char* height_map;
@@ -26,8 +23,8 @@ struct
 
 static bool get_terrain_points_and_pos(float x, float z, Vector3f* p1, Vector3f* p2, Vector3f* p3, Vector2f* pos)
 {
-    float terrain_x = -x + terrain.pos.x;
-    float terrain_z = -z + terrain.pos.z;
+    float terrain_x = terrain.pos.x - x;
+    float terrain_z = terrain.pos.z - z;
 
     float grid_square_size = TERRAIN_PLANAR_SCALE; // * (1.0f / terrain.w);
 
@@ -42,9 +39,9 @@ static bool get_terrain_points_and_pos(float x, float z, Vector3f* p1, Vector3f*
     float x_coord = fmod(terrain_x,grid_square_size)/grid_square_size;
     float z_coord = fmod(terrain_z,grid_square_size)/grid_square_size;
     
-    //printf("grid x: %d z: %d\n",grid_x, grid_z);
+    printf("grid x: %d z: %d\n",grid_x, grid_z);
 
-    int g = terrain.w+1;
+    int g = terrain.l;
 
     if (x_coord <= (1.0f-z_coord))
     {
@@ -80,7 +77,7 @@ float terrain_get_height(float x, float z)
     if(res)
     {
         float height = barry_centric(a,b,c,pos2);
-        //printf("height: %f\n");
+        printf("height: %f\n", height);
         return height;
     }
 
@@ -130,6 +127,11 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             terrain_vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
             terrain_vertices[index].position.y = -terrain.height_values[index];
             terrain_vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
+
+            if(j == 0 && i < 10)
+            {
+                printf("height %d: %f\n", i, terrain.height_values[index]);
+            }
 
             terrain_vertices[index].tex_coord.x = i/4.0f;
             terrain_vertices[index].tex_coord.y = j/4.0f;

@@ -5,6 +5,7 @@
 [ ] fix terrain collision
 [ ] figure out negative axes situation
 [ ] add blend map for terrain
+[ ] add font
 [ ] add trees
 [ ] add water/lakes/etc
 [ ] add character animation

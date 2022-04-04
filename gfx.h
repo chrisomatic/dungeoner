@@ -16,6 +16,7 @@ typedef struct
 } Mesh;
 
 extern int show_wireframe;
+extern int show_fog;
 extern GLuint vao;
 
 void gfx_init(int width, int height);

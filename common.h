@@ -14,3 +14,7 @@ extern GLuint t_outfit;
 
 extern Mesh m_terrain;
 extern Mesh m_human;
+
+// @TODO put these in an environment struct later or something
+extern float fog_density;
+extern float fog_gradient;

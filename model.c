@@ -85,9 +85,10 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 
             if(res > 0)
             {
+                // CCW
                 indices[index_count+0] = v1-1;
-                indices[index_count+1] = v3-1;
-                indices[index_count+2] = v2-1;
+                indices[index_count+1] = v2-1;
+                indices[index_count+2] = v3-1;
 
                 vertices[v1-1].tex_coord.x = tex_coords[vt1-1].x;
                 vertices[v1-1].tex_coord.y = 1.0 - tex_coords[vt1-1].y;

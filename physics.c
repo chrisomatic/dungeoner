@@ -101,7 +101,7 @@ void physics_simulate(PhysicsObj* phys)
     // update velocity
     // v1 = v0 + a*t
 
-    phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+    phys->ground_height = terrain_get_height(phys->pos.z, phys->pos.x);
 
     Vector v0 = {phys->vel.x, phys->vel.y, phys->vel.z};
 
@@ -136,6 +136,7 @@ void physics_simulate(PhysicsObj* phys)
     if(phys->pos.y <= phys->ground_height && phys->vel.y < 0.0)
     {
         // hit the ground
+        /*
         if(ABS(phys->vel.y) > 0.25)
         {
             phys->vel.y = -0.10*phys->vel.y; // cause some bounce
@@ -144,13 +145,18 @@ void physics_simulate(PhysicsObj* phys)
         {
             phys->vel.y = 0.0;
         }
+        */
+        phys->vel.y = 0.0;
+        phys->pos.y = phys->ground_height;
     }
 
+    /*
     if(phys->pos.y < phys->ground_height)
     {
         phys->pos.y = phys->ground_height;
         //phys->vel.y = 0.0f;
     }
+    */
 
     if(ABS(phys->vel.x) < 0.00001) phys->vel.x = 0.0;
     if(ABS(phys->vel.y) < 0.00001) phys->vel.y = 0.0;

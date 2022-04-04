@@ -28,6 +28,9 @@
 Timer game_timer = {0};
 double g_delta_t = 0.0f;
 
+float fog_density = 0.030;
+float fog_gradient = 4.0;
+
 // =========================
 // Textures
 // =========================
@@ -176,6 +179,15 @@ void render()
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
 
-    gfx_draw_cube(t_stone,5.0f,20.0f,20.0f, 1.0f);
+    for(int i = 0; i < 3; ++i)
+    {
+        for(int j = 0; j < 3; ++j)
+        {
+            for(int k = 0; k < 3; ++k)
+            {
+                gfx_draw_cube(t_stone,i*5,j*5,k*5, 0.20f);
+            }
+        }
+    }
 }
 

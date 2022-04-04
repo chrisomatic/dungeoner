@@ -12,8 +12,8 @@ uniform mat4 wv;
 uniform mat4 wvp;
 uniform mat4 world;
 
-const float density = 0.030;
-const float gradient = 4.0;
+uniform float fog_density;
+uniform float fog_gradient;
 
 void main()
 {
@@ -25,6 +25,6 @@ void main()
     vec4 position_rel_to_camera = wv*vec4(position,1.0);
 
     float dist = length(position_rel_to_camera.xyz);
-    visibility = exp(-pow((dist*density),gradient));
+    visibility = exp(-pow((dist*fog_density),fog_gradient));
     visibility = clamp(visibility, 0.0,1.0);
 }

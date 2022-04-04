@@ -288,43 +288,7 @@ void get_camera_transform(Matrix* mat, Vector3f target, Vector3f up)
     mat->m[3][3] = 1.0f;
 }
 
-static Matrix world_trans = {0};
-static Matrix wv_trans = {0};
-static Matrix wvp_trans = {0};
-
-Matrix* get_wv_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
-{
-    Matrix scale_trans            = {0};
-    Matrix rotation_trans         = {0};
-    Matrix translate_trans        = {0};
-    Matrix camera_translate_trans = {0};
-    Matrix camera_rotate_trans    = {0};
-
-    Camera* cam = &player.camera;
-    Vector3f camera_pos = {
-        cam->phys.pos.x + cam->offset.x,
-        cam->phys.pos.y + cam->offset.y,
-        cam->phys.pos.z + cam->offset.z
-    };
-
-    get_scale_transform(&scale_trans, scale);
-    get_rotation_transform(&rotation_trans, rotation);
-    get_translate_transform(&translate_trans, pos);
-    get_translate_transform(&camera_translate_trans, &camera_pos);
-    get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
-
-    memcpy(&wv_trans,&identity_matrix,sizeof(Matrix));
-
-    dot_product_mat(wv_trans, camera_rotate_trans,    &wv_trans);
-    dot_product_mat(wv_trans, camera_translate_trans, &wv_trans);
-    dot_product_mat(wv_trans, translate_trans,        &wv_trans);
-    dot_product_mat(wv_trans, rotation_trans,         &wv_trans);
-    dot_product_mat(wv_trans, scale_trans,            &wv_trans);
-
-    return &wv_trans;
-}
-
-Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
+void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* world, Matrix* view, Matrix* proj)
 {
     Matrix scale_trans            = {0};
     Matrix rotation_trans         = {0};
@@ -347,35 +311,32 @@ Matrix* get_wvp_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
     get_translate_transform(&camera_translate_trans, &camera_pos);
     get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
 
-    memcpy(&wvp_trans,&identity_matrix,sizeof(Matrix));
+    memcpy(world,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*world, translate_trans, world);
+    dot_product_mat(*world, rotation_trans,  world);
+    dot_product_mat(*world, scale_trans,     world);
 
-    dot_product_mat(wvp_trans, perspective_trans,      &wvp_trans);
-    dot_product_mat(wvp_trans, camera_rotate_trans,    &wvp_trans);
-    dot_product_mat(wvp_trans, camera_translate_trans, &wvp_trans);
-    dot_product_mat(wvp_trans, translate_trans,        &wvp_trans);
-    dot_product_mat(wvp_trans, rotation_trans,         &wvp_trans);
-    dot_product_mat(wvp_trans, scale_trans,            &wvp_trans);
+    memcpy(view,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*view, camera_rotate_trans,    view);
+    dot_product_mat(*view, camera_translate_trans, view);
 
-    return &wvp_trans;
+    memcpy(proj,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*proj, perspective_trans, proj);
 }
 
-Matrix* get_world_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale)
+void get_wvp(Matrix* world, Matrix* view, Matrix* proj, Matrix* wvp)
 {
-    Matrix scale_trans            = {0};
-    Matrix rotation_trans         = {0};
-    Matrix translate_trans        = {0};
+    memcpy(wvp,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*wvp, *proj,  wvp);
+    dot_product_mat(*wvp, *view,  wvp);
+    dot_product_mat(*wvp, *world, wvp);
+}
 
-    get_scale_transform(&scale_trans, scale);
-    get_rotation_transform(&rotation_trans, rotation);
-    get_translate_transform(&translate_trans, pos);
-
-    memcpy(&world_trans,&identity_matrix,sizeof(Matrix));
-
-    dot_product_mat(world_trans, translate_trans, &world_trans);
-    dot_product_mat(world_trans, rotation_trans,  &world_trans);
-    dot_product_mat(world_trans, scale_trans,     &world_trans);
-
-    return &world_trans;
+void get_wv(Matrix* world, Matrix* view, Matrix* wv)
+{
+    memcpy(wv,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*wv, *view,  wv);
+    dot_product_mat(*wv, *world, wv);
 }
 
 void print_matrix(Matrix* mat)

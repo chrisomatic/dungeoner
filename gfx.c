@@ -15,6 +15,7 @@ GLuint vao;
 GLuint sky_vao;
 
 int show_wireframe = 0;
+int show_fog = 0;
 
 static Mesh quad = {};
 static Mesh cube = {};
@@ -50,9 +51,11 @@ void gfx_draw_sky()
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {1.0,1.0,1.0};
 
-    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
+    Matrix world, view, proj, wvp;
+    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
 
-    shader_set_mat4(program_sky, "wvp", wvp);
+    shader_set_mat4(program_sky, "wvp", &wvp);
 
     glBindVertexArray(sky_vao);
     glActiveTexture(GL_TEXTURE0);
@@ -70,20 +73,32 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
 {
     glUseProgram(program_basic);
 
-    Matrix* wv    = get_wv_transform(pos,rot,sca);
-    Matrix* wvp   = get_wvp_transform(pos,rot,sca);
-    Matrix* world = get_world_transform(pos,rot,sca);
+    Matrix world, view, proj, wvp, wv;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+    get_wv(&world, &view, &wv);
 
     shader_set_int(program_basic,"sampler",0);
     shader_set_int(program_basic,"wireframe",show_wireframe);
-    shader_set_mat4(program_basic,"wv",wv);
-    shader_set_mat4(program_basic,"wvp",wvp);
-    shader_set_mat4(program_basic,"world",world);
+    shader_set_mat4(program_basic,"wv",&wv);
+    shader_set_mat4(program_basic,"wvp",&wvp);
+    shader_set_mat4(program_basic,"world",&world);
     shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
     shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
     shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
     shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
     shader_set_vec3(program_basic,"sky_color",0.7, 0.8, 0.9);
+
+    if(show_fog)
+    {
+        shader_set_float(program_basic,"fog_density",fog_density);
+        shader_set_float(program_basic,"fog_gradient",fog_gradient);
+    }
+    else
+    {
+        shader_set_float(program_basic,"fog_density",0.0);
+        shader_set_float(program_basic,"fog_gradient",1.0);
+    }
 
     if(texture)
     {
@@ -134,9 +149,11 @@ void gfx_draw_quad(GLuint texture, float x, float y, float z, float rotx, float 
     Vector3f rot = {rotx,roty,rotz};
     Vector3f sca = {scalex, scaley, scalez};
 
-    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
+    Matrix world, view, proj, wvp;
+    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
 
-    shader_set_mat4(program_basic,"wvp",wvp);
+    shader_set_mat4(program_basic,"wvp",&wvp);
     shader_set_int(program_basic, "wireframe", show_wireframe);
 
     if(texture)
@@ -184,11 +201,21 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {scale,scale,scale};
 
-    Matrix* wvp = get_wvp_transform(&pos,&rot,&sca);
-    Matrix* world = get_world_transform(&pos,&rot,&sca);
+    //printf("cube pos: %f %f %f\n",pos.x,pos.y,pos.z);
 
-    shader_set_mat4(program_basic,"wvp",wvp);
-    shader_set_mat4(program_basic,"world",world);
+    Matrix world, view, proj, wvp;
+    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+
+    /*
+    printf("cube wvp: %f %f %f %f\n", wvp->m[0][0], wvp->m[1][0], wvp->m[2][0], wvp->m[3][0]);
+    printf("          %f %f %f %f\n", wvp->m[0][1], wvp->m[1][1], wvp->m[2][1], wvp->m[3][1]);
+    printf("          %f %f %f %f\n", wvp->m[0][2], wvp->m[1][2], wvp->m[2][2], wvp->m[3][2]);
+    printf("          %f %f %f %f\n", wvp->m[0][3], wvp->m[1][3], wvp->m[2][3], wvp->m[3][3]);
+    */
+
+    shader_set_mat4(program_basic,"wvp",&wvp);
+    shader_set_mat4(program_basic,"world",&world);
     shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
     shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
     shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
@@ -242,7 +269,7 @@ static void init_quad()
         {{+1.0, -1.0, 0.0},{+1.0,+0.0}},
     }; 
 
-    uint32_t indices[6] = {0,1,2,0,2,3};
+    uint32_t indices[6] = {0,2,1,0,3,2};
 
  	glGenBuffers(1, &quad.vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
@@ -336,12 +363,12 @@ static void init_cube()
 
     uint32_t indices[6*6] =
     {
-        0,1,2,2,3,0, // front
-		1,5,6,6,2,1, // right
-		7,6,5,5,4,7, // back
-		4,0,3,3,7,4, // left
-		4,5,1,1,0,4, // bottom
-		3,2,6,6,7,3  // top
+        0,2,1,2,0,3, // front
+		1,6,5,6,1,2, // right
+		7,5,6,5,7,4, // back
+		4,3,0,3,4,7, // left
+		4,1,5,1,4,0, // bottom
+		3,6,2,6,3,7  // top
     };
 
  	glGenBuffers(1, &cube.vbo);
@@ -357,11 +384,11 @@ void gfx_init(int width, int height)
 {
     LOGI("GL version: %s",glGetString(GL_VERSION));
 
-    glClearColor(0.80f, 0.85f, 0.90f, 0.0f);
+    glClearColor(0.70f, 0.80f, 0.90f, 0.0f);
 
-    glFrontFace(GL_CW);
-    //glCullFace(GL_BACK);
-    //glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -370,6 +397,8 @@ void gfx_init(int width, int height)
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+    show_fog = 1;
 
     init_quad();
     init_cube();

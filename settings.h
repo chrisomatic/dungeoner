@@ -17,4 +17,3 @@
 
 extern int view_width;
 extern int view_height;
-extern int show_wireframe;
