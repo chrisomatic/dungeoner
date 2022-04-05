@@ -11,7 +11,7 @@
 #include "terrain.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 10.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 200.0f // distance between vertices in y direction
 
 struct
 {
@@ -39,21 +39,22 @@ static bool get_terrain_points_and_pos(float x, float z, Vector3f* p1, Vector3f*
     float x_coord = fmod(terrain_x,grid_square_size)/grid_square_size;
     float z_coord = fmod(terrain_z,grid_square_size)/grid_square_size;
     
-    printf("grid x: %d z: %d\n",grid_x, grid_z);
+    //printf("grid x: %d z: %d\n",grid_x, grid_z);
 
     int g = terrain.l;
+    int grid_zi = g*grid_z;
 
     if (x_coord <= (1.0f-z_coord))
     {
-        p1->x = 0; p1->y = terrain.height_values[g*grid_x+grid_z];     p1->z = 0;
-        p2->x = 1; p2->y = terrain.height_values[(g*grid_x+1)+grid_z]; p2->z = 1;
-        p3->x = 0; p3->y = terrain.height_values[g*grid_x+(grid_z+1)]; p3->z = 1;
+        p1->x = 0; p1->y = terrain.height_values[grid_x+grid_zi];     p1->z = 0;
+        p2->x = 1; p2->y = terrain.height_values[(grid_x+1)+grid_zi]; p2->z = 1;
+        p3->x = 0; p3->y = terrain.height_values[grid_x+(grid_zi+1)]; p3->z = 1;
     }
     else
     {
-        p1->x = 1; p1->y = terrain.height_values[(g*grid_x+1)+grid_z]; p1->z = 0;
-        p2->x = 1; p2->y = terrain.height_values[(g*grid_x+1)+grid_z]; p2->z = 1;
-        p3->x = 0; p3->y = terrain.height_values[g*grid_x+(grid_z+1)]; p3->z = 1;
+        p1->x = 1; p1->y = terrain.height_values[(grid_x+1)+grid_zi]; p1->z = 0;
+        p2->x = 1; p2->y = terrain.height_values[(grid_x+1)+grid_zi]; p2->z = 1;
+        p3->x = 0; p3->y = terrain.height_values[grid_x+(grid_zi+1)]; p3->z = 1;
     }
 
     if(pos == NULL)
@@ -77,7 +78,6 @@ float terrain_get_height(float x, float z)
     if(res)
     {
         float height = barry_centric(a,b,c,pos2);
-        printf("height: %f\n", height);
         return height;
     }
 
@@ -127,11 +127,6 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             terrain_vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
             terrain_vertices[index].position.y = -terrain.height_values[index];
             terrain_vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
-
-            if(j == 0 && i < 10)
-            {
-                printf("height %d: %f\n", i, terrain.height_values[index]);
-            }
 
             terrain_vertices[index].tex_coord.x = i/4.0f;
             terrain_vertices[index].tex_coord.y = j/4.0f;

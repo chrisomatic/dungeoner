@@ -28,8 +28,8 @@
 Timer game_timer = {0};
 double g_delta_t = 0.0f;
 
-float fog_density = 0.030;
-float fog_gradient = 4.0;
+float fog_density = 0.010;
+float fog_gradient = 5.0;
 
 // =========================
 // Textures
@@ -37,7 +37,8 @@ float fog_gradient = 4.0;
 
 GLuint t_stone;
 GLuint t_grass;
-GLuint t_sky;
+GLuint t_sky_day;
+GLuint t_sky_night;
 GLuint t_outfit;
 
 // =========================
@@ -126,7 +127,7 @@ void init()
     player_init();
 
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/height_map.png");
+    terrain_build(&m_terrain, "textures/heightmap_large.png");
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human2.obj");
@@ -139,16 +140,27 @@ void init()
     t_grass = load_texture("textures/grass.png");
     t_outfit = load_texture("textures/outfit.png");
 
-    char* cube[] = {
-        "textures/skybox/right.jpg",
-        "textures/skybox/left.jpg",
-        "textures/skybox/bottom.jpg",
-        "textures/skybox/top.jpg",
-        "textures/skybox/front.jpg",
-        "textures/skybox/back.jpg",
+    char* cube_sky_day[] = {
+        "textures/skybox/day_right.jpg",
+        "textures/skybox/day_left.jpg",
+        "textures/skybox/day_bottom.jpg",
+        "textures/skybox/day_top.jpg",
+        "textures/skybox/day_front.jpg",
+        "textures/skybox/day_back.jpg",
     };
 
-    t_sky = load_texture_cube(cube, 6);
+    t_sky_day = load_texture_cube(cube_sky_day, 6);
+
+    char* cube_sky_night[] = {
+        "textures/skybox/night_right.png",
+        "textures/skybox/night_left.png",
+        "textures/skybox/night_bottom.png",
+        "textures/skybox/night_top.png",
+        "textures/skybox/night_front.png",
+        "textures/skybox/night_back.png",
+    };
+
+    t_sky_night = load_texture_cube(cube_sky_night, 6);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
@@ -170,15 +182,15 @@ void render()
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    player_draw();
-
+    gfx_draw_sky();
     terrain_draw();
-    //gfx_draw_sky();
+    player_draw();
 
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
 
+    /*
     for(int i = 0; i < 3; ++i)
     {
         for(int j = 0; j < 3; ++j)
@@ -189,5 +201,6 @@ void render()
             }
         }
     }
+    */
 }
 

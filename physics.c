@@ -101,7 +101,7 @@ void physics_simulate(PhysicsObj* phys)
     // update velocity
     // v1 = v0 + a*t
 
-    phys->ground_height = terrain_get_height(phys->pos.z, phys->pos.x);
+    phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
 
     Vector v0 = {phys->vel.x, phys->vel.y, phys->vel.z};
 

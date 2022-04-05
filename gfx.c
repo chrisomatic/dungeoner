@@ -14,6 +14,10 @@
 GLuint vao;
 GLuint sky_vao;
 
+#define FOG_COLOR_R 0.7
+#define FOG_COLOR_G 0.8
+#define FOG_COLOR_B 0.9
+
 int show_wireframe = 0;
 int show_fog = 0;
 
@@ -56,10 +60,11 @@ void gfx_draw_sky()
     get_wvp(&world, &view, &proj, &wvp);
 
     shader_set_mat4(program_sky, "wvp", &wvp);
+    shader_set_vec3(program_sky, "fog_color", FOG_COLOR_R,FOG_COLOR_G, FOG_COLOR_B );
 
     glBindVertexArray(sky_vao);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, t_sky);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, t_sky_day);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,sky.ibo);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -320,12 +325,12 @@ static void init_skybox()
     };
 
     uint32_t sky_indices[] = {
-        0,1,4,1,5,4,
-        1,3,5,3,7,5,
-        3,2,7,2,6,7,
-        2,0,6,0,4,6,
-        0,2,1,1,2,3,
-        4,5,6,5,7,6
+        0,4,1,1,4,5,
+        1,5,3,3,5,7,
+        3,7,2,2,7,6,
+        2,6,0,0,6,4,
+        0,1,2,1,3,2,
+        4,6,5,5,6,7
     };
 
     glGenVertexArrays(1, &sky_vao);
@@ -384,7 +389,7 @@ void gfx_init(int width, int height)
 {
     LOGI("GL version: %s",glGetString(GL_VERSION));
 
-    glClearColor(0.70f, 0.80f, 0.90f, 0.0f);
+    glClearColor(FOG_COLOR_R, FOG_COLOR_G, FOG_COLOR_B,0.0);
 
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
