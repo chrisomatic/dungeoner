@@ -11,17 +11,18 @@
 #include "terrain.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 200.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 100.0f // distance between vertices in y direction
 
 struct
 {
     unsigned char* height_map;
     float* height_values;
     Vector3f pos;
+    Vector3f* normals;
     int w,l,n;
 } terrain;
 
-static bool get_terrain_points_and_pos(float x, float z, Vector3f* p1, Vector3f* p2, Vector3f* p3, Vector2f* pos)
+static bool get_terrain_points_and_pos(float x, float z, int* terrain_index, Vector3f* p1, Vector3f* p2, Vector3f* p3, Vector2f* pos)
 {
     float terrain_x = terrain.pos.x - x;
     float terrain_z = terrain.pos.z - z;
@@ -43,6 +44,8 @@ static bool get_terrain_points_and_pos(float x, float z, Vector3f* p1, Vector3f*
 
     int g = terrain.l;
     int grid_zi = g*grid_z;
+
+    *terrain_index = grid_x+grid_zi;
 
     if (x_coord <= (1.0f-z_coord))
     {
@@ -73,7 +76,8 @@ float terrain_get_height(float x, float z)
     Vector3f c  = {0};
     Vector2f pos2 = {0};
 
-    bool res = get_terrain_points_and_pos(x,z,&a,&b,&c,&pos2);
+    int terrain_index = 0;
+    bool res = get_terrain_points_and_pos(x,z,&terrain_index, &a,&b,&c,&pos2);
 
     if(res)
     {
@@ -83,6 +87,30 @@ float terrain_get_height(float x, float z)
 
     return 0.0;
 }
+
+void terrain_get_info(float x, float z, float* height, Vector3f* n)
+{
+    Vector3f a  = {0};
+    Vector3f b  = {0};
+    Vector3f c  = {0};
+    Vector2f pos2 = {0};
+
+    int terrain_index = 0;
+    bool res = get_terrain_points_and_pos(x,z,&terrain_index, &a,&b,&c,&pos2);
+
+    if(res)
+    {
+        *height = barry_centric(a,b,c,pos2);
+        n->x = terrain.normals[terrain_index].x;
+        n->y = terrain.normals[terrain_index].y;
+        n->z = terrain.normals[terrain_index].z;
+        //printf("n %d: %f %f %f\n",terrain_index,n->x,n->y,n->z);
+        return;
+    }
+
+    *height = 0.0;
+}
+
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 {
     terrain.height_map = util_load_image(height_map_file, &terrain.w, &terrain.l, &terrain.n, 1);
@@ -112,6 +140,7 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     uint32_t* terrain_indices  = calloc(num_indices,sizeof(uint32_t));
 
     terrain.height_values = calloc(x*y*n,sizeof(float));
+    terrain.normals = calloc(x*y*n,sizeof(Vector3f));
 
     unsigned char* curr_height = terrain.height_map;
 
@@ -128,8 +157,8 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             terrain_vertices[index].position.y = -terrain.height_values[index];
             terrain_vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
 
-            terrain_vertices[index].tex_coord.x = i/4.0f;
-            terrain_vertices[index].tex_coord.y = j/4.0f;
+            terrain_vertices[index].tex_coord.x = (i/(float)x);
+            terrain_vertices[index].tex_coord.y = (j/(float)y);
 
             curr_height++;
         }
@@ -161,6 +190,10 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     {
         terrain_vertices[i].normal.y *= -1.0;
         //printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
+
+        terrain.normals[i].x = terrain_vertices[i].normal.x;
+        terrain.normals[i].y = terrain_vertices[i].normal.y;
+        terrain.normals[i].z = terrain_vertices[i].normal.z;
     }
 
     gfx_create_mesh(ret_mesh, terrain_vertices, num_vertices, terrain_indices, num_indices);
@@ -177,6 +210,6 @@ void terrain_draw()
     Vector3f rot = {0.0,0.0,0.0};
     Vector3f sca = {1.0,1.0,1.0};
 
-    gfx_draw_mesh(&m_terrain,t_grass,&pos, &rot, &sca);
+    gfx_draw_terrain(&m_terrain,&pos, &rot, &sca);
 
 }

@@ -74,6 +74,78 @@ void gfx_draw_sky()
 
 }
 
+void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
+{
+    glUseProgram(program_terrain);
+
+    Matrix world, view, proj, wvp, wv;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+    get_wv(&world, &view, &wv);
+
+    shader_set_int(program_terrain,"texture_r",0);
+    shader_set_int(program_terrain,"texture_b",1);
+    shader_set_int(program_terrain,"blend_map",2);
+
+    shader_set_int(program_terrain,"wireframe",show_wireframe);
+    shader_set_mat4(program_terrain,"wv",&wv);
+    shader_set_mat4(program_terrain,"wvp",&wvp);
+    shader_set_mat4(program_terrain,"world",&world);
+    shader_set_vec3(program_terrain,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+    shader_set_vec3(program_terrain,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+    shader_set_float(program_terrain,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+    shader_set_float(program_terrain,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+    shader_set_vec3(program_terrain,"sky_color",0.7, 0.8, 0.9);
+
+    if(show_fog)
+    {
+        shader_set_float(program_terrain,"fog_density",fog_density);
+        shader_set_float(program_terrain,"fog_gradient",fog_gradient);
+    }
+    else
+    {
+        shader_set_float(program_terrain,"fog_density",0.0);
+        shader_set_float(program_terrain,"fog_gradient",1.0);
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, t_grass);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, t_dirt);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, t_blend_map);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,mesh->ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDrawElements(GL_TRIANGLES,mesh->index_count,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+
+    glBindTexture(GL_TEXTURE_2D,0);
+    glUseProgram(0);
+}
+
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vector3f *sca)
 {
     glUseProgram(program_basic);

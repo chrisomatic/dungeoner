@@ -37,6 +37,8 @@ float fog_gradient = 5.0;
 
 GLuint t_stone;
 GLuint t_grass;
+GLuint t_dirt;
+GLuint t_blend_map;
 GLuint t_sky_day;
 GLuint t_sky_night;
 GLuint t_outfit;
@@ -136,8 +138,10 @@ void init()
     light_init();
 
     LOGI(" - Textures.");
-    t_stone = load_texture("textures/stonewall.jpg");
-    t_grass = load_texture("textures/grass.png");
+    t_stone  = load_texture("textures/stonewall.jpg");
+    t_grass  = load_texture("textures/grass2.png");
+    t_dirt   = load_texture("textures/dirt.png");
+    t_blend_map = load_texture("textures/blend_map.png");
     t_outfit = load_texture("textures/outfit.png");
 
     char* cube_sky_day[] = {

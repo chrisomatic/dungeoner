@@ -59,7 +59,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 normals[normal_count].x = v1;
-                normals[normal_count].y = v2;
+                normals[normal_count].y = -v2;
                 normals[normal_count].z = v3;
                 normal_count++;
             }
@@ -71,7 +71,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 tex_coords[tex_coord_count].x = v1;
-                tex_coords[tex_coord_count].y = v2;
+                tex_coords[tex_coord_count].y = -v2;
                 tex_coord_count++;
             }
         }
@@ -91,20 +91,20 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
                 indices[index_count+2] = v3-1;
 
                 vertices[v1-1].tex_coord.x = tex_coords[vt1-1].x;
-                vertices[v1-1].tex_coord.y = 1.0 - tex_coords[vt1-1].y;
+                vertices[v1-1].tex_coord.y = tex_coords[vt1-1].y;
                 vertices[v2-1].tex_coord.x = tex_coords[vt2-1].x;
-                vertices[v2-1].tex_coord.y = 1.0 - tex_coords[vt2-1].y;
+                vertices[v2-1].tex_coord.y = tex_coords[vt2-1].y;
                 vertices[v3-1].tex_coord.x = tex_coords[vt3-1].x;
-                vertices[v3-1].tex_coord.y = 1.0 - tex_coords[vt3-1].y;
+                vertices[v3-1].tex_coord.y = tex_coords[vt3-1].y;
 
                 vertices[v1-1].normal.x = normals[vn1-1].x;
-                vertices[v1-1].normal.y = 1.0 - normals[vn1-1].y;
+                vertices[v1-1].normal.y = normals[vn1-1].y;
                 vertices[v1-1].normal.z = normals[vn1-1].z;
                 vertices[v2-1].normal.x = normals[vn2-1].x;
-                vertices[v2-1].normal.y = 1.0 - normals[vn2-1].y;
+                vertices[v2-1].normal.y = normals[vn2-1].y;
                 vertices[v2-1].normal.z = normals[vn2-1].z;
                 vertices[v3-1].normal.x = normals[vn3-1].x;
-                vertices[v3-1].normal.y = 1.0 - normals[vn3-1].y;
+                vertices[v3-1].normal.y = normals[vn3-1].y;
                 vertices[v3-1].normal.z = normals[vn3-1].z;
 
                 index_count += 3;

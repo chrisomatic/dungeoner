@@ -26,4 +26,5 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *pos, Vector3f *rot, Vec
 
 void gfx_draw_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez);
 void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale);
+void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();

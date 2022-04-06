@@ -175,7 +175,7 @@ void player_init()
     
     // initialize player camera
     memset(&player.camera.phys, 0, sizeof(PhysicsObj));
-    player.camera.target.z   = 1.0;
+    player.camera.target.z   = -1.0;
     player.camera.up.y       = 1.0;
 
     player.height = 1.76; // meters
@@ -273,6 +273,16 @@ void player_draw()
 {
     if(player.camera.mode == CAMERA_MODE_THIRD_PERSON || player.spectator)
     {
+        /*
+        Vector3f target = {player.camera.target.x, 0.0, player.camera.target.z};
+        Vector3f vel = {player.phys.vel.x,0.0, player.phys.vel.z};
+
+        float d = dot(target, vel);
+        float mt = magn(target);
+        float mv = magn(vel);
+
+        float lean_angle = mt == 0.0 || mv == 0.0 ? 0.0 : acos(d / (mt*mv));
+        */
         Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z};
         Vector3f rot = {0.0,-player.angle_h,0.0};
         Vector3f sca = {1.0,1.0,1.0};

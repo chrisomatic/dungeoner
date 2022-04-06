@@ -9,6 +9,8 @@ extern double g_delta_t;
 
 extern GLuint t_stone;
 extern GLuint t_grass;
+extern GLuint t_dirt;
+extern GLuint t_blend_map;
 extern GLuint t_sky_day;
 extern GLuint t_sky_night;
 extern GLuint t_outfit;

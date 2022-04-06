@@ -13,6 +13,7 @@ typedef struct
     float mass;
     float max_linear_speed;
     float ground_height;
+    Vector3f ground_normal;
 
     Vector3f pos;
     Vector3f vel;

@@ -2,9 +2,9 @@
 
 [x] add sunlight
 [x] add simple fog
-[ ] fix terrain collision
+[x] fix terrain collision
 [ ] figure out negative axes situation
-[ ] add blend map for terrain
+[x] add blend map for terrain
 [ ] add font
 [ ] add trees
 [ ] add water/lakes/etc

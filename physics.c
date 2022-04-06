@@ -39,6 +39,11 @@ void physics_add_gravity(PhysicsObj* phys)
     if(phys->pos.y == phys->ground_height)
     {
         // ground normal
+        /*
+        Vector3f n = {GRAVITY*phys->ground_normal.x, GRAVITY*phys->ground_normal.y, GRAVITY*phys->ground_normal.z};
+        printf("ground normal: %f %f %f\n", n.x, n.y, n.z);
+        physics_add_force(phys, n.x, n.y, n.z);
+        */
         physics_add_force_y(phys,GRAVITY);
     }
 }
@@ -101,7 +106,8 @@ void physics_simulate(PhysicsObj* phys)
     // update velocity
     // v1 = v0 + a*t
 
-    phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+    //phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+    terrain_get_info(phys->pos.x, phys->pos.z, &phys->ground_height, &phys->ground_normal);
 
     Vector v0 = {phys->vel.x, phys->vel.y, phys->vel.z};
 

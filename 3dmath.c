@@ -79,9 +79,9 @@ void normalize(Vector3f* v)
 
 void cross(Vector3f a, Vector3f b, Vector3f* res)
 {
-    res->x = a.y * b.z - a.z * b.y;
-    res->y = a.z * b.x - a.x * b.z;
-    res->z = a.x * b.y - a.y * b.x;
+    res->x = (a.y * b.z) - (a.z * b.y);
+    res->y = (a.z * b.x) - (a.x * b.z);
+    res->z = (a.x * b.y) - (a.y * b.x);
 }
 
 void rotate(Vector3f* v, const Vector3f axis, float angle)
