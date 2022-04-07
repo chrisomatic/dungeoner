@@ -52,12 +52,12 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 8.0;
+    float accel_force = 10.0;
     phys->max_linear_speed = player.walk_speed;
 
     if(player.run)
     {
-        accel_force = 12.0;
+        accel_force = 15.0;
         phys->max_linear_speed *= player.run_factor;
     }
 
@@ -74,11 +74,11 @@ static void update_player_physics()
     if(!player.spectator)
         physics_add_gravity(phys);
 
-    //phys->ground_height = terrain_get_height(phys->pos.x, phys->pos.z);
+    //phys->ground.height = terrain_get_height(phys->pos.x, phys->pos.z);
 
-    //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground_height);
+    //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground.height);
 
-    if(player.spectator || phys->pos.y <= phys->ground_height)
+    if(player.spectator || phys->pos.y <= phys->ground.height)
     {
         // where the player is looking
         Vector3f target = {
@@ -96,9 +96,12 @@ static void update_player_physics()
             physics_add_kinetic_friction(phys, 0.50);
         }
 
+        Vector3f user_force = {0.0,0.0,0.0};
+
         if(player.jump && !player.spectator)
         {
-            physics_add_force_y(phys,350.0);
+            //physics_add_force_y(phys,350.0);
+            user_force.y += 150.0;
         }
 
         if(player.forward)
@@ -107,7 +110,7 @@ static void update_player_physics()
             normalize(&forward);
             mult(&forward,accel_force);
 
-            physics_add_force(phys,forward.x,forward.y,forward.z);
+            add(&user_force,forward);
         }
 
         if(player.back)
@@ -116,7 +119,7 @@ static void update_player_physics()
             normalize(&back);
             mult(&back,accel_force);
 
-            physics_add_force(phys,back.x,back.y,back.z);
+            add(&user_force,back);
         }
 
         if(player.left)
@@ -127,7 +130,7 @@ static void update_player_physics()
 
             mult(&left,-accel_force);
 
-            physics_add_force(phys,left.x,left.y,left.z);
+            add(&user_force,left);
         }
 
         if(player.right)
@@ -138,8 +141,10 @@ static void update_player_physics()
 
             mult(&right,accel_force);
 
-            physics_add_force(phys,right.x,right.y,right.z);
+            add(&user_force,right);
         }
+
+        physics_add_user_force(phys,&user_force);
     }
 
     physics_simulate(phys);

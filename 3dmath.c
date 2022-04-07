@@ -324,6 +324,71 @@ void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* 
     dot_product_mat(*proj, perspective_trans, proj);
 }
 
+void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top)
+{
+    memset(m,0,sizeof(Matrix));
+
+    m->m[0][0] = 2.0f/(right-left);
+    m->m[1][1] = -2.0f/(top-bottom);
+    m->m[2][2] = -1.0f;
+    m->m[3][3] = 1.0f;
+    m->m[0][3] = -(right+left) / (right - left);
+    m->m[1][3] = (top+bottom) / (top-bottom);
+}
+
+// This function accepts a point and a plane definition, and will find the point on the plane projected from the original point
+Vector3f get_projected_point_on_plane(Vector3f* point, Vector3f* plane_normal, Vector3f* point_on_plane)
+{
+    /*
+
+        1. Make a vector from your orig point to the point of interest:
+            v = point-orig (in each dimension);
+
+        2. Take the dot product of that vector with the unit normal vector n:
+            dist = vx*nx + vy*ny + vz*nz; dist = scalar distance from point to plane along the normal
+
+        3. Multiply the unit normal vector by the distance, and subtract that vector from your point.
+            projected_point = point - dist*normal;
+    */
+
+    Vector3f v = {
+        point->x - point_on_plane->x,
+        point->y - point_on_plane->y,
+        point->z - point_on_plane->z
+    };
+
+    float dist = dot(v,*plane_normal);
+
+    Vector3f proj_p = {
+        point->x - (dist*plane_normal->x),
+        point->y - (dist*plane_normal->y),
+        point->z - (dist*plane_normal->z),
+    };
+
+    return proj_p;
+
+}
+
+float get_angle_between_vectors_rad(Vector3f* a, Vector3f* b)
+{
+    float d  = dot(*a,*b);
+    float ma = magn(*a);
+    float mb = magn(*b);
+    
+    float angle = acosf(d/(ma*mb));
+    return angle;
+}
+
+Vector3f get_center_of_triangle(Vector3f* a, Vector3f* b, Vector3f* c)
+{
+    float x = (a->x + b->x + c->x)/3.0;
+    float y = (a->y + b->y + c->y)/3.0;
+    float z = (a->z + b->z + c->z)/3.0;
+
+    Vector3f v = {x,y,z};
+    return v;
+}
+
 void get_wvp(Matrix* world, Matrix* view, Matrix* proj, Matrix* wvp)
 {
     memcpy(wvp,&identity_matrix,sizeof(Matrix));

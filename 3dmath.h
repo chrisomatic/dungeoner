@@ -34,9 +34,9 @@ typedef struct
 
 typedef struct
 {
-    Vector3f position;
+    Vector position;
     Vector2f tex_coord;
-    Vector3f normal;
+    Vector normal;
 } Vertex;
 
 extern Matrix identity_matrix;
@@ -47,19 +47,23 @@ float dot(Vector a, Vector b);
 void cross(Vector a, Vector b, Vector* res);
 void copy_vector(Vector* dest, Vector src);
 void rotate(Vector* v, const Vector axis, float angle);
-void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm);
+void normal(Vector a, Vector b, Vector c, Vector* norm);
 void normalize(Vector* v);
 
 void calc_vertex_normals(const uint32_t* indices, uint32_t index_count, Vertex* vertices, uint32_t vertex_count);
 
-float barry_centric(Vector3f p1, Vector3f p2, Vector3f p3, Vector2f pos);
+float barry_centric(Vector p1, Vector p2, Vector p3, Vector2f pos);
 
-void subtract(Vector3f* a, Vector3f b);
-void add(Vector3f* a, Vector3f b);
-void mult(Vector3f* a, float c);
+void subtract(Vector* a, Vector b);
+void add(Vector* a, Vector b);
+void mult(Vector* a, float c);
 void dot_product_mat(Matrix a, Matrix b, Matrix* result);
 
-void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* world, Matrix* view, Matrix* proj);
+void get_transforms(Vector* pos, Vector* rotation, Vector* scale, Matrix* world, Matrix* view, Matrix* proj);
+void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top);
 void get_wvp(Matrix* world, Matrix* view, Matrix* proj, Matrix* wvp);
 void get_wv(Matrix* world, Matrix* view, Matrix* wv);
 void print_matrix(Matrix* mat);
+Vector get_projected_point_on_plane(Vector* point, Vector* plane_normal, Vector* point_on_plane);
+Vector get_center_of_triangle(Vector* a, Vector* b, Vector* c);
+float get_angle_between_vectors_rad(Vector* a, Vector* b);

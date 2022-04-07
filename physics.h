@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include "3dmath.h"
+#include "terrain.h"
 
 #define GRAVITY_EARTH 9.81
 
@@ -12,8 +13,8 @@ typedef struct
 {
     float mass;
     float max_linear_speed;
-    float ground_height;
-    Vector3f ground_normal;
+
+    GroundInfo ground;
 
     Vector3f pos;
     Vector3f vel;
@@ -31,6 +32,8 @@ void physics_add_force_z(PhysicsObj* phys, float force_y);
 void physics_add_gravity(PhysicsObj* phys);
 void physics_add_kinetic_friction(PhysicsObj* phys, float mu);
 void physics_add_air_friction(PhysicsObj* phys, float mu);
+
+void physics_add_user_force(PhysicsObj* phys, Vector3f* force);
 
 void physics_print(PhysicsObj* phys, bool force);
 

@@ -20,6 +20,7 @@
 #include "model.h"
 #include "util.h"
 #include "log.h"
+#include "text.h"
 
 // =========================
 // Global Vars
@@ -128,11 +129,17 @@ void init()
     LOGI(" - Player.");
     player_init();
 
+    LOGI(" - Player.");
+    player_init();
+
     LOGI(" - Terrain.");
     terrain_build(&m_terrain, "textures/heightmap_large.png");
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human2.obj");
+
+    LOGI(" - Fonts.");
+    text_init();
 
     LOGI(" - Light.");
     light_init();
@@ -193,18 +200,9 @@ void render()
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
-
-    /*
-    for(int i = 0; i < 3; ++i)
-    {
-        for(int j = 0; j < 3; ++j)
-        {
-            for(int k = 0; k < 3; ++k)
-            {
-                gfx_draw_cube(t_stone,i*5,j*5,k*5, 0.20f);
-            }
-        }
-    }
-    */
+    
+    // hud
+    //Vector3f color = {0.0f,0.0f,1.0f};
+    //text_print(10.0f,25.0f,"Dungeoner",color);
 }
 

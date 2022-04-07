@@ -10,6 +10,7 @@ gcc main.c \
     projectile.c \
     shader.c \
     terrain.c \
+    text.c \
     timer.c \
     util.c \
     window.c \

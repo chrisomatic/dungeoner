@@ -6,19 +6,21 @@
 #include "3dmath.h"
 #include "log.h"
 #include "shader.h"
-#include "gfx.h"
 #include "util.h"
 #include "terrain.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 100.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 150.0f // distance between vertices in y direction
 
 struct
 {
     unsigned char* height_map;
     float* height_values;
     Vector3f pos;
-    Vector3f* normals;
+    uint32_t num_vertices;
+    Vertex* vertices;
+    uint32_t num_indices;
+    uint32_t* indices;
     int w,l,n;
 } terrain;
 
@@ -69,7 +71,7 @@ static bool get_terrain_points_and_pos(float x, float z, int* terrain_index, Vec
     return true;
 }
 
-float terrain_get_height(float x, float z)
+void terrain_get_info(float x, float z, GroundInfo* ground)
 {
     Vector3f a  = {0};
     Vector3f b  = {0};
@@ -81,34 +83,20 @@ float terrain_get_height(float x, float z)
 
     if(res)
     {
-        float height = barry_centric(a,b,c,pos2);
-        return height;
-    }
+        ground->height = barry_centric(a,b,c,pos2);
 
-    return 0.0;
-}
+        ground->normal.x = terrain.vertices[terrain_index].normal.x;
+        ground->normal.y = terrain.vertices[terrain_index].normal.y;
+        ground->normal.z = terrain.vertices[terrain_index].normal.z;
 
-void terrain_get_info(float x, float z, float* height, Vector3f* n)
-{
-    Vector3f a  = {0};
-    Vector3f b  = {0};
-    Vector3f c  = {0};
-    Vector2f pos2 = {0};
+        ground->point.x = x;
+        ground->point.y = ground->height;
+        ground->point.z = z;
 
-    int terrain_index = 0;
-    bool res = get_terrain_points_and_pos(x,z,&terrain_index, &a,&b,&c,&pos2);
-
-    if(res)
-    {
-        *height = barry_centric(a,b,c,pos2);
-        n->x = terrain.normals[terrain_index].x;
-        n->y = terrain.normals[terrain_index].y;
-        n->z = terrain.normals[terrain_index].z;
-        //printf("n %d: %f %f %f\n",terrain_index,n->x,n->y,n->z);
         return;
     }
 
-    *height = 0.0;
+    ground->height = 0.0;
 }
 
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
@@ -131,16 +119,14 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     
     LOGI("Loaded file %s. w: %d h: %d channels: %d",height_map_file,x,y,n);
 
-    int num_vertices = x*y;
-    int num_indices = (x-1)*(y-1)*6;
+    terrain.num_vertices = x*y;
+    terrain.num_indices = (x-1)*(y-1)*6;
 
-    LOGI("Num vertices: %d, num indices: %d", num_vertices, num_indices);
+    LOGI("Num vertices: %d, num indices: %d", terrain.num_vertices, terrain.num_indices);
 
-    Vertex* terrain_vertices = calloc(num_vertices,sizeof(Vertex));
-    uint32_t* terrain_indices  = calloc(num_indices,sizeof(uint32_t));
-
+    terrain.vertices = calloc(terrain.num_vertices,sizeof(Vertex));
+    terrain.indices  = calloc(terrain.num_indices,sizeof(uint32_t));
     terrain.height_values = calloc(x*y*n,sizeof(float));
-    terrain.normals = calloc(x*y*n,sizeof(Vector3f));
 
     unsigned char* curr_height = terrain.height_map;
 
@@ -153,12 +139,12 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             float height = (*curr_height/255.0f)*TERRAIN_HEIGHT_SCALE;
             terrain.height_values[index] = height;
 
-            terrain_vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
-            terrain_vertices[index].position.y = -terrain.height_values[index];
-            terrain_vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
+            terrain.vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
+            terrain.vertices[index].position.y = -terrain.height_values[index];
+            terrain.vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
 
-            terrain_vertices[index].tex_coord.x = (i/(float)x);
-            terrain_vertices[index].tex_coord.y = (j/(float)y);
+            terrain.vertices[index].tex_coord.x = (i/(float)x);
+            terrain.vertices[index].tex_coord.y = (j/(float)y);
 
             curr_height++;
         }
@@ -166,40 +152,33 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 
     int index = 0;
 
-    for(int i = 0; i < num_indices; i += 6)
+    for(int i = 0; i < terrain.num_indices; i += 6)
     {
         if((i/6) > 0 && (i/6) % (x-1) == 0)
             index += 6;
 
         // triangle 1
-        terrain_indices[i]   = (index / 6);
-        terrain_indices[i+1] = terrain_indices[i] + x;
-        terrain_indices[i+2] = terrain_indices[i] + 1;
+        terrain.indices[i]   = (index / 6);
+        terrain.indices[i+1] = terrain.indices[i] + x;
+        terrain.indices[i+2] = terrain.indices[i] + 1;
 
         // triangle 2
-        terrain_indices[i+3] = terrain_indices[i+1];
-        terrain_indices[i+4] = terrain_indices[i+1] + 1;
-        terrain_indices[i+5] = terrain_indices[i+2];
+        terrain.indices[i+3] = terrain.indices[i+1];
+        terrain.indices[i+4] = terrain.indices[i+1] + 1;
+        terrain.indices[i+5] = terrain.indices[i+2];
 
         index+=6;
     }
 
-    calc_vertex_normals(terrain_indices, num_indices, terrain_vertices, num_vertices);
+    calc_vertex_normals(terrain.indices, terrain.num_indices, terrain.vertices, terrain.num_vertices);
 
-    for(int i = 0; i < num_vertices; ++i)
+    for(int i = 0; i < terrain.num_vertices; ++i)
     {
-        terrain_vertices[i].normal.y *= -1.0;
+        terrain.vertices[i].normal.y *= -1.0;
         //printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
-
-        terrain.normals[i].x = terrain_vertices[i].normal.x;
-        terrain.normals[i].y = terrain_vertices[i].normal.y;
-        terrain.normals[i].z = terrain_vertices[i].normal.z;
     }
 
-    gfx_create_mesh(ret_mesh, terrain_vertices, num_vertices, terrain_indices, num_indices);
-
-    free(terrain_vertices);
-    free(terrain_indices);
+    gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, terrain.indices, terrain.num_indices);
 
     util_unload_image(terrain.height_map);
 }
