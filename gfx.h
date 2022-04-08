@@ -28,3 +28,4 @@ void gfx_draw_quad(GLuint texture, float x, float y, float z, float rotx, float 
 void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale);
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();
+void gfx_draw_debug_lines(Vector* position, Vector* vel);

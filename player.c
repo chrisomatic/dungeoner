@@ -100,8 +100,7 @@ static void update_player_physics()
 
         if(player.jump && !player.spectator)
         {
-            //physics_add_force_y(phys,350.0);
-            user_force.y += 150.0;
+            physics_add_force_y(phys,150.0);
         }
 
         if(player.forward)
@@ -144,7 +143,7 @@ static void update_player_physics()
             add(&user_force,right);
         }
 
-        physics_add_user_force(phys,&user_force);
+        physics_add_force(phys,user_force.x, user_force.y, user_force.z);
     }
 
     physics_simulate(phys);

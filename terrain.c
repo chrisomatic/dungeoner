@@ -3,14 +3,20 @@
 #include <math.h>
 
 #include "common.h"
+#include "terrain.h"
 #include "3dmath.h"
 #include "log.h"
 #include "shader.h"
 #include "util.h"
-#include "terrain.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 150.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 20.0f // distance between vertices in y direction
+
+Vector* t_a;
+Vector* t_b;
+Vector* t_c;
+
+float t_y; 
 
 struct
 {
@@ -24,79 +30,57 @@ struct
     int w,l,n;
 } terrain;
 
-static bool get_terrain_points_and_pos(float x, float z, int* terrain_index, Vector3f* p1, Vector3f* p2, Vector3f* p3, Vector2f* pos)
+void terrain_get_info(float x, float z, GroundInfo* ground)
 {
     float terrain_x = terrain.pos.x - x;
     float terrain_z = terrain.pos.z - z;
 
-    float grid_square_size = TERRAIN_PLANAR_SCALE; // * (1.0f / terrain.w);
+    float grid_square_size = TERRAIN_PLANAR_SCALE;
 
     int grid_x = (int)floor(terrain_x / grid_square_size);
     if(grid_x < 0 || grid_x >= terrain.w)
-        return false;
+        return;
 
     int grid_z = (int)floor(terrain_z / grid_square_size);
     if(grid_z < 0 || grid_z >= terrain.w)
-        return false;
+        return;
+
+    /*
+    printf("-----------------------------\n");
+    printf("grid_x: %d, grid_z: %d\n",grid_x, grid_z);
+    printf("-----------------------------\n");
+    */
+
+    int index = grid_z*(terrain.l-1)+grid_x;
 
     float x_coord = fmod(terrain_x,grid_square_size)/grid_square_size;
     float z_coord = fmod(terrain_z,grid_square_size)/grid_square_size;
-    
-    //printf("grid x: %d z: %d\n",grid_x, grid_z);
 
-    int g = terrain.l;
-    int grid_zi = g*grid_z;
-
-    *terrain_index = grid_x+grid_zi;
+    int i0,i1,i2;
 
     if (x_coord <= (1.0f-z_coord))
     {
-        p1->x = 0; p1->y = terrain.height_values[grid_x+grid_zi];     p1->z = 0;
-        p2->x = 1; p2->y = terrain.height_values[(grid_x+1)+grid_zi]; p2->z = 1;
-        p3->x = 0; p3->y = terrain.height_values[grid_x+(grid_zi+1)]; p3->z = 1;
+        i0 = terrain.indices[6*index+0];
+        i1 = terrain.indices[6*index+1];
+        i2 = terrain.indices[6*index+2];
     }
     else
     {
-        p1->x = 1; p1->y = terrain.height_values[(grid_x+1)+grid_zi]; p1->z = 0;
-        p2->x = 1; p2->y = terrain.height_values[(grid_x+1)+grid_zi]; p2->z = 1;
-        p3->x = 0; p3->y = terrain.height_values[grid_x+(grid_zi+1)]; p3->z = 1;
+        i0 = terrain.indices[6*index+3];
+        i1 = terrain.indices[6*index+4];
+        i2 = terrain.indices[6*index+5];
     }
 
-    if(pos == NULL)
-        return true;
+    ground->a = &terrain.vertices[i0].position;
+    ground->b = &terrain.vertices[i1].position;
+    ground->c = &terrain.vertices[i2].position;
 
-    pos->x = x_coord;
-    pos->y = z_coord;
+    ground->height = get_y_value_on_plane(-x,-z,ground->a,ground->b,ground->c);
+    ground->height *= -1;
 
-    return true;
-}
-
-void terrain_get_info(float x, float z, GroundInfo* ground)
-{
-    Vector3f a  = {0};
-    Vector3f b  = {0};
-    Vector3f c  = {0};
-    Vector2f pos2 = {0};
-
-    int terrain_index = 0;
-    bool res = get_terrain_points_and_pos(x,z,&terrain_index, &a,&b,&c,&pos2);
-
-    if(res)
-    {
-        ground->height = barry_centric(a,b,c,pos2);
-
-        ground->normal.x = terrain.vertices[terrain_index].normal.x;
-        ground->normal.y = terrain.vertices[terrain_index].normal.y;
-        ground->normal.z = terrain.vertices[terrain_index].normal.z;
-
-        ground->point.x = x;
-        ground->point.y = ground->height;
-        ground->point.z = z;
-
-        return;
-    }
-
-    ground->height = 0.0;
+    ground->normal.x = terrain.vertices[index].normal.x;
+    ground->normal.y = terrain.vertices[index].normal.y;
+    ground->normal.z = terrain.vertices[index].normal.z;
 }
 
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)

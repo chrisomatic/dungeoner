@@ -336,6 +336,31 @@ void get_ortho_transform(Matrix* m, float left, float right, float bottom, float
     m->m[1][3] = (top+bottom) / (top-bottom);
 }
 
+float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c)
+{
+    if(a == NULL || b == NULL || c == NULL)
+        return 0.0;
+
+    // plane equ: rx+sy+tz=k
+
+    Vector v1 = {a->x - b->x, a->y - b->y, a->z - b->z};
+    Vector v2 = {a->x - c->x, a->y - c->y, a->z - c->z};
+
+    Vector n; // r,s,t
+    cross(v1,v2,&n);
+
+    // compute k
+    float k = dot(n,*a);
+
+    float rx = n.x * x;
+    float tz = n.z * z;
+    float s  = n.y;
+
+    float y = (k - rx - tz) / s;
+
+    return y;
+}
+
 // This function accepts a point and a plane definition, and will find the point on the plane projected from the original point
 Vector3f get_projected_point_on_plane(Vector3f* point, Vector3f* plane_normal, Vector3f* point_on_plane)
 {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
 
 extern int view_width;
 extern int view_height;

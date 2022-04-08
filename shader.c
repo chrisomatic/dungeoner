@@ -13,6 +13,7 @@ GLuint program_basic;
 GLuint program_sky;
 GLuint program_terrain;
 GLuint program_text;
+GLuint program_debug;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
@@ -22,6 +23,7 @@ void shader_load_all()
     shader_build_program(&program_sky,"shaders/skybox.vert.glsl","shaders/skybox.frag.glsl");
     shader_build_program(&program_terrain,"shaders/terrain.vert.glsl","shaders/terrain.frag.glsl");
     shader_build_program(&program_text,"shaders/text.vert.glsl","shaders/text.frag.glsl");
+    shader_build_program(&program_debug,"shaders/debug.vert.glsl","shaders/debug.frag.glsl");
 }
 
 void shader_deinit()

@@ -3,12 +3,12 @@
 #include <GL/glew.h>
 
 #include "common.h"
-#include "3dmath.h"
 #include "shader.h"
 #include "util.h"
 #include "log.h"
 #include "player.h"
 #include "light.h"
+
 #include "gfx.h"
 
 GLuint vao;
@@ -336,6 +336,64 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     glUseProgram(0);
 }
 
+typedef struct
+{
+    Vector p;
+    Vector color;
+} DebugLine;
+
+GLuint debug_vbo;
+
+void init_debug()
+{
+    glGenBuffers(1, &debug_vbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, debug_vbo);
+	glBufferData(GL_ARRAY_BUFFER, 2*sizeof(DebugLine), 0, GL_STATIC_DRAW);
+}
+
+void gfx_draw_debug_lines(Vector* position, Vector* vel)
+{
+    // build debug info
+    DebugLine lines[] = 
+    {
+        // vel
+        {{0.0,0.0,0.0},{0.0,1.0,0.0}},
+        {{vel->x,vel->y,vel->z}, {0.0,1.0,0.0}}
+    }; 
+
+    int num_lines = sizeof(lines) / sizeof(DebugLine);
+
+	glBindBuffer(GL_ARRAY_BUFFER, debug_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(lines), lines);
+
+    // draw debug info
+    glUseProgram(program_debug);
+
+    Vector3f pos = {position->x,position->y,position->z};
+    Vector3f rot = {0.0,0.0,0.0};
+    Vector3f sca = {1.0,1.0,1.0};
+
+    Matrix world, view, proj, wvp;
+    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+
+    shader_set_mat4(program_debug,"wvp",&wvp);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(DebugLine), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)12);
+
+    glDrawArrays(GL_LINE,0,num_lines);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glUseProgram(0);
+}
+
 static void init_quad()
 {
     Vertex vertices[4] = 
@@ -355,32 +413,6 @@ static void init_quad()
     glGenBuffers(1,&quad.ibo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
-}
-
-static void init_sphere()
-{
-    // platonic solid
-    const Vertex base_vertices[] = 
-    {
-        {{-0.707f,+0.0f,-0.707f},{0.0f,0.0f}},
-        {{+0.707f,+0.0f,-0.707f},{0.0f,0.707f}},
-        {{+0.707f,+0.0f,+0.707f},{0.707f,0.707f}},
-        {{-0.707f,+0.0f,+0.707f},{0.0f,0.707f}},
-        {{+0.0f,+1.0f,+0.0f},{1.0f,0.0f}},
-        {{+0.0f,-1.0f,+0.0f},{1.0f,1.0f}}
-    };
-
-    const uint32_t base_indices[] =
-    {
-        4,1,0,
-        4,2,1,
-        4,3,2,
-        4,0,3,
-        5,0,1,
-        5,1,2,
-        5,2,3,
-        5,3,0
-    };
 }
 
 static void init_skybox()
@@ -480,4 +512,5 @@ void gfx_init(int width, int height)
     init_quad();
     init_cube();
     init_skybox();
+    init_debug();
 }

@@ -7,15 +7,14 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "3dmath.h"
 #include "gfx.h"
+#include "terrain.h"
+#include "3dmath.h"
 #include "settings.h"
 #include "window.h"
 #include "shader.h"
 #include "timer.h"
-#include "terrain.h"
 #include "player.h"
-#include "level.h"
 #include "light.h"
 #include "model.h"
 #include "util.h"
@@ -133,7 +132,7 @@ void init()
     player_init();
 
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap_large.png");
+    terrain_build(&m_terrain, "textures/heightmap.png");
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human2.obj");
@@ -200,6 +199,15 @@ void render()
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
     GFX_QUAD_VERT(t_stone, 10.0f,0.0f,10.0f, 1.0f);
+
+    gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
+
+    if(player.phys.ground.a)
+    {
+        gfx_draw_cube(t_stone, player.phys.ground.a->x, player.phys.ground.a->y, player.phys.ground.a->z, 0.1);
+        gfx_draw_cube(t_stone, player.phys.ground.b->x, player.phys.ground.b->y, player.phys.ground.b->z, 0.1);
+        gfx_draw_cube(t_stone, player.phys.ground.c->x, player.phys.ground.c->y, player.phys.ground.c->z, 0.1);
+    }
     
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

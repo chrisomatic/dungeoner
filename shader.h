@@ -7,6 +7,7 @@ extern GLuint program_basic;
 extern GLuint program_sky;
 extern GLuint program_terrain;
 extern GLuint program_text;
+extern GLuint program_debug;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);

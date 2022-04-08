@@ -33,6 +33,29 @@ void physics_add_force_z(PhysicsObj* phys, float force_z)
     phys->accel.z += force_z;
 }
 
+/*
+void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
+{
+    float y = get_y_value_on_plane(-phys->pos.x-force->x, -phys->pos.z-force->z, phys->ground.a, phys->ground.b, phys->ground.c);
+
+
+    Vector user_force = {force->x,phys->pos.y - y , force->z};
+    normalize(&user_force);
+
+    float m = magn(*force);
+    mult(&user_force,m);
+
+    printf("--------------\n");
+    printf("user_force: %f %f %f\n",user_force.x, user_force.y, user_force.z);
+    printf("user_height: %f\n",phys->pos.y);
+    printf("--------------\n");
+
+   // gfx_draw_cube(t_stone, user_force.x, user_force.y, user_force.z,0.1);
+
+    physics_add_force(phys,user_force.x, user_force.y, user_force.z);
+}
+*/
+
 void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
 {
     Vector3f force_parallel = {force->x, force->y,force->z};
@@ -49,6 +72,7 @@ void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
         force_parallel.y = force_magn*(n.y + f.y);
         force_parallel.z = force_magn*(n.z + f.z);
 
+        /*
         printf("===============\n");
         printf("\n");
         printf("force magn: %f\n",force_magn);
@@ -56,9 +80,34 @@ void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
         printf("force_para: %f %f %f\n",force_parallel.x, force_parallel.y, force_parallel.z);
         printf("\n");
         printf("===============\n");
+        */
     }
 
     physics_add_force(phys,force_parallel.x, force_parallel.y, force_parallel.z);
+
+}
+
+void physics_add_gravity2(PhysicsObj* phys)
+{
+    Vector gravity = {0.0,-GRAVITY,0.0};
+
+    if(phys->pos.y == phys->ground.height)
+    {
+        // on ground
+        /*
+        Vector normal_proj = {phys->ground.normal.x, 0.0, phys->ground.normal.z};
+        normal_proj.y = get_y_value_on_plane(normal_proj.x, normal_proj.z, phys->ground.a, phys->ground.b, phys->ground.c);
+        normalize(&normal_proj);
+
+        gravity.x = GRAVITY*normal_proj.x;
+        gravity.y = GRAVITY*normal_proj.y;
+        gravity.z = GRAVITY*normal_proj.z;
+        */
+
+        //printf("gravity: %f %f %f\n",gravity.x, gravity.y, gravity.z);
+    }
+
+    physics_add_force(phys,gravity.x, gravity.y, gravity.z);
 
 }
 
@@ -88,15 +137,13 @@ void physics_add_gravity(PhysicsObj* phys)
         normal.z = GRAVITY*n.z;
     }
 
-    /*
-    printf("===============\n");
-    printf("\n");
-    printf("normal: %f %f %f\n",normal.x, normal.y, normal.z);
-    printf("g_para: %f %f %f\n",gravity_parallel.x, gravity_parallel.y, gravity_parallel.z);
-    printf("g_perp: %f %f %f\n",gravity_perpendicular.x, gravity_perpendicular.y, gravity_perpendicular.z);
-    printf("\n");
-    printf("===============\n");
-    */
+    //printf("===============\n");
+    //printf("\n");
+    //printf("normal: %f %f %f\n",normal.x, normal.y, normal.z);
+    //printf("g_para: %f %f %f\n",gravity_parallel.x, gravity_parallel.y, gravity_parallel.z);
+    //printf("g_perp: %f %f %f\n",gravity_perpendicular.x, gravity_perpendicular.y, gravity_perpendicular.z);
+    //printf("\n");
+    //printf("===============\n");
 
     physics_add_force(phys,gravity_parallel.x, gravity_parallel.y, gravity_parallel.z);
     physics_add_force(phys,gravity_perpendicular.x, gravity_perpendicular.y, gravity_perpendicular.z);
@@ -157,7 +204,6 @@ void physics_add_kinetic_friction(PhysicsObj* phys, float mu)
 
 void physics_simulate(PhysicsObj* phys)
 {
-
     // get terrain info for object
     terrain_get_info(phys->pos.x, phys->pos.z, &phys->ground);
 
@@ -193,7 +239,7 @@ void physics_simulate(PhysicsObj* phys)
     phys->pos.z += ((phys->vel.z + v0.z)/2.0)*g_delta_t;
 
     //printf("pos.y: %f, ground.height: %f, vel.y: %f\n",phys->pos.y, phys->ground.height, phys->vel.y);
-    if(phys->pos.y <= phys->ground.height && phys->vel.y < 0.0)
+    if(phys->pos.y <= phys->ground.height)
     {
         phys->vel.y = 0.0;
         phys->pos.y = phys->ground.height;
@@ -202,7 +248,6 @@ void physics_simulate(PhysicsObj* phys)
     if(ABS(phys->vel.x) < 0.00001) phys->vel.x = 0.0;
     if(ABS(phys->vel.y) < 0.00001) phys->vel.y = 0.0;
     if(ABS(phys->vel.z) < 0.00001) phys->vel.z = 0.0;
-
 }
 
 void physics_print(PhysicsObj* phys, bool force)
