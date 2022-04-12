@@ -77,8 +77,8 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     ground->b = &terrain.vertices[i1].position;
     ground->c = &terrain.vertices[i2].position;
 
-    ground->height = get_y_value_on_plane(-x,-z,ground->a,ground->b,ground->c);
-    ground->height *= -1;
+    ground->height = get_y_value_on_plane(-x,-z,ground->a,ground->b,ground->c); // @NEG
+    ground->height *= -1; // @NEG
 
     ground->normal.x = terrain.vertices[index].normal.x;
     ground->normal.y = terrain.vertices[index].normal.y;
@@ -121,8 +121,8 @@ static void generate_trees()
                 t->pos.z = (float)j;
 
                 GroundInfo ground;
-                terrain_get_info(-t->pos.x, -t->pos.z, &ground);
-                t->pos.y = -ground.height;
+                terrain_get_info(-t->pos.x, -t->pos.z, &ground); // @NEG
+                t->pos.y = -ground.height; // @NEG
 
                 float theta = rand() % 359;
 
@@ -182,7 +182,7 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
             terrain.height_values[index] = height;
 
             terrain.vertices[index].position.x = i*TERRAIN_PLANAR_SCALE;
-            terrain.vertices[index].position.y = -terrain.height_values[index];
+            terrain.vertices[index].position.y = -terrain.height_values[index]; // NEG
             terrain.vertices[index].position.z = j*TERRAIN_PLANAR_SCALE;
 
             terrain.vertices[index].tex_coord.x = (i/(float)x);
@@ -216,7 +216,7 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 
     for(int i = 0; i < terrain.num_vertices; ++i)
     {
-        terrain.vertices[i].normal.y *= -1.0;
+        terrain.vertices[i].normal.y *= -1.0; // @NEG
         //printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
     }
 

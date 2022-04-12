@@ -60,7 +60,7 @@ void projectile_draw()
     for(int i = 0; i < projectile_count; ++i)
     {
         PhysicsObj* phys = &projectiles[i].phys;
-        Vector pos = {-phys->pos.x, -phys->pos.y, -phys->pos.z};
+        Vector pos = {-phys->pos.x, -phys->pos.y, -phys->pos.z}; // @NEG
 
         gfx_draw_mesh(&m_sphere, t_stone,&pos,&rot, &sca);
     }

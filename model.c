@@ -21,8 +21,6 @@ int normal_count = 0;
 bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 {
 
-
-
     FILE* fp = fopen(obj_filepath, "r");
     if(!fp)
     {
@@ -59,7 +57,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 vertices[vertex_count].position.x = v1;
-                vertices[vertex_count].position.y = -v2;
+                vertices[vertex_count].position.y = -v2; // @NEG
                 vertices[vertex_count].position.z = v3;
                 vertex_count++;
             }
@@ -71,7 +69,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 normals[normal_count].x = v1;
-                normals[normal_count].y = -v2;
+                normals[normal_count].y = -v2; // @NEG
                 normals[normal_count].z = v3;
                 normal_count++;
             }
@@ -83,7 +81,7 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             if(res > 0)
             {
                 tex_coords[tex_coord_count].x = v1;
-                tex_coords[tex_coord_count].y = -v2;
+                tex_coords[tex_coord_count].y = -v2; // @NEG
                 tex_coord_count++;
             }
         }
