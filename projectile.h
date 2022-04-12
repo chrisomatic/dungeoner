@@ -3,8 +3,6 @@
 #include "physics.h"
 #include "gfx.h"
 
-typedef struct
-{
-    PhysicsObj phys;
-    Mesh* mesh;
-} Projectile;
+void projectile_spawn(Player* p, Vector* pos, Vector* vel);
+void projectile_update();
+void projectile_draw();

@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include "3dmath.h"
 #include "physics.h"
-#include "projectile.h"
 
 typedef enum
 {
@@ -48,9 +47,6 @@ typedef struct
     bool jump;
     bool run;
     bool attack;
-
-    Projectile projectiles[100];
-    int projectile_count;
 } Player;
 
 extern Player player;

@@ -151,26 +151,12 @@ static void update_player_physics()
 
 static void player_spawn_projectile()
 {
-    player.projectiles[player.projectile_count].phys.pos.x = -player.phys.pos.x;
-    player.projectiles[player.projectile_count].phys.pos.y = -10-player.phys.pos.y;
-    player.projectiles[player.projectile_count].phys.pos.z = -player.phys.pos.z;
-    player.projectiles[player.projectile_count].phys.mass  = 10.0;
-    player.projectiles[player.projectile_count].phys.max_linear_speed = 50.0;
+    Vector pos = {player.phys.pos.x, player.height+player.phys.pos.y, player.phys.pos.z};
+    Vector vel = {-10*player.camera.target.x, -10*player.camera.target.y,-10*player.camera.target.z}; // @NEG
 
-    PhysicsObj* phys = &player.projectiles[player.projectile_count].phys;
+    add(&vel, player.phys.vel);
 
-    float force = 1500.0;
-
-    physics_begin(phys);
-    physics_add_force(phys, 
-            player.phys.accel.x + 2*force*player.camera.target.x, 
-            player.phys.accel.y + 10*force*player.camera.target.y,
-            player.phys.accel.z + 2*force*player.camera.target.z
-            );
-    physics_simulate(phys);
-    //physics_print(phys, true);
-
-    player.projectile_count++;
+    projectile_spawn(&player,&pos,&vel);
 }
 
 void player_init()
@@ -212,8 +198,6 @@ void player_init()
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;
 
-    player.projectile_count = 0;
-
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 }
 
@@ -246,25 +230,12 @@ void player_update()
 
     //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     
-    bool projectile_spawned = false;
-
     physics_print(&player.phys, false);
 
     if(player.attack)
     {
         player.attack = false;
         player_spawn_projectile();
-        projectile_spawned = true;
-    }
-
-    for(int i = 0; i < player.projectile_count; ++i)
-    {
-        if(!projectile_spawned)
-            physics_begin(&player.projectiles[i].phys);
-        physics_add_gravity(&player.projectiles[i].phys);
-        physics_add_kinetic_friction(&player.projectiles[i].phys, 0.25);
-        physics_simulate(&player.projectiles[i].phys);
-        //physics_print(&player.projectiles[i].phys, false);
     }
 
     if(!player.spectator)
@@ -287,16 +258,11 @@ void player_draw()
 
         float lean_angle = mt == 0.0 || mv == 0.0 ? 0.0 : acos(d / (mt*mv));
         */
-        Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z};
-        Vector3f rot = {0.0,-player.angle_h,0.0};
+        Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z}; // @NEG
+        Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
         Vector3f sca = {1.0,1.0,1.0};
 
         gfx_draw_mesh(&m_human,t_outfit,&pos, &rot, &sca);
-    }
-    for(int i = 0; i < player.projectile_count; ++i)
-    {
-        PhysicsObj* phys = &player.projectiles[i].phys;
-        gfx_draw_cube(t_stone,phys->pos.x,phys->pos.y,phys->pos.z, 0.2);
     }
 }
 

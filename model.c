@@ -20,12 +20,24 @@ int normal_count = 0;
 
 bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 {
+
+
+
     FILE* fp = fopen(obj_filepath, "r");
     if(!fp)
     {
         LOGE("Failed to load object file: %s\n",obj_filepath);
         return false;
     }
+
+    vertex_count = 0;
+    index_count = 0;
+    tex_coord_count = 0;
+    normal_count = 0;
+
+    memset(vertices,0,1000*sizeof(Vertex));
+    memset(tex_coords,0,1000*sizeof(Vector2f));
+    memset(normals,0,1000*sizeof(Vector3f));
 
     char line[100+1] = {0};
 
@@ -111,6 +123,8 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
             }
         }
     }
+
+    LOGI("Imported model: %s (verts: %d, indices: %d)", obj_filepath, vertex_count, index_count);
 
     /*
     printf("Vertices (%d):\n", vertex_count);

@@ -37,6 +37,7 @@ float fog_gradient = 5.0;
 
 GLuint t_stone;
 GLuint t_grass;
+GLuint t_tree;
 GLuint t_dirt;
 GLuint t_blend_map;
 GLuint t_sky_day;
@@ -49,6 +50,8 @@ GLuint t_outfit;
 
 Mesh m_terrain;
 Mesh m_human;
+Mesh m_sphere;
+Mesh m_tree;
 
 // =========================
 // Function Prototypes
@@ -132,10 +135,12 @@ void init()
     player_init();
 
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap.png");
+    terrain_build(&m_terrain, "textures/heightmap_large.png");
 
     LOGI(" - Models.");
-    model_import(&m_human,"models/human2.obj");
+    model_import(&m_human,"models/human.obj");
+    model_import(&m_sphere,"models/sphere.obj");
+    model_import(&m_tree,"models/tree.obj");
 
     LOGI(" - Fonts.");
     text_init();
@@ -147,6 +152,7 @@ void init()
     t_stone  = load_texture("textures/stonewall.jpg");
     t_grass  = load_texture("textures/grass2.png");
     t_dirt   = load_texture("textures/dirt.png");
+    t_tree   = load_texture("textures/tree_bark.png");
     t_blend_map = load_texture("textures/blend_map.png");
     t_outfit = load_texture("textures/outfit.png");
 
@@ -185,6 +191,7 @@ void deinit()
 void simulate()
 {
     player_update();
+    projectile_update();
 }
 
 void render()
@@ -195,6 +202,7 @@ void render()
     gfx_draw_sky();
     terrain_draw();
     player_draw();
+    projectile_draw();
 
     // render scene
     GFX_QUAD_VERT(t_stone, 0.0f,0.0f,0.0f, 1.0f);
@@ -202,12 +210,14 @@ void render()
 
     gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 
+    /*
     if(player.phys.ground.a)
     {
         gfx_draw_cube(t_stone, player.phys.ground.a->x, player.phys.ground.a->y, player.phys.ground.a->z, 0.1);
         gfx_draw_cube(t_stone, player.phys.ground.b->x, player.phys.ground.b->y, player.phys.ground.b->z, 0.1);
         gfx_draw_cube(t_stone, player.phys.ground.c->x, player.phys.ground.c->y, player.phys.ground.c->z, 0.1);
     }
+    */
     
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

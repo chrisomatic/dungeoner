@@ -10,7 +10,7 @@
 #include "util.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 20.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 120.0f // distance between vertices in y direction
 
 Vector* t_a;
 Vector* t_b;
@@ -36,6 +36,8 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     float terrain_z = terrain.pos.z - z;
 
     float grid_square_size = TERRAIN_PLANAR_SCALE;
+
+    memset(ground,0,sizeof(GroundInfo));
 
     int grid_x = (int)floor(terrain_x / grid_square_size);
     if(grid_x < 0 || grid_x >= terrain.w)
@@ -81,6 +83,62 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     ground->normal.x = terrain.vertices[index].normal.x;
     ground->normal.y = terrain.vertices[index].normal.y;
     ground->normal.z = terrain.vertices[index].normal.z;
+}
+
+typedef struct
+{
+    Vector pos;
+    Vector rot;
+} Tree;
+
+int num_trees;
+Tree trees[100] = {0};
+
+static void generate_trees()
+{
+    int w,h,n;
+    uint8_t* tree_data = util_load_image("textures/foliage_map.png",&w,&h,&n,3);
+
+    printf("loaded foliage map. x: %d, y: %d, n: %d\n",w,h,n);
+
+    for(int j = 0; j < h; ++j)
+    {
+        for(int i = 0; i < w; ++i)
+        {
+            int index = 3*(j*w+i);
+
+            uint8_t r = tree_data[index+0];
+            uint8_t g = tree_data[index+1];
+            uint8_t b = tree_data[index+2];
+
+            if(r == 0x00 && g == 0xFF && b == 0x00)
+            {
+                Tree* t = &trees[num_trees];
+
+                printf("found tree at %f, %f\n",(float)i,(float)j);
+
+                t->pos.x = (float)i;
+                t->pos.z = (float)j;
+
+                GroundInfo ground;
+                terrain_get_info(-t->pos.x, -t->pos.z, &ground);
+                t->pos.y = -ground.height;
+
+                float theta = rand() % 359;
+
+                t->rot.x = 0.0;
+                t->rot.y = theta;
+                t->rot.z = 0.0;
+
+                printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+
+                num_trees++;
+            }
+        }
+
+    }
+
+    util_unload_image(tree_data);
 }
 
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
@@ -165,6 +223,9 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, terrain.indices, terrain.num_indices);
 
     util_unload_image(terrain.height_map);
+
+    generate_trees();
+
 }
 
 void terrain_draw()
@@ -174,5 +235,10 @@ void terrain_draw()
     Vector3f sca = {1.0,1.0,1.0};
 
     gfx_draw_terrain(&m_terrain,&pos, &rot, &sca);
+
+    for(int i = 0; i < num_trees; ++i)
+    {
+        gfx_draw_mesh(&m_tree, t_tree, &trees[i].pos,&trees[i].rot, &sca);
+    }
 
 }

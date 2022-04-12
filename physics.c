@@ -254,13 +254,11 @@ void physics_print(PhysicsObj* phys, bool force)
 {
     if(force || phys->vel.x != 0 || phys->vel.y != 0 || phys->vel.z != 0)
     {
-        /*
         LOGI("A: %6.4f %6.4f %6.4f  V: %6.4f %6.4f %6.4f  P: %6.4f %6.4f %6.4f",
             phys->accel.x, phys->accel.y, phys->accel.z,
             phys->vel.x, phys->vel.y, phys->vel.z,
             phys->pos.x, phys->pos.y, phys->pos.z
             );
-        */
         /*
         LOGI("A: %f V: %f P: %f",
             magn(phys->accel),
