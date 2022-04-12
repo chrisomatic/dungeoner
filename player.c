@@ -8,6 +8,7 @@
 #include "player.h"
 #include "3dmath.h"
 #include "physics.h"
+#include "projectile.h"
 #include "log.h"
 #include "gfx.h"
 
@@ -18,7 +19,7 @@ static int prior_cursor_y = 0;
 
 static void update_camera_rotation()
 {
-    const Vector3f v_axis = {0.0, -1.0, 0.0};
+    const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis
     Vector3f view = {0.0, 0.0, 1.0};
@@ -166,7 +167,7 @@ void player_init()
     // initialize player camera
     memset(&player.camera.phys, 0, sizeof(PhysicsObj));
     player.camera.target.z   = -1.0;
-    player.camera.up.y       = -1.0;
+    player.camera.up.y       = 1.0;
 
     player.height = 1.76; // meters
     player.phys.mass = 62.0; // kg

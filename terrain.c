@@ -10,25 +10,13 @@
 #include "util.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 120.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 20.0f // distance between vertices in y direction
 
 Vector* t_a;
 Vector* t_b;
 Vector* t_c;
 
-float t_y; 
-
-struct
-{
-    unsigned char* height_map;
-    float* height_values;
-    Vector3f pos;
-    uint32_t num_vertices;
-    Vertex* vertices;
-    uint32_t num_indices;
-    uint32_t* indices;
-    int w,l,n;
-} terrain;
+Terrain terrain;
 
 void terrain_get_info(float x, float z, GroundInfo* ground)
 {
@@ -73,11 +61,19 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
         i2 = terrain.indices[6*index+5];
     }
 
-    ground->a = &terrain.vertices[i0].position;
-    ground->b = &terrain.vertices[i1].position;
-    ground->c = &terrain.vertices[i2].position;
+    ground->a.x = terrain.vertices[i0].position.x;
+    ground->a.y = terrain.vertices[i0].position.y;
+    ground->a.z = terrain.vertices[i0].position.z;
 
-    ground->height = get_y_value_on_plane(-x,-z,ground->a,ground->b,ground->c); // @NEG
+    ground->b.x = terrain.vertices[i1].position.x;
+    ground->b.y = terrain.vertices[i1].position.y;
+    ground->b.z = terrain.vertices[i1].position.z;
+
+    ground->c.x = terrain.vertices[i2].position.x;
+    ground->c.y = terrain.vertices[i2].position.y;
+    ground->c.z = terrain.vertices[i2].position.z;
+
+    ground->height = get_y_value_on_plane(terrain_x,terrain_z,&ground->a,&ground->b,&ground->c); // @NEG
     ground->height *= -1; // @NEG
 
     ground->normal.x = terrain.vertices[index].normal.x;
@@ -155,9 +151,9 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
     int y = terrain.l;
     int n = terrain.n;
 
-    terrain.pos.x = 0.0;
-    terrain.pos.z = 0.0;
+    terrain.pos.x = (terrain.w / 2.0);
     terrain.pos.y = 0.0;
+    terrain.pos.z = (terrain.l / 2.0);
     
     LOGI("Loaded file %s. w: %d h: %d channels: %d",height_map_file,x,y,n);
 
@@ -230,7 +226,7 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 
 void terrain_draw()
 {
-    Vector3f pos = {terrain.pos.x, terrain.pos.y, terrain.pos.z};
+    Vector3f pos = {-terrain.pos.x, -terrain.pos.y, -terrain.pos.z};
     Vector3f rot = {0.0,0.0,0.0};
     Vector3f sca = {1.0,1.0,1.0};
 

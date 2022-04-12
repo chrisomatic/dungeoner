@@ -47,6 +47,7 @@ void gfx_draw_sky()
     shader_set_int(program_sky,"skybox",0);
     shader_set_int(program_basic, "wireframe", show_wireframe);
 
+    // @NEG
     Vector3f pos = {
         -player.camera.phys.pos.x-player.camera.offset.x,
         -player.camera.phys.pos.y-player.camera.offset.y,

@@ -113,6 +113,71 @@ void physics_add_gravity2(PhysicsObj* phys)
 
 void physics_add_gravity(PhysicsObj* phys)
 {
+    Vector gravity = {0.0,-GRAVITY,0.0};
+
+    if(phys->pos.y == phys->ground.height)
+    {
+        /*
+            Get vector [x,0,z] of normal
+            Get magnitude of vector and store to m
+            calculate vector [x+a.x, 0+a.y, z+a.z] where a is a point on plane
+            get y value of new vector
+            normalize
+            multiply by m and GRAVITY
+        */
+
+        Vector norm = {0.0,0.0,0.0};
+        normal(phys->ground.a, phys->ground.b, phys->ground.c, &norm);
+
+        /*
+        printf("normal: %f %f %f, re-norm: %f %f %f\n",
+                phys->ground.normal.x,
+                phys->ground.normal.y,
+                phys->ground.normal.z,
+                norm.x,
+                norm.y,
+                norm.z);
+                */
+
+        Vector v = {norm.x, 0.0, norm.z};
+        float m = magn(v);
+
+        if(m == 0.0)
+        {
+            gravity.x = 0.0;
+            gravity.y = 0.0;
+            gravity.z = 0.0;
+        }
+        else
+        {
+            float h = 0.0;
+
+            Vector d = get_center_of_triangle(&phys->ground.a, &phys->ground.b, &phys->ground.c);
+
+            add(&v, d);
+
+            h = get_y_value_on_plane(v.x, v.z, &phys->ground.a, &phys->ground.b, &phys->ground.c);
+            v.y = h;
+
+            subtract(&v,d);
+            normalize(&v);
+
+            mult(&v,m*GRAVITY);
+            //printf("V: %f %f %f\n",v.x,v.y,v.z);
+
+            gravity.x = v.x;
+            gravity.y = v.y;
+            gravity.z = v.z;
+
+            //printf("Height: %f, Gravity on Ground: %f %f %f\n",h,gravity.x, gravity.y, gravity.z);
+        }
+    }
+
+    physics_add_force(phys,gravity.x, gravity.y, gravity.z);
+}
+
+void physics_add_gravity3(PhysicsObj* phys)
+{
     // apply gravity
     Vector3f gravity_parallel      = {0.0,0.0,0.0};
     Vector3f gravity_perpendicular = {0.0,-GRAVITY,0.0};
@@ -179,23 +244,25 @@ void physics_add_air_friction(PhysicsObj* phys, float mu)
 
 void physics_add_kinetic_friction(PhysicsObj* phys, float mu)
 {
-    if(phys->pos.y == phys->ground.height && (phys->vel.x != 0.0f || phys->vel.z != 0.0f)) // on ground and moving
+    if(phys->pos.y == phys->ground.height && (phys->vel.x != 0.0f || phys->vel.y || phys->vel.z != 0.0f)) // on ground and moving
     {
         // apply kinetic friction
         float mu_k = mu;
         float friction_magn = GRAVITY * mu_k;
 
-        Vector3f ground_vel = {phys->vel.x, 0.0f, phys->vel.z};
+        Vector3f ground_vel = {phys->vel.x, phys->vel.y, phys->vel.z};
         normalize(&ground_vel);
 
         float friction_x = ground_vel.x*friction_magn;
+        float friction_y = ground_vel.y*friction_magn;
         float friction_z = ground_vel.z*friction_magn;
 
         // truncate friction vector if slowing to a stop (don't overshoot)
         friction_x = friction_x <= 0.0f ? MAX(friction_x,phys->vel.x/g_delta_t) : MIN(friction_x, phys->vel.x/g_delta_t);
+        friction_y = friction_y <= 0.0f ? MAX(friction_y,phys->vel.y/g_delta_t) : MIN(friction_y, phys->vel.y/g_delta_t);
         friction_z = friction_z <= 0.0f ? MAX(friction_z,phys->vel.z/g_delta_t) : MIN(friction_z, phys->vel.z/g_delta_t);
 
-        Vector3f friction = {-1*friction_x, 0.0f,-1*friction_z};
+        Vector3f friction = {-1*friction_x, -1*friction_y,-1*friction_z};
         //printf("friction: %f %f %f\n",friction.x, friction.y, friction.z);
 
         physics_add_force(phys,friction.x, friction.y, friction.z);
