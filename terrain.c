@@ -76,9 +76,10 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     ground->height = get_y_value_on_plane(terrain_x,terrain_z,&ground->a,&ground->b,&ground->c); // @NEG
     ground->height *= -1; // @NEG
 
-    ground->normal.x = terrain.vertices[index].normal.x;
-    ground->normal.y = terrain.vertices[index].normal.y;
-    ground->normal.z = terrain.vertices[index].normal.z;
+    normal(ground->a, ground->b, ground->c,&ground->normal);
+    //ground->normal.x = terrain.vertices[index].normal.x;
+    //ground->normal.y = terrain.vertices[index].normal.y;
+    //ground->normal.z = terrain.vertices[index].normal.z;
 }
 
 typedef struct
@@ -234,7 +235,7 @@ void terrain_draw()
 
     for(int i = 0; i < num_trees; ++i)
     {
-        gfx_draw_mesh(&m_tree, t_tree, &trees[i].pos,&trees[i].rot, &sca);
+        gfx_draw_mesh(&m_tree, t_tree, NULL, &trees[i].pos,&trees[i].rot, &sca);
     }
 
 }

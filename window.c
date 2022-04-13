@@ -138,7 +138,11 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         if(mode == GLFW_CURSOR_NORMAL)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        player.attack = true;
+        player.primary_action = true;
+    }
+    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        player.secondary_action = true;
     }
 }
 

@@ -208,11 +208,9 @@ void render()
     // render scene
     gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 
-    gfx_draw_cube(t_dirt, -player.phys.pos.x-player.phys.accel.x, -player.phys.pos.y-player.phys.accel.y , -player.phys.pos.z-player.phys.accel.z , 0.1);
-
-    gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);
-    gfx_draw_cube(t_stone, player.phys.ground.b.x, player.phys.ground.b.y, player.phys.ground.b.z, 0.1);
-    gfx_draw_cube(t_stone, player.phys.ground.c.x, player.phys.ground.c.y, player.phys.ground.c.z, 0.1);
+    //gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);
+    //gfx_draw_cube(t_stone, player.phys.ground.b.x, player.phys.ground.b.y, player.phys.ground.b.z, 0.1);
+    //gfx_draw_cube(t_stone, player.phys.ground.c.x, player.phys.ground.c.y, player.phys.ground.c.z, 0.1);
     
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

@@ -20,6 +20,8 @@ typedef struct
     Vector3f vel;
     Vector3f accel;
 
+    bool collided;
+
 } PhysicsObj;
 
 void physics_begin(PhysicsObj* phys);

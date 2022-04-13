@@ -53,12 +53,12 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 10.0;
+    float accel_force = 7.0;
     phys->max_linear_speed = player.walk_speed;
 
     if(player.run)
     {
-        accel_force = 15.0;
+        accel_force = 10.0;
         phys->max_linear_speed *= player.run_factor;
     }
 
@@ -150,14 +150,11 @@ static void update_player_physics()
     physics_simulate(phys);
 }
 
-static void player_spawn_projectile()
+static void player_spawn_projectile(ProjectileType type)
 {
     Vector pos = {player.phys.pos.x, player.height+player.phys.pos.y, player.phys.pos.z};
-    Vector vel = {-10*player.camera.target.x, -10*player.camera.target.y,-10*player.camera.target.z}; // @NEG
 
-    add(&vel, player.phys.vel);
-
-    projectile_spawn(&player,&pos,&vel);
+    projectile_spawn(&player,type,&pos);
 }
 
 void player_init()
@@ -172,8 +169,8 @@ void player_init()
     player.height = 1.76; // meters
     player.phys.mass = 62.0; // kg
     player.phys.max_linear_speed = 8.0; // m/s
-    player.run_factor = 2.0;
-    player.walk_speed = 8.0; // m/s
+    player.run_factor = 2.5;
+    player.walk_speed = 2.0; // m/s
     player.spectator = false;
 
     Vector3f h_target = {player.camera.target.x,0.0,player.camera.target.z};
@@ -233,10 +230,16 @@ void player_update()
     
     physics_print(&player.phys, false);
 
-    if(player.attack)
+    if(player.primary_action)
     {
-        player.attack = false;
-        player_spawn_projectile();
+        player.primary_action = false;
+        player_spawn_projectile(PROJECTILE_FIREBALL);
+    }
+
+    if(player.secondary_action)
+    {
+        player.secondary_action = false;
+        player_spawn_projectile(PROJECTILE_ICE);
     }
 
     if(!player.spectator)
@@ -263,7 +266,7 @@ void player_draw()
         Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
         Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&m_human,t_outfit,&pos, &rot, &sca);
+        gfx_draw_mesh(&m_human,t_outfit,NULL, &pos, &rot, &sca);
     }
 }
 

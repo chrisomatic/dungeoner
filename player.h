@@ -46,7 +46,9 @@ typedef struct
     bool right;
     bool jump;
     bool run;
-    bool attack;
+
+    bool primary_action;
+    bool secondary_action;
 } Player;
 
 extern Player player;

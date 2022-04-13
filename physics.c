@@ -4,6 +4,8 @@
 #include "terrain.h"
 #include "physics.h"
 
+#define STATIC_COEFF_FRICTION 0.40
+
 void physics_begin(PhysicsObj* phys)
 {
     phys->accel.x = 0.0f;
@@ -33,29 +35,6 @@ void physics_add_force_z(PhysicsObj* phys, float force_z)
     phys->accel.z += force_z;
 }
 
-/*
-void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
-{
-    float y = get_y_value_on_plane(-phys->pos.x-force->x, -phys->pos.z-force->z, phys->ground.a, phys->ground.b, phys->ground.c);
-
-
-    Vector user_force = {force->x,phys->pos.y - y , force->z};
-    normalize(&user_force);
-
-    float m = magn(*force);
-    mult(&user_force,m);
-
-    printf("--------------\n");
-    printf("user_force: %f %f %f\n",user_force.x, user_force.y, user_force.z);
-    printf("user_height: %f\n",phys->pos.y);
-    printf("--------------\n");
-
-   // gfx_draw_cube(t_stone, user_force.x, user_force.y, user_force.z,0.1);
-
-    physics_add_force(phys,user_force.x, user_force.y, user_force.z);
-}
-*/
-
 void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
 {
     Vector3f force_parallel = {force->x, force->y,force->z};
@@ -71,43 +50,9 @@ void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
         force_parallel.x = force_magn*(n.x + f.x);
         force_parallel.y = force_magn*(n.y + f.y);
         force_parallel.z = force_magn*(n.z + f.z);
-
-        /*
-        printf("===============\n");
-        printf("\n");
-        printf("force magn: %f\n",force_magn);
-        printf("user_force: %f %f %f\n",force->x, force->y,force->z);
-        printf("force_para: %f %f %f\n",force_parallel.x, force_parallel.y, force_parallel.z);
-        printf("\n");
-        printf("===============\n");
-        */
     }
 
     physics_add_force(phys,force_parallel.x, force_parallel.y, force_parallel.z);
-
-}
-
-void physics_add_gravity2(PhysicsObj* phys)
-{
-    Vector gravity = {0.0,-GRAVITY,0.0};
-
-    if(phys->pos.y == phys->ground.height)
-    {
-        // on ground
-        /*
-        Vector normal_proj = {phys->ground.normal.x, 0.0, phys->ground.normal.z};
-        normal_proj.y = get_y_value_on_plane(normal_proj.x, normal_proj.z, phys->ground.a, phys->ground.b, phys->ground.c);
-        normalize(&normal_proj);
-
-        gravity.x = GRAVITY*normal_proj.x;
-        gravity.y = GRAVITY*normal_proj.y;
-        gravity.z = GRAVITY*normal_proj.z;
-        */
-
-        //printf("gravity: %f %f %f\n",gravity.x, gravity.y, gravity.z);
-    }
-
-    physics_add_force(phys,gravity.x, gravity.y, gravity.z);
 
 }
 
@@ -117,32 +62,10 @@ void physics_add_gravity(PhysicsObj* phys)
 
     if(phys->pos.y == phys->ground.height)
     {
-        /*
-            Get vector [x,0,z] of normal
-            Get magnitude of vector and store to m
-            calculate vector [x+a.x, 0+a.y, z+a.z] where a is a point on plane
-            get y value of new vector
-            normalize
-            multiply by m and GRAVITY
-        */
-
-        Vector norm = {0.0,0.0,0.0};
-        normal(phys->ground.a, phys->ground.b, phys->ground.c, &norm);
-
-        /*
-        printf("normal: %f %f %f, re-norm: %f %f %f\n",
-                phys->ground.normal.x,
-                phys->ground.normal.y,
-                phys->ground.normal.z,
-                norm.x,
-                norm.y,
-                norm.z);
-                */
-
-        Vector v = {norm.x, 0.0, norm.z};
+        Vector v = {phys->ground.normal.x, 0.0, phys->ground.normal.z};
         float m = magn(v);
 
-        if(m == 0.0)
+        if(m == 0.0 || m <= STATIC_COEFF_FRICTION)
         {
             gravity.x = 0.0;
             gravity.y = 0.0;
@@ -174,44 +97,6 @@ void physics_add_gravity(PhysicsObj* phys)
     }
 
     physics_add_force(phys,gravity.x, gravity.y, gravity.z);
-}
-
-void physics_add_gravity3(PhysicsObj* phys)
-{
-    // apply gravity
-    Vector3f gravity_parallel      = {0.0,0.0,0.0};
-    Vector3f gravity_perpendicular = {0.0,-GRAVITY,0.0};
-    Vector3f normal                = {0.0,0.0,0.0};
-
-    if(phys->pos.y == phys->ground.height)
-    {
-        // if on ground, take into account the ground normal
-        Vector3f n = {phys->ground.normal.x, -phys->ground.normal.y, phys->ground.normal.z};
-        Vector3f g = {0.0,-1.0, 0.0};
-
-        gravity_parallel.x = GRAVITY*(n.x + g.x);
-        gravity_parallel.y = GRAVITY*(n.y + g.y);
-        gravity_parallel.z = GRAVITY*(n.z + g.z);
-
-        gravity_perpendicular.x = -GRAVITY*n.x;
-        gravity_perpendicular.y = -GRAVITY*n.y;
-        gravity_perpendicular.z = -GRAVITY*n.z;
-
-        normal.x = GRAVITY*n.x;
-        normal.y = GRAVITY*n.y;
-        normal.z = GRAVITY*n.z;
-    }
-
-    //printf("===============\n");
-    //printf("\n");
-    //printf("normal: %f %f %f\n",normal.x, normal.y, normal.z);
-    //printf("g_para: %f %f %f\n",gravity_parallel.x, gravity_parallel.y, gravity_parallel.z);
-    //printf("g_perp: %f %f %f\n",gravity_perpendicular.x, gravity_perpendicular.y, gravity_perpendicular.z);
-    //printf("\n");
-    //printf("===============\n");
-
-    physics_add_force(phys,gravity_parallel.x, gravity_parallel.y, gravity_parallel.z);
-    physics_add_force(phys,gravity_perpendicular.x, gravity_perpendicular.y, gravity_perpendicular.z);
 }
 
 void physics_add_air_friction(PhysicsObj* phys, float mu)
@@ -305,27 +190,71 @@ void physics_simulate(PhysicsObj* phys)
     phys->pos.y += ((phys->vel.y + v0.y)/2.0)*g_delta_t;
     phys->pos.z += ((phys->vel.z + v0.z)/2.0)*g_delta_t;
 
+    // set collision to uncollided initially
+    phys->collided = false;
+
     //printf("pos.y: %f, ground.height: %f, vel.y: %f\n",phys->pos.y, phys->ground.height, phys->vel.y);
-    if(phys->pos.y <= phys->ground.height)
+    if(phys->pos.y < phys->ground.height)
     {
-        phys->vel.y = 0.0;
         phys->pos.y = phys->ground.height;
+        phys->collided = true;
+
+        if(phys->vel.y < -1.0)
+        {
+            // falling
+            float theta = get_angle_between_vectors_rad(&phys->vel,&phys->ground.normal);
+
+            Vector reflection_vel = {-phys->vel.x, -phys->vel.y, -phys->vel.z};
+            rotate(&reflection_vel,phys->ground.normal,180.0);
+
+            float bounce_factor = 0.20;
+
+            LOGI("Ground Collision! v0: %f %f %f, v1: %f %f %f, angle: %f, bounce_factor: %f",phys->vel.x, phys->vel.y, phys->vel.z,reflection_vel.x,reflection_vel.y, reflection_vel.z, DEG(theta), bounce_factor);
+
+            phys->vel.x += bounce_factor*reflection_vel.x;
+            phys->vel.y = bounce_factor*reflection_vel.y;
+            phys->vel.z += bounce_factor*reflection_vel.z;
+        }
+        else
+        {
+            phys->vel.y = 0.0;
+        }
+
+        /*
+        if(ABS(phys->vel.y) < 5.0)
+        {
+            // no bounce
+            phys->vel.y = 0.0;
+        }
+        else
+        {
+            // bounce
+            float m = magn(phys->vel);
+            float bounce_factor = 0.20*m;
+
+            phys->vel.x += bounce_factor*phys->ground.normal.x;
+            phys->vel.y = bounce_factor*phys->ground.normal.y;
+            phys->vel.z += bounce_factor*phys->ground.normal.z;
+        }
+        */
     }
 
-    if(ABS(phys->vel.x) < 0.00001) phys->vel.x = 0.0;
-    if(ABS(phys->vel.y) < 0.00001) phys->vel.y = 0.0;
-    if(ABS(phys->vel.z) < 0.00001) phys->vel.z = 0.0;
+    if(ABS(phys->vel.x) < 0.0001) phys->vel.x = 0.0;
+    if(ABS(phys->vel.y) < 0.0001) phys->vel.y = 0.0;
+    if(ABS(phys->vel.z) < 0.0001) phys->vel.z = 0.0;
 }
 
 void physics_print(PhysicsObj* phys, bool force)
 {
     if(force || phys->vel.x != 0 || phys->vel.y != 0 || phys->vel.z != 0)
     {
+        /*
         LOGI("A: %6.4f %6.4f %6.4f  V: %6.4f %6.4f %6.4f  P: %6.4f %6.4f %6.4f",
             phys->accel.x, phys->accel.y, phys->accel.z,
             phys->vel.x, phys->vel.y, phys->vel.z,
             phys->pos.x, phys->pos.y, phys->pos.z
             );
+            */
         /*
         LOGI("A: %f V: %f P: %f",
             magn(phys->accel),

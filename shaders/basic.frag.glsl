@@ -18,6 +18,7 @@ struct DirectionalLight
 uniform DirectionalLight dl;
 uniform int wireframe;
 uniform vec3 sky_color;
+uniform vec3 model_color;
 
 void main() {
 
@@ -41,9 +42,16 @@ void main() {
             diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);
         }
 
-        vec4 base_color = vec4(0.5,0.5,0.5,1.0);
+        vec4 base_color;
+        if(model_color != vec3(0.0,0.0,0.0))
+        {
+            base_color = vec4(model_color,1.0);
+        }
+        else
+        {
+            base_color = texture2D(sampler,tex_coord0.xy);
 
-        base_color = texture2D(sampler,tex_coord0.xy);
+        }
 
         vec4 out_color = base_color * (ambient_color + diffuse_color);
         frag_color = mix(vec4(sky_color,1.0), out_color, visibility);
