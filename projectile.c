@@ -69,7 +69,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             break;
     }
 
-    Vector vel = {-speed*player->camera.target.x, -speed*player->camera.target.y,-speed*player->camera.target.z}; // @NEG
+    Vector vel = {-speed*player->camera.lookat.x, -speed*player->camera.lookat.y,-speed*player->camera.lookat.z}; // @NEG
 
     proj->player = player;
     proj->phys.mass  = 10.0;
@@ -94,7 +94,7 @@ void projectile_update()
     {
         physics_begin(&projectiles[i].phys);
         if(projectiles[i].type != PROJECTILE_FIREBALL)
-            physics_add_gravity(&projectiles[i].phys);
+            physics_add_gravity(&projectiles[i].phys, 1.0);
         physics_add_kinetic_friction(&projectiles[i].phys, 0.50);
         physics_simulate(&projectiles[i].phys);
         

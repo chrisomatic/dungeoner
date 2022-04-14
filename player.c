@@ -19,28 +19,22 @@ static int prior_cursor_y = 0;
 
 static void update_camera_rotation()
 {
-    const Vector3f v_axis = {0.0, 1.0, 0.0};
+   // const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis
     Vector3f view = {0.0, 0.0, 1.0};
-    rotate(&view, v_axis, player.camera.angle_h);
-    normalize(&view);
 
-    // Rotate the view vector by the vertical angle around the horizontal axis
     Vector3f h_axis = {0};
+    rotate_vector(&view, player.camera.angle_h, player.camera.angle_v, &h_axis);
 
-    cross(v_axis, view, &h_axis);
-    normalize(&h_axis);
-    rotate(&view, h_axis, player.camera.angle_v);
+    copy_vector(&player.camera.lookat,view);
+    normalize(&player.camera.lookat);
 
-    copy_vector(&player.camera.target,view);
-    normalize(&player.camera.target);
+    normalize(&player.camera.lookat);
 
-    normalize(&player.camera.target);
+    //printf("lookat: %f %f %f\n", camera.lookat.x, camera.lookat.y, camera.lookat.z);
 
-    //printf("Target: %f %f %f\n", camera.target.x, camera.target.y, camera.target.z);
-
-    cross(player.camera.target,h_axis, &player.camera.up);
+    cross(player.camera.lookat,h_axis, &player.camera.up);
     normalize(&player.camera.up);
 
     //printf("Up: %f %f %f\n", camera.up.x, camera.up.y, camera.up.z);
@@ -73,7 +67,7 @@ static void update_player_physics()
     physics_begin(phys);
 
     if(!player.spectator)
-        physics_add_gravity(phys);
+        physics_add_gravity(phys,1.0);
 
     //phys->ground.height = terrain_get_height(phys->pos.x, phys->pos.z);
 
@@ -82,10 +76,10 @@ static void update_player_physics()
     if(player.spectator || phys->pos.y <= phys->ground.height)
     {
         // where the player is looking
-        Vector3f target = {
-            player.camera.target.x,
-            player.camera.target.y,
-            player.camera.target.z
+        Vector3f lookat = {
+            player.camera.lookat.x,
+            player.camera.lookat.y,
+            player.camera.lookat.z
         };
 
         if(player.spectator)
@@ -106,7 +100,7 @@ static void update_player_physics()
 
         if(player.forward)
         {
-            Vector3f forward = {-target.x,player.spectator ? -target.y : 0.0,-target.z};
+            Vector3f forward = {-lookat.x,player.spectator ? -lookat.y : 0.0,-lookat.z};
             normalize(&forward);
             mult(&forward,accel_force);
 
@@ -115,7 +109,7 @@ static void update_player_physics()
 
         if(player.back)
         {
-            Vector3f back = {target.x,player.spectator ? target.y : 0.0,target.z};
+            Vector3f back = {lookat.x,player.spectator ? lookat.y : 0.0,lookat.z};
             normalize(&back);
             mult(&back,accel_force);
 
@@ -125,7 +119,7 @@ static void update_player_physics()
         if(player.left)
         {
             Vector3f left = {0};
-            cross(player.camera.up, target, &left);
+            cross(player.camera.up, lookat, &left);
             normalize(&left);
 
             mult(&left,-accel_force);
@@ -136,7 +130,7 @@ static void update_player_physics()
         if(player.right)
         {
             Vector3f right = {0};
-            cross(player.camera.up, target, &right);
+            cross(player.camera.up, lookat, &right);
             normalize(&right);
 
             mult(&right,accel_force);
@@ -163,7 +157,7 @@ void player_init()
     
     // initialize player camera
     memset(&player.camera.phys, 0, sizeof(PhysicsObj));
-    player.camera.target.z   = -1.0;
+    player.camera.lookat.z   = -1.0;
     player.camera.up.y       = 1.0;
 
     player.height = 1.76; // meters
@@ -172,46 +166,50 @@ void player_init()
     player.run_factor = 2.5;
     player.walk_speed = 2.0; // m/s
     player.spectator = false;
+    player.run = true;
 
-    Vector3f h_target = {player.camera.target.x,0.0,player.camera.target.z};
-    normalize(&h_target);
+    Vector3f h_lookat = {player.camera.lookat.x,0.0,player.camera.lookat.z};
+    normalize(&h_lookat);
 
-    if(h_target.z >= 0.0)
+    if(h_lookat.z >= 0.0)
     {
-        if(h_target.x >= 0.0)
-            player.camera.angle_h = 360.0 - DEG(asin(h_target.z));
+        if(h_lookat.x >= 0.0)
+            player.camera.angle_h = 360.0 - DEG(asin(h_lookat.z));
         else
-            player.camera.angle_h = 180.0 + DEG(asin(h_target.z));
+            player.camera.angle_h = 180.0 + DEG(asin(h_lookat.z));
     }
     else
     {
-        if(h_target.x >= 0.0)
-            player.camera.angle_h = DEG(asin(-h_target.z));
+        if(h_lookat.x >= 0.0)
+            player.camera.angle_h = DEG(asin(-h_lookat.z));
         else
-            player.camera.angle_h = 180.0 - DEG(asin(-h_target.z));
+            player.camera.angle_h = 180.0 - DEG(asin(-h_lookat.z));
     }
 
-    player.camera.angle_v = -DEG(asin(player.camera.target.y));
+    player.camera.angle_v = -DEG(asin(player.camera.lookat.y));
 
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;
 
+    memcpy(&player.camera.target_pos,&player.camera.phys.pos,sizeof(Vector));
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 }
 
 void player_snap_camera()
 {
-    copy_vector(&player.camera.phys.pos,player.phys.pos);
-    player.camera.phys.pos.y += player.height; // put camera in head of player
+    player.camera.phys.pos.x = player.phys.pos.x;
+    player.camera.phys.pos.y = player.phys.pos.y + player.height;
+    player.camera.phys.pos.z = player.phys.pos.z;
 
     player.camera.angle_h = player.angle_h;
     player.camera.angle_v = player.angle_v;
 
     if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
     {
-        player.camera.offset.x = 3.0*player.camera.target.x;
-        player.camera.offset.y = 3.0*player.camera.target.y + 0.5;
-        player.camera.offset.z = 3.0*player.camera.target.z;
+        player.camera.offset.x = 3.0*player.camera.lookat.x;
+        player.camera.offset.y = 3.0*player.camera.lookat.y + 0.5;
+        player.camera.offset.z = 3.0*player.camera.lookat.z;
+
     }
     else if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
     {
@@ -253,11 +251,11 @@ void player_draw()
     if(player.camera.mode == CAMERA_MODE_THIRD_PERSON || player.spectator)
     {
         /*
-        Vector3f target = {player.camera.target.x, 0.0, player.camera.target.z};
+        Vector3f lookat = {player.camera.lookat.x, 0.0, player.camera.lookat.z};
         Vector3f vel = {player.phys.vel.x,0.0, player.phys.vel.z};
 
-        float d = dot(target, vel);
-        float mt = magn(target);
+        float d = dot(lookat, vel);
+        float mt = magn(lookat);
         float mv = magn(vel);
 
         float lean_angle = mt == 0.0 || mv == 0.0 ? 0.0 : acos(d / (mt*mv));

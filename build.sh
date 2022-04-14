@@ -6,6 +6,7 @@ gcc main.c \
     model.c \
     physics.c \
     player.c \
+    particles.c \
     projectile.c \
     shader.c \
     terrain.c \

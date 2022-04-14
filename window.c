@@ -167,8 +167,8 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
             case GLFW_KEY_SPACE:
                 player.jump = true;
                 break;
-            case GLFW_KEY_LEFT_SHIFT:
-                player.run = true;
+            case GLFW_KEY_R:
+                player.run = !player.run;
                 break;
             case GLFW_KEY_F:
                 show_fog = !show_fog;
@@ -225,9 +225,6 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_SPACE:
                 player.jump = false;
-                break;
-            case GLFW_KEY_LEFT_SHIFT:
-                player.run = false;
                 break;
         }
     }

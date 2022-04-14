@@ -68,3 +68,6 @@ Vector get_projected_point_on_plane(Vector* point, Vector* plane_normal, Vector*
 Vector get_center_of_triangle(Vector* a, Vector* b, Vector* c);
 float get_angle_between_vectors_rad(Vector* a, Vector* b);
 float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c);
+
+void rotate_vector(Vector* v, float angle_h, float angle_v, Vector* ret_h_axis);
+void rotate_toward_point(Vector curr_normal, Vector* starting_point, Vector* point, Vector* ret_rotation);

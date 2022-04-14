@@ -10,7 +10,7 @@
 #include "util.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 20.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 100.0f // distance between vertices in y direction
 
 Vector* t_a;
 Vector* t_b;
@@ -96,7 +96,7 @@ static void generate_trees()
     int w,h,n;
     uint8_t* tree_data = util_load_image("textures/foliage_map.png",&w,&h,&n,3);
 
-    printf("loaded foliage map. x: %d, y: %d, n: %d\n",w,h,n);
+    LOGI("loaded foliage map. x: %d, y: %d, n: %d",w,h,n);
 
     for(int j = 0; j < h; ++j)
     {
@@ -112,7 +112,7 @@ static void generate_trees()
             {
                 Tree* t = &trees[num_trees];
 
-                printf("found tree at %f, %f\n",(float)i,(float)j);
+                //printf("found tree at %f, %f\n",(float)i,(float)j);
 
                 t->pos.x = (float)i;
                 t->pos.z = (float)j;
@@ -127,7 +127,7 @@ static void generate_trees()
                 t->rot.y = theta;
                 t->rot.z = 0.0;
 
-                printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+                //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
 
                 num_trees++;
             }

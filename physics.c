@@ -56,9 +56,9 @@ void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
 
 }
 
-void physics_add_gravity(PhysicsObj* phys)
+void physics_add_gravity(PhysicsObj* phys, float gravity_factor)
 {
-    Vector gravity = {0.0,-GRAVITY,0.0};
+    Vector gravity = {0.0,-GRAVITY*gravity_factor,0.0};
 
     if(phys->pos.y == phys->ground.height)
     {
@@ -85,7 +85,7 @@ void physics_add_gravity(PhysicsObj* phys)
             subtract(&v,d);
             normalize(&v);
 
-            mult(&v,m*GRAVITY);
+            mult(&v,m*GRAVITY*gravity_factor);
             //printf("V: %f %f %f\n",v.x,v.y,v.z);
 
             gravity.x = v.x;

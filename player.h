@@ -13,9 +13,12 @@ typedef enum
 typedef struct
 {
     PhysicsObj phys;
-    Vector3f target;
+
+    Vector3f lookat;
     Vector3f up;
     Vector3f offset; // used for third-person
+
+    Vector3f target_pos;
 
     CameraMode mode;
 

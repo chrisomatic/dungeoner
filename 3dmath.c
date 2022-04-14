@@ -109,6 +109,59 @@ void rotate(Vector3f* v, const Vector3f axis, float angle)
     v->z = w.z;
 }
 
+void rotate_toward_point(Vector curr_normal, Vector* starting_point, Vector* target_point, Vector* ret_rotation)
+{
+    //Rotation axis = normalize(crossproduct(currentNormal, desiredNormal))
+    //Rotation angle = acos(dotproduct(normalize(currentNormal), normalize(desiredNormal)).
+
+    Vector desired_normal = {
+        starting_point->x - target_point->x,
+        starting_point->y - target_point->y,
+        starting_point->z - target_point->z
+    };
+
+    normalize(&desired_normal);
+
+    Vector rot_axis;
+    cross(curr_normal,desired_normal,&rot_axis);
+    normalize(&rot_axis);
+
+    Vector x = {1.0,0.0,0.0};
+    Vector y = {0.0,1.0,0.0};
+    Vector z = {0.0,0.0,1.0};
+
+    float angle = acos(dot(desired_normal,rot_axis));
+
+    ret_rotation->x = DEG(angle);
+    ret_rotation->y = 0.0;//DEG(angle_y);
+    ret_rotation->z = DEG(angle);
+
+    printf("desired_normal: %f %f %f, rot_axis: %f %f %f, rotate: %f %f %f\n",
+        desired_normal.x,desired_normal.y, desired_normal.z,
+        rot_axis.x,rot_axis.y, rot_axis.z,
+        ret_rotation->x,ret_rotation->y, ret_rotation->z
+    );
+}
+
+void rotate_vector(Vector* v, float angle_h, float angle_v, Vector* ret_h_axis)
+{
+    const Vector3f v_axis = {0.0, 1.0, 0.0};
+
+    // Rotate the view vector by the horizontal angle around the vertical axis
+    rotate(v, v_axis, angle_h);
+    normalize(v);
+
+    // Rotate the view vector by the vertical angle around the horizontal axis
+    Vector3f h_axis = {0};
+
+    cross(v_axis, *v, &h_axis);
+    normalize(&h_axis);
+    rotate(v, h_axis, angle_v);
+
+    if(ret_h_axis)
+        copy_vector(ret_h_axis,h_axis);
+}
+
 float dot(Vector3f a, Vector3f b)
 {
     return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
@@ -263,15 +316,15 @@ static void get_perspective_transform(Matrix* mat)
     mat->m[3][2] = 1.0f;
 }
 
-void get_camera_transform(Matrix* mat, Vector3f target, Vector3f up)
+void get_camera_transform(Matrix* mat, Vector3f lookat, Vector3f up)
 {
     Vector3f n,u,v;
 
-    copy_vector(&n,target);
+    copy_vector(&n,lookat);
     copy_vector(&u,up);
 
     normalize(&n);
-    cross(target,u,&u);
+    cross(lookat,u,&u);
     cross(n,u,&v);
 
     memset(mat,0,sizeof(Matrix));
@@ -309,7 +362,7 @@ void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* 
     get_translate_transform(&translate_trans, pos);
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &camera_pos);
-    get_camera_transform(&camera_rotate_trans, player.camera.target, player.camera.up);
+    get_camera_transform(&camera_rotate_trans, player.camera.lookat, player.camera.up);
 
     memcpy(world,&identity_matrix,sizeof(Matrix));
     dot_product_mat(*world, translate_trans, world);

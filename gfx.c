@@ -143,7 +143,7 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
 
-    glBindTexture(GL_TEXTURE_2D,0);
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
@@ -221,34 +221,57 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, V
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
 
-    glBindTexture(GL_TEXTURE_2D,0);
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
-void gfx_draw_quad(GLuint texture, float x, float y, float z, float rotx, float roty, float rotz, float scalex, float scaley, float scalez)
+void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca)
 {
     glUseProgram(program_basic);
 
-    Vector3f pos = {x,y,z};
-    Vector3f rot = {rotx,roty,rotz};
-    Vector3f sca = {scalex, scaley, scalez};
-
-    Matrix world, view, proj, wvp;
-    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
+    Matrix world, view, proj, wvp, wv;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
     get_wvp(&world, &view, &proj, &wvp);
+    get_wv(&world, &view, &wv);
 
+    shader_set_int(program_basic,"sampler",0);
+    shader_set_int(program_basic,"wireframe",show_wireframe);
+    shader_set_mat4(program_basic,"wv",&wv);
     shader_set_mat4(program_basic,"wvp",&wvp);
-    shader_set_int(program_basic, "wireframe", show_wireframe);
+    shader_set_mat4(program_basic,"world",&world);
+    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+    shader_set_vec3(program_basic,"sky_color",0.7, 0.8, 0.9);
+
+    if(show_fog)
+    {
+        shader_set_float(program_basic,"fog_density",fog_density);
+        shader_set_float(program_basic,"fog_gradient",fog_gradient);
+    }
+    else
+    {
+        shader_set_float(program_basic,"fog_density",0.0);
+        shader_set_float(program_basic,"fog_gradient",1.0);
+    }
 
     if(texture)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+        shader_set_vec3(program_basic,"model_color",0.0, 0.0, 0.0);
     }
     else
     {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+
+    if(color)
+    {
+        shader_set_vec3(program_basic,"model_color",color->x, color->y, color->z);
+    }
+
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -273,7 +296,7 @@ void gfx_draw_quad(GLuint texture, float x, float y, float z, float rotx, float 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 
-    glBindTexture(GL_TEXTURE_2D,0);
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
@@ -299,21 +322,26 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     */
 
     shader_set_mat4(program_basic,"wvp",&wvp);
+    shader_set_int(program_basic, "wireframe", show_wireframe);
     shader_set_mat4(program_basic,"world",&world);
     shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
     shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
     shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
     shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
 
-    if(texture)
+    if(show_fog)
     {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        shader_set_float(program_basic,"fog_density",fog_density);
+        shader_set_float(program_basic,"fog_gradient",fog_gradient);
     }
     else
     {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        shader_set_float(program_basic,"fog_density",0.0);
+        shader_set_float(program_basic,"fog_gradient",1.0);
     }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -339,7 +367,7 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 
-    glBindTexture(GL_TEXTURE_2D,0);
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
@@ -349,10 +377,12 @@ typedef struct
     Vector color;
 } DebugLine;
 
+GLuint debug_vao;
 GLuint debug_vbo;
 
 void init_debug()
 {
+    glGenVertexArrays(1, &debug_vao);
     glGenBuffers(1, &debug_vbo);
 
 	glBindBuffer(GL_ARRAY_BUFFER, debug_vbo);
@@ -369,15 +399,25 @@ void gfx_draw_debug_lines(Vector* position, Vector* vel)
         {{vel->x,vel->y,vel->z}, {0.0,1.0,0.0}}
     }; 
 
+    lines[0].p.x = 0.0; lines[0].color.x = 0.0;
+    lines[0].p.y = 0.0; lines[0].color.y = 1.0;
+    lines[0].p.z = 0.0; lines[0].color.z = 0.0;
+
+    lines[1].p.x = vel->x; lines[1].color.x = 0.0;
+    lines[1].p.y = vel->y; lines[1].color.y = 1.0;
+    lines[1].p.z = vel->z; lines[1].color.z = 0.0;
+
     int num_lines = sizeof(lines) / sizeof(DebugLine);
 
+    glBindVertexArray(debug_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, debug_vbo);
+
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(lines), lines);
 
     // draw debug info
     glUseProgram(program_debug);
 
-    Vector3f pos = {position->x,position->y,position->z};
+    Vector3f pos = {-position->x,-position->y,-position->z};
     Vector3f rot = {0.0,0.0,0.0};
     Vector3f sca = {1.0,1.0,1.0};
 
@@ -387,7 +427,6 @@ void gfx_draw_debug_lines(Vector* position, Vector* vel)
 
     shader_set_mat4(program_debug,"wvp",&wvp);
 
-    glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 

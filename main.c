@@ -15,6 +15,7 @@
 #include "shader.h"
 #include "timer.h"
 #include "player.h"
+#include "particles.h"
 #include "projectile.h"
 #include "light.h"
 #include "model.h"
@@ -44,6 +45,7 @@ GLuint t_blend_map;
 GLuint t_sky_day;
 GLuint t_sky_night;
 GLuint t_outfit;
+GLuint t_particle_explosion;
 
 // =========================
 // Meshes
@@ -136,7 +138,7 @@ void init()
     player_init();
 
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap.png");
+    terrain_build(&m_terrain, "textures/heightmap_large.png");
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human.obj");
@@ -150,12 +152,13 @@ void init()
     light_init();
 
     LOGI(" - Textures.");
-    t_stone  = load_texture("textures/stonewall.jpg");
+    t_stone  = load_texture("textures/stonewall.png");
     t_grass  = load_texture("textures/grass2.png");
     t_dirt   = load_texture("textures/dirt.png");
     t_tree   = load_texture("textures/tree_bark.png");
     t_blend_map = load_texture("textures/blend_map.png");
     t_outfit = load_texture("textures/outfit.png");
+    t_particle_explosion = load_texture("textures/particles/explosion.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.jpg",
@@ -179,6 +182,9 @@ void init()
 
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
+    Vector pos = {1.0,18.0,1.0};
+    particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 1.0);
+
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
@@ -193,6 +199,7 @@ void simulate()
 {
     player_update();
     projectile_update();
+    particles_update();
 }
 
 void render()
@@ -204,8 +211,8 @@ void render()
     terrain_draw();
     player_draw();
     projectile_draw();
+    particles_draw();
 
-    // render scene
     gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 
     //gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);

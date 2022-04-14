@@ -50,7 +50,6 @@ void main() {
         else
         {
             base_color = texture2D(sampler,tex_coord0.xy);
-
         }
 
         vec4 out_color = base_color * (ambient_color + diffuse_color);

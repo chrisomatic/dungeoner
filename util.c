@@ -49,6 +49,8 @@ GLuint load_texture(const char* texture_path)
     glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     stbi_image_free(data);
 
     return texture;
@@ -93,6 +95,8 @@ GLuint load_texture_cube(char* cube_file_paths[], int num_file_paths)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); 
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     return texture;
 }
