@@ -109,7 +109,7 @@ void projectile_update()
             if(projectiles[i].type == PROJECTILE_FIREBALL)
             {
                 Vector pos = {-projectiles[i].phys.pos.x,projectiles[i].phys.pos.y,-projectiles[i].phys.pos.z};
-                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.4);
+                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.25);
             }
             remove_projectile(i);
         }

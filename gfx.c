@@ -300,7 +300,7 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
-void gfx_draw_particle(GLuint texture, Vector* color, float opaqueness, Vector* pos, Vector* rot, Vector* sca)
+void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca)
 {
     glUseProgram(program_particle);
 
@@ -315,6 +315,9 @@ void gfx_draw_particle(GLuint texture, Vector* color, float opaqueness, Vector* 
     shader_set_mat4(program_particle,"wvp",&wvp);
     shader_set_mat4(program_particle,"world",&world);
     shader_set_vec3(program_particle,"sky_color",0.7, 0.8, 0.9);
+
+    shader_set_vec3(program_particle,"color0",color0->x, color0->y, color0->z);
+    shader_set_vec3(program_particle,"color1",color1->x, color1->y, color1->z);
 
     if(show_fog)
     {
@@ -333,18 +336,11 @@ void gfx_draw_particle(GLuint texture, Vector* color, float opaqueness, Vector* 
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-        shader_set_vec3(program_particle,"model_color",0.0, 0.0, 0.0);
     }
     else
     {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
-
-    if(color)
-    {
-        shader_set_vec3(program_particle,"model_color",color->x, color->y, color->z);
-    }
-
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);

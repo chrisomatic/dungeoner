@@ -4,6 +4,7 @@
 typedef enum
 {
     PARTICLE_EFFECT_EXPLOSION,
+    PARTICLE_EFFECT_HEAL,
 } ParticleEffect;
 
 typedef struct
@@ -19,6 +20,9 @@ typedef struct
     Particle particles[MAX_PARTICLES];
 
     Vector pos;
+
+    Vector color0;
+    Vector color1;
 
     int particle_count;
     GLuint texture;
@@ -36,11 +40,15 @@ typedef struct
 
     float particle_lifetime;
     float particle_scale;
-    float particle_atten;
+    float particle_size_atten;
+    float particle_speed_atten;
+    float particle_opaque_atten;
     int particle_burst_count;
 
     float life;
     float life_max; // 0.0 is infinite
+
+    bool dead;
 
 } ParticleGenerator;
 

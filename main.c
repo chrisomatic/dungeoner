@@ -46,6 +46,7 @@ GLuint t_sky_day;
 GLuint t_sky_night;
 GLuint t_outfit;
 GLuint t_particle_explosion;
+GLuint t_particle_star;
 
 // =========================
 // Meshes
@@ -159,6 +160,7 @@ void init()
     t_blend_map = load_texture("textures/blend_map.png");
     t_outfit = load_texture("textures/outfit.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
+    t_particle_star = load_texture("textures/particles/star.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.jpg",
@@ -183,7 +185,7 @@ void init()
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
     Vector pos = {1.0,18.0,1.0};
-    particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.0);
+    particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
