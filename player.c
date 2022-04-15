@@ -66,9 +66,6 @@ static void update_player_physics()
     // zero out prior accel
     physics_begin(phys);
 
-    if(!player.spectator)
-        physics_add_gravity(phys,1.0);
-
     //phys->ground.height = terrain_get_height(phys->pos.x, phys->pos.z);
 
     //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground.height);
@@ -140,6 +137,9 @@ static void update_player_physics()
 
         physics_add_force(phys,user_force.x, user_force.y, user_force.z);
     }
+
+    if(!player.spectator)
+        physics_add_gravity(phys,1.0);
 
     physics_simulate(phys);
 }

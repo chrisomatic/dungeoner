@@ -14,6 +14,7 @@ GLuint program_sky;
 GLuint program_terrain;
 GLuint program_text;
 GLuint program_debug;
+GLuint program_particle;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
@@ -24,6 +25,7 @@ void shader_load_all()
     shader_build_program(&program_terrain,"shaders/terrain.vert.glsl","shaders/terrain.frag.glsl");
     shader_build_program(&program_text,"shaders/text.vert.glsl","shaders/text.frag.glsl");
     shader_build_program(&program_debug,"shaders/debug.vert.glsl","shaders/debug.frag.glsl");
+    shader_build_program(&program_particle,"shaders/particle.vert.glsl","shaders/particle.frag.glsl");
 }
 
 void shader_deinit()
@@ -31,6 +33,9 @@ void shader_deinit()
     glDeleteProgram(program_basic);
     glDeleteProgram(program_sky);
     glDeleteProgram(program_terrain);
+    glDeleteProgram(program_text);
+    glDeleteProgram(program_debug);
+    glDeleteProgram(program_particle);
 }
 
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path)

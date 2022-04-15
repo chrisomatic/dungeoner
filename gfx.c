@@ -300,6 +300,79 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
+void gfx_draw_particle(GLuint texture, Vector* color, float opaqueness, Vector* pos, Vector* rot, Vector* sca)
+{
+    glUseProgram(program_particle);
+
+    Matrix world, view, proj, wvp, wv;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+    get_wv(&world, &view, &wv);
+
+    shader_set_int(program_particle,"sampler",0);
+    shader_set_int(program_particle,"wireframe",show_wireframe);
+    shader_set_mat4(program_particle,"wv",&wv);
+    shader_set_mat4(program_particle,"wvp",&wvp);
+    shader_set_mat4(program_particle,"world",&world);
+    shader_set_vec3(program_particle,"sky_color",0.7, 0.8, 0.9);
+
+    if(show_fog)
+    {
+        shader_set_float(program_particle,"fog_density",fog_density);
+        shader_set_float(program_particle,"fog_gradient",fog_gradient);
+    }
+    else
+    {
+        shader_set_float(program_particle,"fog_density",0.0);
+        shader_set_float(program_particle,"fog_gradient",1.0);
+    }
+
+    shader_set_float(program_particle,"opaqueness",opaqueness);
+
+    if(texture)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        shader_set_vec3(program_particle,"model_color",0.0, 0.0, 0.0);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    if(color)
+    {
+        shader_set_vec3(program_particle,"model_color",color->x, color->y, color->z);
+    }
+
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
 void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
 {
     glUseProgram(program_basic);
@@ -544,6 +617,9 @@ void gfx_init(int width, int height)
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);

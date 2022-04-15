@@ -21,6 +21,7 @@ typedef struct
     Vector3f accel;
 
     bool collided;
+    bool user_force_applied;
 
 } PhysicsObj;
 

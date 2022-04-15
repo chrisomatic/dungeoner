@@ -5,6 +5,7 @@
 #include "player.h"
 #include "physics.h"
 #include "log.h"
+#include "particles.h"
 #include "projectile.h"
 
 #define MAX_PROJECTILES 100
@@ -105,6 +106,11 @@ void projectile_update()
     {
         if(projectiles[i].life >= projectiles[i].life_max || (projectiles[i].type == PROJECTILE_FIREBALL && projectiles[i].phys.collided))
         {
+            if(projectiles[i].type == PROJECTILE_FIREBALL)
+            {
+                Vector pos = {-projectiles[i].phys.pos.x,projectiles[i].phys.pos.y,-projectiles[i].phys.pos.z};
+                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.4);
+            }
             remove_projectile(i);
         }
     }

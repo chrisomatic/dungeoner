@@ -115,30 +115,27 @@ void rotate_toward_point(Vector curr_normal, Vector* starting_point, Vector* tar
     //Rotation angle = acos(dotproduct(normalize(currentNormal), normalize(desiredNormal)).
 
     Vector desired_normal = {
-        starting_point->x - target_point->x,
-        starting_point->y - target_point->y,
-        starting_point->z - target_point->z
+        target_point->x - starting_point->x,
+        target_point->y - starting_point->y,
+        target_point->z - starting_point->z
     };
 
     normalize(&desired_normal);
 
-    Vector rot_axis;
-    cross(curr_normal,desired_normal,&rot_axis);
-    normalize(&rot_axis);
+    Vector dn_x = {0.0,desired_normal.y, desired_normal.z};
+    Vector dn_y = {desired_normal.x,0.0, desired_normal.z};
+    Vector dn_z = {desired_normal.x, desired_normal.y, 0.0};
 
-    Vector x = {1.0,0.0,0.0};
-    Vector y = {0.0,1.0,0.0};
-    Vector z = {0.0,0.0,1.0};
+    Vector cn_x = {0.0,curr_normal.y, curr_normal.z};
+    Vector cn_y = {curr_normal.x,0.0, curr_normal.z};
+    Vector cn_z = {curr_normal.x, curr_normal.y, 0.0};
 
-    float angle = acos(dot(desired_normal,rot_axis));
+    ret_rotation->x = DEG(get_angle_between_vectors_rad(&cn_x,&dn_x));
+    ret_rotation->y = DEG(get_angle_between_vectors_rad(&cn_y,&dn_y));
+    ret_rotation->z = DEG(get_angle_between_vectors_rad(&cn_z,&dn_z));
 
-    ret_rotation->x = DEG(angle);
-    ret_rotation->y = 0.0;//DEG(angle_y);
-    ret_rotation->z = DEG(angle);
-
-    printf("desired_normal: %f %f %f, rot_axis: %f %f %f, rotate: %f %f %f\n",
+    printf("desired_normal: %f %f %f, rotate: %f %f %f\n",
         desired_normal.x,desired_normal.y, desired_normal.z,
-        rot_axis.x,rot_axis.y, rot_axis.z,
         ret_rotation->x,ret_rotation->y, ret_rotation->z
     );
 }
@@ -449,9 +446,13 @@ Vector3f get_projected_point_on_plane(Vector3f* point, Vector3f* plane_normal, V
 
 float get_angle_between_vectors_rad(Vector3f* a, Vector3f* b)
 {
-    float d  = dot(*a,*b);
     float ma = magn(*a);
     float mb = magn(*b);
+
+    if(ma == 0.0 || mb == 0.0)
+        return 0.0;
+
+    float d  = dot(*a,*b);
     
     float angle = acosf(d/(ma*mb));
     return angle;

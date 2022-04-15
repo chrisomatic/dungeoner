@@ -11,6 +11,9 @@ void physics_begin(PhysicsObj* phys)
     phys->accel.x = 0.0f;
     phys->accel.y = 0.0f;
     phys->accel.z = 0.0f;
+
+    phys->collided = false;
+    phys->user_force_applied = false;
 }
 
 void physics_add_force(PhysicsObj* phys, float force_x, float force_y, float force_z)
@@ -53,7 +56,7 @@ void physics_add_user_force(PhysicsObj* phys, Vector3f* force)
     }
 
     physics_add_force(phys,force_parallel.x, force_parallel.y, force_parallel.z);
-
+    phys->user_force_applied = true;
 }
 
 void physics_add_gravity(PhysicsObj* phys, float gravity_factor)
@@ -65,7 +68,7 @@ void physics_add_gravity(PhysicsObj* phys, float gravity_factor)
         Vector v = {phys->ground.normal.x, 0.0, phys->ground.normal.z};
         float m = magn(v);
 
-        if(m == 0.0 || m <= STATIC_COEFF_FRICTION)
+        if(m == 0.0 || (m <= STATIC_COEFF_FRICTION && magn(phys->vel) == 0.0) || phys->user_force_applied)
         {
             gravity.x = 0.0;
             gravity.y = 0.0;

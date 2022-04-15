@@ -34,10 +34,13 @@ typedef struct
 
     float gravity_factor; // 0.0 - 1.0
 
-    float particle_longevity;
+    float particle_lifetime;
+    float particle_scale;
+    float particle_atten;
+    int particle_burst_count;
 
     float life;
-    float life_max;
+    float life_max; // 0.0 is infinite
 
 } ParticleGenerator;
 

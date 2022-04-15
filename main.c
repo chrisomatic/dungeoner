@@ -183,7 +183,7 @@ void init()
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
     Vector pos = {1.0,18.0,1.0};
-    particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 1.0);
+    particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
