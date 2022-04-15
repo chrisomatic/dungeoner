@@ -47,19 +47,19 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 7.0;
+    float accel_force = 10.0;
     phys->max_linear_speed = player.walk_speed;
 
     if(player.run)
     {
-        accel_force = 10.0;
+        accel_force = 15.0;
         phys->max_linear_speed *= player.run_factor;
     }
 
     if(player.spectator)
     {
         phys = &player.camera.phys;
-        accel_force = 15.0;
+        accel_force = 20.0;
         phys->max_linear_speed = 60.0;
     }
 
@@ -85,7 +85,7 @@ static void update_player_physics()
         }
         else
         {
-            physics_add_kinetic_friction(phys, 0.50);
+            physics_add_kinetic_friction(phys, 0.80);
         }
 
         Vector3f user_force = {0.0,0.0,0.0};

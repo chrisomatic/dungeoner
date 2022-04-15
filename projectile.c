@@ -56,7 +56,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.z = 0.0;
             break;
         case PROJECTILE_ICE:
-            speed = 10.0;
+            speed = 5.0;
             proj->size = 5.0;
             proj->life_max = 5.0;
             proj->color.x = 0.6;
@@ -96,7 +96,7 @@ void projectile_update()
         physics_begin(&projectiles[i].phys);
         if(projectiles[i].type != PROJECTILE_FIREBALL)
             physics_add_gravity(&projectiles[i].phys, 1.0);
-        physics_add_kinetic_friction(&projectiles[i].phys, 0.50);
+        physics_add_kinetic_friction(&projectiles[i].phys, 0.80);
         physics_simulate(&projectiles[i].phys);
         
         projectiles[i].life += g_delta_t;
