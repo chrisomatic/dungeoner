@@ -160,7 +160,7 @@ void player_init()
     player.camera.lookat.z   = -1.0;
     player.camera.up.y       = 1.0;
 
-    player.height = 1.76; // meters
+    player.height = 1.50; // meters
     player.phys.mass = 62.0; // kg
     player.phys.max_linear_speed = 8.0; // m/s
     player.run_factor = 2.5;

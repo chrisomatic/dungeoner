@@ -8,6 +8,8 @@
 #include "log.h"
 #include "player.h"
 #include "light.h"
+#include "water.h"
+#include "settings.h"
 
 #include "gfx.h"
 
@@ -147,6 +149,213 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     glUseProgram(0);
 }
 
+#define WATER_REFLECTION_WIDTH  320
+#define WATER_REFLECTION_HEIGHT 180
+#define WATER_REFRACTION_WIDTH  1280
+#define WATER_REFRACTION_HEIGHT 720
+
+struct
+{
+    GLuint reflection_frame_buffer;
+    GLuint reflection_texture;
+    GLuint reflection_depth_buffer;
+
+    GLuint refraction_frame_buffer;
+    GLuint refraction_texture;
+    GLuint refraction_depth_texture;
+
+} water_info;
+
+static GLuint create_fbo()
+{
+    GLuint fbo;
+    glGenFramebuffers(1,&fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    return fbo;
+}
+
+static GLuint create_texture_attachment(int width, int height)
+{
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture,0);
+    return texture;
+}
+
+static GLuint create_depth_texture_attachment(int width, int height)
+{
+    GLuint texture;
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT32,1024,1024,0,GL_DEPTH_COMPONENT,GL_FLOAT, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture,0);
+    return texture;
+}
+
+static GLuint create_depth_buffer(int width, int height)
+{
+    GLuint buffer;
+    glGenRenderbuffers(1,&buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER,buffer);
+
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,1024,1024);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,buffer);
+    return buffer;
+}
+
+static void init_water()
+{
+    // reflection
+    water_info.reflection_frame_buffer = create_fbo();
+    water_info.reflection_texture = create_texture_attachment(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+    water_info.reflection_depth_buffer = create_depth_buffer(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+
+    // refraction
+    water_info.refraction_frame_buffer = create_fbo();
+    water_info.refraction_texture = create_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
+    water_info.refraction_depth_texture = create_depth_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
+}
+
+static void bind_frame_buffer(int frame_buffer, int width, int height)
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
+    glViewport(0,0,width,height);
+}
+
+void gfx_bind_reflection_frame_buffer()
+{
+    bind_frame_buffer(water_info.reflection_frame_buffer, WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+}
+
+void gfx_bind_refraction_frame_buffer()
+{
+    bind_frame_buffer(water_info.refraction_frame_buffer, WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
+}
+
+void gfx_unbind_frame_current_buffer()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glViewport(0,0,view_width,view_height);
+}
+
+GLuint gfx_get_water_reflection_texture()
+{
+    return water_info.reflection_texture;
+}
+
+void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
+{
+    glUseProgram(program_water);
+
+    Matrix world, view, proj, wvp;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+
+    //shader_set_int(program_water,"sampler",0);
+    shader_set_int(program_water,"wireframe",show_wireframe);
+    shader_set_mat4(program_water,"wvp",&wvp);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+#define MAX_GUI_ELEMENTS 10
+
+typedef struct
+{
+    GLuint texture;
+    Vector2f pos;
+    Vector2f scale;
+} GuiElement;
+
+GuiElement gui[MAX_GUI_ELEMENTS];
+int gui_count;
+
+GLuint gui_vao;
+
+static void init_gui_quad()
+{
+    float positions[] = {
+        -1.0, +1.0,
+        -1.0, -1.0,
+        +1.0, +1.0,
+        +1.0, -1.0
+    };
+
+}
+
+void gfx_add_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale)
+{
+    if(gui_count == MAX_GUI_ELEMENTS)
+    {
+        LOGW("Too many GUI elements. Failed to add.");
+        return;
+    }
+
+    gui[gui_count].texture = texture;
+
+    gui[gui_count].pos.x = pos->x;
+    gui[gui_count].pos.y = pos->y;
+
+    gui[gui_count].scale.x = scale->x;
+    gui[gui_count].scale.y = scale->y;
+
+    gui_count++;
+}
+
+void gfx_draw_gui()
+{
+    glBindVertexArray(gui_vao);
+    glEnableVertexAttribArray(0);
+
+    for(int i = 0; i < gui_count; ++i)
+    {
+        glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+    }
+
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+}
+
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, Vector3f *rot, Vector3f *sca)
 {
     glUseProgram(program_basic);
@@ -271,7 +480,6 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     {
         shader_set_vec3(program_basic,"model_color",color->x, color->y, color->z);
     }
-
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -631,4 +839,12 @@ void gfx_init(int width, int height)
     init_cube();
     init_skybox();
     init_debug();
+    init_gui_quad();
+    init_water();
+}
+
+void gfx_deinit(int width, int height)
+{
+    // @TODO
+    //glDeleteFramebuffers();
 }

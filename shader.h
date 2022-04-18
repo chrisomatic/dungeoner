@@ -9,6 +9,8 @@ extern GLuint program_terrain;
 extern GLuint program_text;
 extern GLuint program_debug;
 extern GLuint program_particle;
+extern GLuint program_water;
+extern GLuint program_gui;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);

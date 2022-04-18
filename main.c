@@ -22,6 +22,7 @@
 #include "util.h"
 #include "log.h"
 #include "text.h"
+#include "water.h"
 
 // =========================
 // Global Vars
@@ -107,6 +108,7 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
+        //printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();
@@ -135,11 +137,9 @@ void init()
     LOGI(" - Player.");
     player_init();
 
-    LOGI(" - Player.");
-    player_init();
-
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap_large.png");
+    terrain_build(&m_terrain, "textures/heightmap.png");
+    water_add_body(1.0,-20.0,1.0,100.0);
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human.obj");
@@ -204,7 +204,7 @@ void simulate()
     particles_update();
 }
 
-void render()
+void render_scene()
 {
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -214,8 +214,25 @@ void render()
     player_draw();
     projectile_draw();
     particles_draw();
+}
 
-    gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
+void render()
+{
+    gfx_bind_reflection_frame_buffer();
+    render_scene();
+    gfx_unbind_frame_current_buffer();
+
+    render_scene();
+    //water_draw_bodies();
+
+    // render UI
+    GLuint t_reflection = gfx_get_water_reflection_texture();
+    Vector pos = {0.0,-15.0, 0.0};
+    Vector rot = {0.0,0.0,0.0};
+    Vector sca = {1.0,1.0,1.0};
+
+    gfx_draw_quad(t_reflection,0,&pos,&rot,&sca);
+    //gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 
     //gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);
     //gfx_draw_cube(t_stone, player.phys.ground.b.x, player.phys.ground.b.y, player.phys.ground.b.z, 0.1);

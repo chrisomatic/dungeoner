@@ -23,6 +23,11 @@ typedef struct
     float x,y,z;
 } Vector3f;
 
+typedef struct
+{
+    float x,y,z,w;
+} Vector4f;
+
 typedef Vector3f Vector;
 
 typedef struct {float m[4][4];} Matrix;

@@ -26,4 +26,16 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale);
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();
 void gfx_draw_debug_lines(Vector* position, Vector* vel);
+void gfx_draw_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale);
 void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca);
+
+// water
+void gfx_bind_reflection_frame_buffer();
+void gfx_bind_refraction_frame_buffer();
+void gfx_unbind_frame_current_buffer();
+void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca);
+GLuint gfx_get_water_reflection_texture();
+
+// gui
+void gfx_add_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale);
+void gfx_draw_gui();

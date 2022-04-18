@@ -13,6 +13,7 @@ gcc main.c \
     text.c \
     timer.c \
     util.c \
+    water.c \
     window.c \
     -lglfw -lGLU -lGLEW -lGL -lm \
     -o dungeoner
