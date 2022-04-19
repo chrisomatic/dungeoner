@@ -4,7 +4,7 @@
 #include "terrain.h"
 #include "physics.h"
 
-#define STATIC_COEFF_FRICTION 0.40
+#define STATIC_COEFF_FRICTION 0.20
 
 void physics_begin(PhysicsObj* phys)
 {
@@ -68,7 +68,7 @@ void physics_add_gravity(PhysicsObj* phys, float gravity_factor)
         Vector v = {phys->ground.normal.x, 0.0, phys->ground.normal.z};
         float m = magn(v);
 
-        if(m == 0.0 || (m <= STATIC_COEFF_FRICTION && magn(phys->vel) == 0.0) || phys->user_force_applied)
+        if(m == 0.0 || (m <= STATIC_COEFF_FRICTION))
         {
             gravity.x = 0.0;
             gravity.y = 0.0;
@@ -127,7 +127,6 @@ void physics_add_air_friction(PhysicsObj* phys, float mu)
 
         physics_add_force(phys,friction.x, friction.y, friction.z);
     }
-
 }
 
 void physics_add_kinetic_friction(PhysicsObj* phys, float mu)
@@ -222,24 +221,6 @@ void physics_simulate(PhysicsObj* phys)
         {
             phys->vel.y = 0.0;
         }
-
-        /*
-        if(ABS(phys->vel.y) < 5.0)
-        {
-            // no bounce
-            phys->vel.y = 0.0;
-        }
-        else
-        {
-            // bounce
-            float m = magn(phys->vel);
-            float bounce_factor = 0.20*m;
-
-            phys->vel.x += bounce_factor*phys->ground.normal.x;
-            phys->vel.y = bounce_factor*phys->ground.normal.y;
-            phys->vel.z += bounce_factor*phys->ground.normal.z;
-        }
-        */
     }
 
     if(ABS(phys->vel.x) < 0.0001) phys->vel.x = 0.0;

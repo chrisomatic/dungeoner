@@ -2,6 +2,8 @@
 
 #include "gfx.h"
 
+#define GROUND_TOLERANCE 0.25
+
 typedef struct
 {
     Vector3f normal;

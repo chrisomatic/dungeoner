@@ -48,6 +48,7 @@ typedef struct
     bool left;
     bool right;
     bool jump;
+    bool jumped;
     bool run;
 
     bool primary_action;

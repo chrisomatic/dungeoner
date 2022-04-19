@@ -47,20 +47,20 @@ static void update_player_physics()
 
     PhysicsObj* phys = &player.phys;
 
-    float accel_force = 10.0;
+    float accel_force = 4.0;
     phys->max_linear_speed = player.walk_speed;
 
     if(player.run)
     {
-        accel_force = 15.0;
+        accel_force = 6.0;
         phys->max_linear_speed *= player.run_factor;
     }
 
     if(player.spectator)
     {
         phys = &player.camera.phys;
-        accel_force = 20.0;
-        phys->max_linear_speed = 60.0;
+        accel_force = 10.0;
+        phys->max_linear_speed = 20.0;
     }
 
     // zero out prior accel
@@ -70,7 +70,10 @@ static void update_player_physics()
 
     //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground.height);
 
-    if(player.spectator || phys->pos.y <= phys->ground.height)
+    if(player.jumped && phys->pos.y <= phys->ground.height)
+        player.jumped = false;
+
+    if(player.spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE) // tolerance to allow movement slightly above ground
     {
         // where the player is looking
         Vector3f lookat = {
@@ -79,20 +82,13 @@ static void update_player_physics()
             player.camera.lookat.z
         };
 
-        if(player.spectator)
-        {
-            physics_add_air_friction(phys, 0.80);
-        }
-        else
-        {
-            physics_add_kinetic_friction(phys, 0.80);
-        }
 
         Vector3f user_force = {0.0,0.0,0.0};
 
-        if(player.jump && !player.spectator)
+        if(player.jump && !player.jumped && !player.spectator)
         {
-            physics_add_force_y(phys,150.0);
+            physics_add_force_y(phys,250.0);
+            player.jumped = true;
         }
 
         if(player.forward)
@@ -135,11 +131,27 @@ static void update_player_physics()
             add(&user_force,right);
         }
 
+        bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
+
+        if(!user_force_applied)
+        {
+            // only apply friction when user isn't causing a force
+            if(player.spectator)
+            {
+                physics_add_air_friction(phys, 0.80);
+            }
+            else
+            {
+                physics_add_kinetic_friction(phys, 0.80);
+            }
+        }
+
         physics_add_force(phys,user_force.x, user_force.y, user_force.z);
     }
 
     if(!player.spectator)
         physics_add_gravity(phys,1.0);
+
 
     physics_simulate(phys);
 }
@@ -163,10 +175,10 @@ void player_init()
     player.height = 1.50; // meters
     player.phys.mass = 62.0; // kg
     player.phys.max_linear_speed = 8.0; // m/s
-    player.run_factor = 2.5;
-    player.walk_speed = 2.0; // m/s
+    player.run_factor = 2.0;
+    player.walk_speed = 4.5; // m/s
     player.spectator = false;
-    player.run = true;
+    player.run = false;
 
     Vector3f h_lookat = {player.camera.lookat.x,0.0,player.camera.lookat.z};
     normalize(&h_lookat);
@@ -189,8 +201,8 @@ void player_init()
     player.camera.angle_v = -DEG(asin(player.camera.lookat.y));
     
     player.phys.pos.x = 11.4;
-    player.phys.pos.y = 3.6;
-    player.phys.pos.z = 5.0;
+    player.phys.pos.y = 5.0;
+    player.phys.pos.z = 18.0;
 
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;

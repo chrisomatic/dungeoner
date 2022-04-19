@@ -1,67 +1,72 @@
 #include "common.h"
 #include "3dmath.h"
-#include "log.h"
+#include "gfx.h"
 #include "water.h"
 
-#define MAX_WATER_BODIES 10
+#define WATER_REFLECTION_WIDTH  1392
+#define WATER_REFLECTION_HEIGHT 783
+#define WATER_REFRACTION_WIDTH  1392
+#define WATER_REFRACTION_HEIGHT 783
 
-WaterBody water_bodies[MAX_WATER_BODIES];
-int water_body_count;
-
-void water_add_body(float x, float y, float z, float length)
+typedef struct
 {
-    if(water_body_count == MAX_WATER_BODIES)
-    {
-        LOGW("Can't add another water body, already at max (%d)", water_body_count);
-        return;
-    }
+    float height;
 
-    Vector center = {x,y,z};
-    float half_length = length / 2.0;
+    GLuint reflection_frame_buffer;
+    GLuint reflection_texture;
+    GLuint reflection_depth_buffer;
 
-    water_bodies[water_body_count].center.x = x;
-    water_bodies[water_body_count].center.y = y;
-    water_bodies[water_body_count].center.z = z;
+    GLuint refraction_frame_buffer;
+    GLuint refraction_texture;
+    GLuint refraction_depth_texture;
 
-    water_bodies[water_body_count].length = length;
+} WaterBody;
 
-    water_bodies[water_body_count].a.x = center.x - half_length;
-    water_bodies[water_body_count].a.y = center.y;
-    water_bodies[water_body_count].a.z = center.z - half_length;
+static WaterBody water_body;
 
-    water_bodies[water_body_count].b.x = center.x + half_length;
-    water_bodies[water_body_count].b.y = center.y;
-    water_bodies[water_body_count].b.z = center.z - half_length;
+void water_init(float height)
+{
+    water_body.height = height;
 
-    water_bodies[water_body_count].c.x = center.x + half_length;
-    water_bodies[water_body_count].c.y = center.y;
-    water_bodies[water_body_count].c.z = center.z + half_length;
+    // reflection
+    water_body.reflection_frame_buffer = gfx_create_fbo();
+    water_body.reflection_texture = gfx_create_texture_attachment(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+    water_body.reflection_depth_buffer = gfx_create_depth_buffer(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
 
-    water_bodies[water_body_count].d.x = center.x - half_length;
-    water_bodies[water_body_count].d.y = center.y;
-    water_bodies[water_body_count].d.z = center.z + half_length;
-
-
-    water_body_count++;
+    // refraction
+    water_body.refraction_frame_buffer = gfx_create_fbo();
+    water_body.refraction_texture = gfx_create_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
+    water_body.refraction_depth_texture = gfx_create_depth_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
 }
 
-float water_get_height(int index)
+void water_deinit()
 {
-    return water_bodies[index].center.y;
+    glDeleteFramebuffers(1, &water_body.reflection_frame_buffer);
+    glDeleteFramebuffers(1, &water_body.refraction_frame_buffer);
 }
 
-void water_draw_bodies()
+float water_get_height()
 {
-    for(int i = 0; i < water_body_count; ++i)
-    {
-        WaterBody* w = &water_bodies[i];
+    return water_body.height;
+}
 
-        Vector pos = {w->center.x, -w->center.y, w->center.z};
-        Vector rot = {-90.0,0.0,0.0};
-        Vector sca = {w->length, w->length, w->length};
+void water_draw()
+{
+    WaterBody* w = &water_body;
 
-        Vector color = {0.0,0.0,1.0};
-        gfx_draw_water(&pos,&rot,&sca);
+    Vector pos = {0.0, -w->height, 0.0};
+    Vector rot = {-90.0,0.0,0.0};
+    Vector sca = {128.0, 128.0, 128.0};
 
-    }
+    gfx_draw_water(&pos,&rot,&sca, w->reflection_texture, w->refraction_texture);
+}
+
+void water_bind_reflection_fbo()
+{
+    gfx_bind_frame_buffer(water_body.reflection_frame_buffer,WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+}
+
+void water_bind_refraction_fbo()
+{
+    gfx_bind_frame_buffer(water_body.refraction_frame_buffer,WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
 }

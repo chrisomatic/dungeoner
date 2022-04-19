@@ -152,24 +152,7 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     glUseProgram(0);
 }
 
-#define WATER_REFLECTION_WIDTH  640
-#define WATER_REFLECTION_HEIGHT 360
-#define WATER_REFRACTION_WIDTH  1392
-#define WATER_REFRACTION_HEIGHT 783
-
-struct
-{
-    GLuint reflection_frame_buffer;
-    GLuint reflection_texture;
-    GLuint reflection_depth_buffer;
-
-    GLuint refraction_frame_buffer;
-    GLuint refraction_texture;
-    GLuint refraction_depth_texture;
-
-} water_info;
-
-static GLuint create_fbo()
+GLuint gfx_create_fbo()
 {
     GLuint fbo;
     glGenFramebuffers(1,&fbo);
@@ -178,7 +161,7 @@ static GLuint create_fbo()
     return fbo;
 }
 
-static GLuint create_texture_attachment(int width, int height)
+GLuint gfx_create_texture_attachment(int width, int height)
 {
     GLuint texture;
     glGenTextures(1, &texture);
@@ -192,13 +175,13 @@ static GLuint create_texture_attachment(int width, int height)
     return texture;
 }
 
-static GLuint create_depth_texture_attachment(int width, int height)
+GLuint gfx_create_depth_texture_attachment(int width, int height)
 {
     GLuint texture;
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT32,1024,1024,0,GL_DEPTH_COMPONENT,GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT32,width,height,0,GL_DEPTH_COMPONENT,GL_FLOAT, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -207,45 +190,22 @@ static GLuint create_depth_texture_attachment(int width, int height)
     return texture;
 }
 
-static GLuint create_depth_buffer(int width, int height)
+GLuint gfx_create_depth_buffer(int width, int height)
 {
     GLuint buffer;
     glGenRenderbuffers(1,&buffer);
     glBindRenderbuffer(GL_RENDERBUFFER,buffer);
 
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,1024,1024);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,width,height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,buffer);
     return buffer;
 }
 
-static void init_water()
-{
-    // reflection
-    water_info.reflection_frame_buffer = create_fbo();
-    water_info.reflection_texture = create_texture_attachment(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
-    water_info.reflection_depth_buffer = create_depth_buffer(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
-
-    // refraction
-    water_info.refraction_frame_buffer = create_fbo();
-    water_info.refraction_texture = create_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
-    water_info.refraction_depth_texture = create_depth_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
-}
-
-static void bind_frame_buffer(int frame_buffer, int width, int height)
+void gfx_bind_frame_buffer(GLuint frame_buffer, int width, int height)
 {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER,frame_buffer);
     glViewport(0,0,width,height);
-}
-
-void gfx_bind_reflection_frame_buffer()
-{
-    bind_frame_buffer(water_info.reflection_frame_buffer, WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
-}
-
-void gfx_bind_refraction_frame_buffer()
-{
-    bind_frame_buffer(water_info.refraction_frame_buffer, WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
 }
 
 void gfx_unbind_frame_current_buffer()
@@ -254,17 +214,7 @@ void gfx_unbind_frame_current_buffer()
     glViewport(0,0,view_width,view_height);
 }
 
-GLuint gfx_get_water_reflection_texture()
-{
-    return water_info.reflection_texture;
-}
-
-GLuint gfx_get_water_refraction_texture()
-{
-    return water_info.refraction_texture;
-}
-
-void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
+void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca, GLuint reflection_texture, GLuint refraction_texture)
 {
     glUseProgram(program_water);
 
@@ -279,10 +229,10 @@ void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
     shader_set_mat4(program_water,"wvp",&wvp);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, water_info.reflection_texture);
+    glBindTexture(GL_TEXTURE_2D, reflection_texture);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, water_info.refraction_texture);
+    glBindTexture(GL_TEXTURE_2D, refraction_texture);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -310,64 +260,6 @@ void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
 
     glBindVertexArray(0);
     glUseProgram(0);
-}
-
-#define MAX_GUI_ELEMENTS 10
-
-typedef struct
-{
-    GLuint texture;
-    Vector2f pos;
-    Vector2f scale;
-} GuiElement;
-
-GuiElement gui[MAX_GUI_ELEMENTS];
-int gui_count;
-
-GLuint gui_vao;
-
-static void init_gui_quad()
-{
-    float positions[] = {
-        -1.0, +1.0,
-        -1.0, -1.0,
-        +1.0, +1.0,
-        +1.0, -1.0
-    };
-
-}
-
-void gfx_add_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale)
-{
-    if(gui_count == MAX_GUI_ELEMENTS)
-    {
-        LOGW("Too many GUI elements. Failed to add.");
-        return;
-    }
-
-    gui[gui_count].texture = texture;
-
-    gui[gui_count].pos.x = pos->x;
-    gui[gui_count].pos.y = pos->y;
-
-    gui[gui_count].scale.x = scale->x;
-    gui[gui_count].scale.y = scale->y;
-
-    gui_count++;
-}
-
-void gfx_draw_gui()
-{
-    glBindVertexArray(gui_vao);
-    glEnableVertexAttribArray(0);
-
-    for(int i = 0; i < gui_count; ++i)
-    {
-        glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-    }
-
-    glDisableVertexAttribArray(0);
-    glBindVertexArray(0);
 }
 
 void gfx_enable_clipping(float x, float y, float z, float w)
@@ -444,35 +336,6 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
 
 
     shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
-
-    /*
-    Matrix world, view, proj, wvp, wv;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
-    get_wv(&world, &view, &wv);
-
-    shader_set_int(program_basic,"sampler",0);
-    shader_set_int(program_basic,"wireframe",show_wireframe);
-    shader_set_mat4(program_basic,"wv",&wv);
-    shader_set_mat4(program_basic,"wvp",&wvp);
-    shader_set_mat4(program_basic,"world",&world);
-    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
-    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
-    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
-    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
-    shader_set_vec3(program_basic,"sky_color",0.7, 0.8, 0.9);
-
-    if(show_fog)
-    {
-        shader_set_float(program_basic,"fog_density",fog_density);
-        shader_set_float(program_basic,"fog_gradient",fog_gradient);
-    }
-    else
-    {
-        shader_set_float(program_basic,"fog_density",0.0);
-        shader_set_float(program_basic,"fog_gradient",1.0);
-    }
-    */
 
     if(texture)
     {
@@ -819,12 +682,9 @@ void gfx_init(int width, int height)
     init_cube();
     init_skybox();
     init_debug();
-    init_gui_quad();
-    init_water();
 }
 
 void gfx_deinit(int width, int height)
 {
     // @TODO
-    //glDeleteFramebuffers();
 }

@@ -1,13 +1,10 @@
 #pragma once
 
-typedef struct
-{
-    Vector3f center;
-    Vector3f a,b,c,d;
-    Vector4f plane;
-    float length;
-} WaterBody;
+void water_init(float height);
+void water_deinit();
 
-void water_add_body(float x, float y, float z, float length);
-void water_draw_bodies();
-float water_get_height(int index);
+void water_bind_reflection_fbo();
+void water_bind_refraction_fbo();
+void water_draw();
+
+float water_get_height();

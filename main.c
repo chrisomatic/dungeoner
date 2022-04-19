@@ -139,7 +139,9 @@ void init()
 
     LOGI(" - Terrain.");
     terrain_build(&m_terrain, "textures/heightmap.png");
-    water_add_body(1.0,5.0,1.0,100.0);
+
+    LOGI(" - Water.");
+    water_init(5.0);
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human.obj");
@@ -215,12 +217,12 @@ void render_scene()
     particles_draw();
 }
 
-void render()
+void render_water_textures()
 {
-    float water_height = water_get_height(0);
+    float water_height = water_get_height();
 
     // pass 1: render reflection
-    gfx_bind_reflection_frame_buffer();
+    water_bind_reflection_fbo();
 
     float distance = 2 * (player.camera.phys.pos.y - water_height);
 
@@ -231,41 +233,28 @@ void render()
     gfx_enable_clipping(0,-1,0,-water_height);
     render_scene();
     gfx_unbind_frame_current_buffer();
+
     player.camera.phys.pos.y += distance;
     player.camera.angle_v *= -1;
     update_camera_rotation();
 
     // pass 2: render refraction
-    gfx_bind_refraction_frame_buffer();
+    water_bind_refraction_fbo();
     gfx_enable_clipping(0,1,0,water_height);
     render_scene();
     gfx_unbind_frame_current_buffer();
 
-    // pass 3: actual scene
     gfx_disable_clipping();
+}
+
+void render()
+{
+    render_water_textures();
     render_scene();
-    water_draw_bodies();
+    water_draw();
 
     player_draw();
 
-    // render UI
-    GLuint t_reflection = gfx_get_water_reflection_texture();
-    GLuint t_refraction = gfx_get_water_refraction_texture();
-
-    Vector pos1 = {-8,-6.0, 0};
-    Vector pos2 = {-11,-6.0, 0};
-    Vector rot = {0.0,0.0,0.0};
-    Vector sca = {1.0,1.0,1.0};
-
-    gfx_draw_quad(t_reflection,0,&pos1,&rot,&sca);
-    gfx_draw_quad(t_refraction,0,&pos2,&rot,&sca);
-
-    //gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
-
-    //gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);
-    //gfx_draw_cube(t_stone, player.phys.ground.b.x, player.phys.ground.b.y, player.phys.ground.b.z, 0.1);
-    //gfx_draw_cube(t_stone, player.phys.ground.c.x, player.phys.ground.c.y, player.phys.ground.c.z, 0.1);
-    
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};
     //text_print(10.0f,25.0f,"Dungeoner",color);
