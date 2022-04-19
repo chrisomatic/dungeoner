@@ -17,7 +17,7 @@ Player player = {0};
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
 
-static void update_camera_rotation()
+void update_camera_rotation()
 {
    // const Vector3f v_axis = {0.0, 1.0, 0.0};
 
@@ -187,6 +187,10 @@ void player_init()
     }
 
     player.camera.angle_v = -DEG(asin(player.camera.lookat.y));
+    
+    player.phys.pos.x = 11.4;
+    player.phys.pos.y = 3.6;
+    player.phys.pos.z = 5.0;
 
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;

@@ -19,4 +19,7 @@ void shader_deinit();
 void shader_set_int(GLuint program, const char* name, int i);
 void shader_set_float(GLuint program, const char* name, float f);
 void shader_set_vec3(GLuint program, const char* name, float x, float y, float z);
+void shader_set_vec4(GLuint program, const char* name, float x, float y, float z, float w);
 void shader_set_mat4(GLuint program, const char* name, Matrix* mat);
+
+void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane);

@@ -61,3 +61,4 @@ void player_update();
 void player_draw();
 void player_update_camera_angle(int cursor_x, int cursor_y);
 void player_snap_camera();
+void update_camera_rotation();

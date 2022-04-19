@@ -14,6 +14,7 @@ typedef struct
 
 extern int show_wireframe;
 extern int show_fog;
+
 extern GLuint vao;
 
 void gfx_init(int width, int height);
@@ -29,12 +30,17 @@ void gfx_draw_debug_lines(Vector* position, Vector* vel);
 void gfx_draw_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale);
 void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca);
 
+void gfx_enable_clipping(float x, float y, float z, float w);
+void gfx_disable_clipping();
+
 // water
 void gfx_bind_reflection_frame_buffer();
 void gfx_bind_refraction_frame_buffer();
 void gfx_unbind_frame_current_buffer();
 void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca);
+
 GLuint gfx_get_water_reflection_texture();
+GLuint gfx_get_water_refraction_texture();
 
 // gui
 void gfx_add_gui_element(GLuint texture, Vector2f* pos, Vector2f* scale);

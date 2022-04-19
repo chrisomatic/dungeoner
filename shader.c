@@ -5,8 +5,11 @@
 
 #include <GL/glew.h>
 
+#include "common.h"
 #include "3dmath.h"
+#include "light.h"
 #include "shader.h"
+#include "gfx.h"
 #include "log.h"
 
 GLuint program_basic;
@@ -24,7 +27,7 @@ void shader_load_all()
 {
     shader_build_program(&program_basic,"shaders/basic.vert.glsl","shaders/basic.frag.glsl");
     shader_build_program(&program_sky,"shaders/skybox.vert.glsl","shaders/skybox.frag.glsl");
-    shader_build_program(&program_terrain,"shaders/terrain.vert.glsl","shaders/terrain.frag.glsl");
+    shader_build_program(&program_terrain,"shaders/basic.vert.glsl","shaders/terrain.frag.glsl");
     shader_build_program(&program_text,"shaders/text.vert.glsl","shaders/text.frag.glsl");
     shader_build_program(&program_debug,"shaders/debug.vert.glsl","shaders/debug.frag.glsl");
     shader_build_program(&program_particle,"shaders/particle.vert.glsl","shaders/particle.frag.glsl");
@@ -72,6 +75,44 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
         exit(1);
     }
 
+}
+
+void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane)
+{
+    Matrix world, view, proj, wv, wvp;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+
+    get_wvp(&world, &view, &proj, &wvp);
+    get_wv(&world, &view, &wv);
+
+    if(program == program_basic)
+    {
+        shader_set_int(program,"sampler",0);
+        shader_set_int(program,"wireframe",show_wireframe);
+        shader_set_mat4(program,"wv",&wv);
+        shader_set_mat4(program,"wvp",&wvp);
+        shader_set_mat4(program,"world",&world);
+        shader_set_vec3(program,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+        shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+        shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
+        if(clip_plane)
+            shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);
+
+        shader_set_float(program,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+        shader_set_float(program,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+
+        if(show_fog)
+        {
+            shader_set_float(program,"fog_density",fog_density);
+            shader_set_float(program,"fog_gradient",fog_gradient);
+        }
+        else
+        {
+            shader_set_float(program,"fog_density",0.0);
+            shader_set_float(program,"fog_gradient",1.0);
+        }
+
+    }
 }
 
 static int read_file(const char* filepath, char* ret_buf, uint32_t max_buffer_size)
@@ -160,6 +201,11 @@ void shader_set_float(GLuint program, const char* name, float f)
 void shader_set_vec3(GLuint program, const char* name, float x, float y, float z)
 {
     glUniform3f(glGetUniformLocation(program, name), x,y,z);
+}
+
+void shader_set_vec4(GLuint program, const char* name, float x, float y, float z, float w)
+{
+    glUniform4f(glGetUniformLocation(program, name), x,y,z,w);
 }
 void shader_set_mat4(GLuint program, const char* name, Matrix* mat)
 {

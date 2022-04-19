@@ -139,7 +139,7 @@ void init()
 
     LOGI(" - Terrain.");
     terrain_build(&m_terrain, "textures/heightmap.png");
-    water_add_body(1.0,-20.0,1.0,100.0);
+    water_add_body(1.0,5.0,1.0,100.0);
 
     LOGI(" - Models.");
     model_import(&m_human,"models/human.obj");
@@ -184,7 +184,7 @@ void init()
 
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
-    Vector pos = {1.0,20.0,1.0};
+    Vector pos = {1.0,10.0,1.0};
     particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
 
     LOGI(" - Renderer.");
@@ -211,27 +211,55 @@ void render_scene()
 
     gfx_draw_sky();
     terrain_draw();
-    player_draw();
     projectile_draw();
     particles_draw();
 }
 
 void render()
 {
+    float water_height = water_get_height(0);
+
+    // pass 1: render reflection
     gfx_bind_reflection_frame_buffer();
+
+    float distance = 2 * (player.camera.phys.pos.y - water_height);
+
+    player.camera.phys.pos.y -= distance;
+    player.camera.angle_v *= -1;
+    update_camera_rotation();
+
+    gfx_enable_clipping(0,-1,0,-water_height);
+    render_scene();
+    gfx_unbind_frame_current_buffer();
+    player.camera.phys.pos.y += distance;
+    player.camera.angle_v *= -1;
+    update_camera_rotation();
+
+    // pass 2: render refraction
+    gfx_bind_refraction_frame_buffer();
+    gfx_enable_clipping(0,1,0,water_height);
     render_scene();
     gfx_unbind_frame_current_buffer();
 
+    // pass 3: actual scene
+    gfx_disable_clipping();
     render_scene();
-    //water_draw_bodies();
+    water_draw_bodies();
+
+    player_draw();
 
     // render UI
     GLuint t_reflection = gfx_get_water_reflection_texture();
-    Vector pos = {0.0,-15.0, 0.0};
+    GLuint t_refraction = gfx_get_water_refraction_texture();
+
+    Vector pos1 = {-8,-6.0, 0};
+    Vector pos2 = {-11,-6.0, 0};
     Vector rot = {0.0,0.0,0.0};
     Vector sca = {1.0,1.0,1.0};
 
-    gfx_draw_quad(t_reflection,0,&pos,&rot,&sca);
+    gfx_draw_quad(t_reflection,0,&pos1,&rot,&sca);
+    gfx_draw_quad(t_refraction,0,&pos2,&rot,&sca);
+
     //gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 
     //gfx_draw_cube(t_stone, player.phys.ground.a.x, player.phys.ground.a.y, player.phys.ground.a.z, 0.1);

@@ -23,6 +23,8 @@ GLuint sky_vao;
 int show_wireframe = 0;
 int show_fog = 0;
 
+static Vector4f clip_plane;
+
 static Mesh quad = {};
 static Mesh cube = {};
 static Mesh sky  = {};
@@ -47,7 +49,7 @@ void gfx_draw_sky()
     glUseProgram(program_sky);
 
     shader_set_int(program_sky,"skybox",0);
-    shader_set_int(program_basic, "wireframe", show_wireframe);
+    shader_set_int(program_sky, "wireframe", show_wireframe);
 
     // @NEG
     Vector3f pos = {
@@ -99,6 +101,7 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     shader_set_float(program_terrain,"dl.ambient_intensity",sunlight.base.ambient_intensity);
     shader_set_float(program_terrain,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
     shader_set_vec3(program_terrain,"sky_color",0.7, 0.8, 0.9);
+    shader_set_vec4(program_terrain,"clip_plane",clip_plane.x, clip_plane.y, clip_plane.z, clip_plane.w);
 
     if(show_fog)
     {
@@ -149,10 +152,10 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     glUseProgram(0);
 }
 
-#define WATER_REFLECTION_WIDTH  320
-#define WATER_REFLECTION_HEIGHT 180
-#define WATER_REFRACTION_WIDTH  1280
-#define WATER_REFRACTION_HEIGHT 720
+#define WATER_REFLECTION_WIDTH  640
+#define WATER_REFLECTION_HEIGHT 360
+#define WATER_REFRACTION_WIDTH  1392
+#define WATER_REFRACTION_HEIGHT 783
 
 struct
 {
@@ -256,6 +259,11 @@ GLuint gfx_get_water_reflection_texture()
     return water_info.reflection_texture;
 }
 
+GLuint gfx_get_water_refraction_texture()
+{
+    return water_info.refraction_texture;
+}
+
 void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
 {
     glUseProgram(program_water);
@@ -264,11 +272,17 @@ void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca)
     get_transforms(pos, rot, sca, &world, &view, &proj);
     get_wvp(&world, &view, &proj, &wvp);
 
-    //shader_set_int(program_water,"sampler",0);
+    shader_set_int(program_water,"reflection_texture",0);
+    shader_set_int(program_water,"refraction_texture",1);
+
     shader_set_int(program_water,"wireframe",show_wireframe);
     shader_set_mat4(program_water,"wvp",&wvp);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, water_info.reflection_texture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, water_info.refraction_texture);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -356,36 +370,26 @@ void gfx_draw_gui()
     glBindVertexArray(0);
 }
 
+void gfx_enable_clipping(float x, float y, float z, float w)
+{
+    glEnable(GL_CLIP_DISTANCE0);
+
+    clip_plane.x = x;
+    clip_plane.y = y;
+    clip_plane.z = z;
+    clip_plane.w = w;
+}
+
+void gfx_disable_clipping()
+{
+    glDisable(GL_CLIP_DISTANCE0);
+}
+
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, Vector3f *rot, Vector3f *sca)
 {
     glUseProgram(program_basic);
 
-    Matrix world, view, proj, wvp, wv;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
-    get_wv(&world, &view, &wv);
-
-    shader_set_int(program_basic,"sampler",0);
-    shader_set_int(program_basic,"wireframe",show_wireframe);
-    shader_set_mat4(program_basic,"wv",&wv);
-    shader_set_mat4(program_basic,"wvp",&wvp);
-    shader_set_mat4(program_basic,"world",&world);
-    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
-    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
-    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
-    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
-    shader_set_vec3(program_basic,"sky_color",0.7, 0.8, 0.9);
-
-    if(show_fog)
-    {
-        shader_set_float(program_basic,"fog_density",fog_density);
-        shader_set_float(program_basic,"fog_gradient",fog_gradient);
-    }
-    else
-    {
-        shader_set_float(program_basic,"fog_density",0.0);
-        shader_set_float(program_basic,"fog_gradient",1.0);
-    }
+    shader_set_variables(program_basic,pos,rot,sca,&clip_plane);
 
     if(texture)
     {
@@ -438,6 +442,10 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
 {
     glUseProgram(program_basic);
 
+
+    shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
+
+    /*
     Matrix world, view, proj, wvp, wv;
     get_transforms(pos, rot, sca, &world, &view, &proj);
     get_wvp(&world, &view, &proj, &wvp);
@@ -464,6 +472,7 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
         shader_set_float(program_basic,"fog_density",0.0);
         shader_set_float(program_basic,"fog_gradient",1.0);
     }
+    */
 
     if(texture)
     {
@@ -585,37 +594,7 @@ void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {scale,scale,scale};
 
-    //printf("cube pos: %f %f %f\n",pos.x,pos.y,pos.z);
-
-    Matrix world, view, proj, wvp;
-    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
-
-    /*
-    printf("cube wvp: %f %f %f %f\n", wvp->m[0][0], wvp->m[1][0], wvp->m[2][0], wvp->m[3][0]);
-    printf("          %f %f %f %f\n", wvp->m[0][1], wvp->m[1][1], wvp->m[2][1], wvp->m[3][1]);
-    printf("          %f %f %f %f\n", wvp->m[0][2], wvp->m[1][2], wvp->m[2][2], wvp->m[3][2]);
-    printf("          %f %f %f %f\n", wvp->m[0][3], wvp->m[1][3], wvp->m[2][3], wvp->m[3][3]);
-    */
-
-    shader_set_mat4(program_basic,"wvp",&wvp);
-    shader_set_int(program_basic, "wireframe", show_wireframe);
-    shader_set_mat4(program_basic,"world",&world);
-    shader_set_vec3(program_basic,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
-    shader_set_vec3(program_basic,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
-    shader_set_float(program_basic,"dl.ambient_intensity",sunlight.base.ambient_intensity);
-    shader_set_float(program_basic,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
-
-    if(show_fog)
-    {
-        shader_set_float(program_basic,"fog_density",fog_density);
-        shader_set_float(program_basic,"fog_gradient",fog_gradient);
-    }
-    else
-    {
-        shader_set_float(program_basic,"fog_density",0.0);
-        shader_set_float(program_basic,"fog_gradient",1.0);
-    }
+    shader_set_variables(program_basic,&pos,&rot,&sca, &clip_plane);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -821,6 +800,7 @@ void gfx_init(int width, int height)
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_CLIP_DISTANCE0);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

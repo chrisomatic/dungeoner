@@ -15,11 +15,18 @@ uniform mat4 world;
 uniform float fog_density;
 uniform float fog_gradient;
 
+uniform vec4 clip_plane;
+
 void main()
 {
+
     tex_coord0 = tex_coord;
-    gl_Position = wvp * vec4(position,1.0);
     normal0 = (world * vec4(normal,0.0)).xyz;
+
+    vec4 world_pos = world * vec4(position,1.0);
+
+    gl_ClipDistance[0] = dot(world_pos,clip_plane);
+    gl_Position = wvp *vec4(position,1.0);
 
     // calculate visibility
     vec4 position_rel_to_camera = wv*vec4(position,1.0);
@@ -27,4 +34,5 @@ void main()
     float dist = length(position_rel_to_camera.xyz);
     visibility = exp(-pow((dist*fog_density),fog_gradient));
     visibility = clamp(visibility, 0.0,1.0);
+
 }

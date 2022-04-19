@@ -41,9 +41,14 @@ void water_add_body(float x, float y, float z, float length)
     water_bodies[water_body_count].d.y = center.y;
     water_bodies[water_body_count].d.z = center.z + half_length;
 
+
     water_body_count++;
 }
 
+float water_get_height(int index)
+{
+    return water_bodies[index].center.y;
+}
 
 void water_draw_bodies()
 {
@@ -51,7 +56,7 @@ void water_draw_bodies()
     {
         WaterBody* w = &water_bodies[i];
 
-        Vector pos = {w->center.x, w->center.y, w->center.z};
+        Vector pos = {w->center.x, -w->center.y, w->center.z};
         Vector rot = {-90.0,0.0,0.0};
         Vector sca = {w->length, w->length, w->length};
 

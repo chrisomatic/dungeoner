@@ -10,3 +10,4 @@ typedef struct
 
 void water_add_body(float x, float y, float z, float length);
 void water_draw_bodies();
+float water_get_height(int index);

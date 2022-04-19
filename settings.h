@@ -1,7 +1,7 @@
 #pragma once
 
-#define STARTING_VIEW_WIDTH   1380
-#define STARTING_VIEW_HEIGHT  768
+#define STARTING_VIEW_WIDTH   1392
+#define STARTING_VIEW_HEIGHT  783
 
 #define ASPECT_NUM 16.0f
 #define ASPECT_DEM  9.0f
