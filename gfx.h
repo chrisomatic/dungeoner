@@ -2,6 +2,7 @@
 
 #include <GL/glew.h>
 #include "3dmath.h"
+#include "water.h"
 
 typedef struct
 {
@@ -41,4 +42,4 @@ void gfx_bind_frame_buffer(GLuint frame_buffer,int width, int height);
 void gfx_unbind_frame_current_buffer();
 
 // water
-void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca, GLuint reflection_texture, GLuint refraction_texture);
+void gfx_draw_water(WaterBody* water);

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "3dmath.h"
 #include "gfx.h"
+#include "util.h"
 #include "water.h"
 
 #define WATER_REFLECTION_WIDTH  1392
@@ -8,19 +9,7 @@
 #define WATER_REFRACTION_WIDTH  1392
 #define WATER_REFRACTION_HEIGHT 783
 
-typedef struct
-{
-    float height;
-
-    GLuint reflection_frame_buffer;
-    GLuint reflection_texture;
-    GLuint reflection_depth_buffer;
-
-    GLuint refraction_frame_buffer;
-    GLuint refraction_texture;
-    GLuint refraction_depth_texture;
-
-} WaterBody;
+#define WATER_WAVE_SPEED 0.03
 
 static WaterBody water_body;
 
@@ -37,6 +26,14 @@ void water_init(float height)
     water_body.refraction_frame_buffer = gfx_create_fbo();
     water_body.refraction_texture = gfx_create_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
     water_body.refraction_depth_texture = gfx_create_depth_texture_attachment(WATER_REFRACTION_WIDTH, WATER_REFRACTION_HEIGHT);
+
+    water_body.dudv_map = load_texture("textures/water_dudv.png");
+
+    water_body.wave_move_factor = 0.0;
+
+    water_body.pos.x = 0.0; water_body.pos.y = -height; water_body.pos.z = 0.0;
+    water_body.rot.x = -90.0; water_body.rot.y = 0.0; water_body.rot.z = 0.0;
+    water_body.sca.x = 128.0; water_body.sca.y = 128.0; water_body.sca.z = 128.0;
 }
 
 void water_deinit()
@@ -50,15 +47,14 @@ float water_get_height()
     return water_body.height;
 }
 
+void water_update()
+{
+    water_body.wave_move_factor += (WATER_WAVE_SPEED * g_delta_t);
+}
+
 void water_draw()
 {
-    WaterBody* w = &water_body;
-
-    Vector pos = {0.0, -w->height, 0.0};
-    Vector rot = {-90.0,0.0,0.0};
-    Vector sca = {128.0, 128.0, 128.0};
-
-    gfx_draw_water(&pos,&rot,&sca, w->reflection_texture, w->refraction_texture);
+    gfx_draw_water(&water_body);
 }
 
 void water_bind_reflection_fbo()

@@ -204,6 +204,7 @@ void simulate()
     player_update();
     projectile_update();
     particles_update();
+    water_update();
 }
 
 void render_scene()

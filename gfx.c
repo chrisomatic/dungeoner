@@ -214,33 +214,40 @@ void gfx_unbind_frame_current_buffer()
     glViewport(0,0,view_width,view_height);
 }
 
-void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca, GLuint reflection_texture, GLuint refraction_texture)
+void gfx_draw_water(WaterBody* water)
 {
     glUseProgram(program_water);
 
     Matrix world, view, proj, wvp;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_transforms(&water->pos, &water->rot, &water->sca, &world, &view, &proj);
     get_wvp(&world, &view, &proj, &wvp);
 
     shader_set_int(program_water,"reflection_texture",0);
     shader_set_int(program_water,"refraction_texture",1);
+    shader_set_int(program_water,"dudv_map",2);
+    shader_set_float(program_water,"wave_move_factor",water->wave_move_factor);
 
     shader_set_int(program_water,"wireframe",show_wireframe);
     shader_set_mat4(program_water,"wvp",&wvp);
+    shader_set_mat4(program_water,"world",&world);
+    shader_set_vec3(program_water,"camera_pos",player.camera.phys.pos.x, player.camera.phys.pos.y, player.camera.phys.pos.z);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, reflection_texture);
+    glBindTexture(GL_TEXTURE_2D, water->reflection_texture);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, refraction_texture);
+    glBindTexture(GL_TEXTURE_2D, water->refraction_texture);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, water->dudv_map);
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    //glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
 
@@ -256,7 +263,7 @@ void gfx_draw_water(Vector* pos, Vector* rot, Vector* sca, GLuint reflection_tex
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    //glDisableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glUseProgram(0);
