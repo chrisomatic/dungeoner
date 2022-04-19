@@ -9,7 +9,7 @@
 #define WATER_REFRACTION_WIDTH  1392
 #define WATER_REFRACTION_HEIGHT 783
 
-#define WATER_WAVE_SPEED 0.03
+#define WATER_WAVE_SPEED 0.02
 
 static WaterBody water_body;
 
