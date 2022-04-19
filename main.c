@@ -108,7 +108,7 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
-        //printf("fps: %f\n",1.0/(t1-t0));
+        printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();

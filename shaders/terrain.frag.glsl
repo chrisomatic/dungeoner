@@ -30,7 +30,7 @@ void main() {
     }
     else
     {
-        vec2 tiled_coords = tex_coord0 * 100.0;
+        vec2 tiled_coords = tex_coord0 * 32.0;
 
         vec4 blend_map_color = texture2D(blend_map,tex_coord0);
         float blend_map_color_total = blend_map_color.r + blend_map_color.g + blend_map_color.b;
