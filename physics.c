@@ -192,6 +192,7 @@ void physics_simulate(PhysicsObj* phys)
     phys->pos.y += ((phys->vel.y + v0.y)/2.0)*g_delta_t;
     phys->pos.z += ((phys->vel.z + v0.z)/2.0)*g_delta_t;
 
+
     // set collision to uncollided initially
     phys->collided = false;
 
@@ -211,7 +212,7 @@ void physics_simulate(PhysicsObj* phys)
 
             float bounce_factor = 0.20;
 
-            LOGI("Ground Collision! v0: %f %f %f, v1: %f %f %f, angle: %f, bounce_factor: %f",phys->vel.x, phys->vel.y, phys->vel.z,reflection_vel.x,reflection_vel.y, reflection_vel.z, DEG(theta), bounce_factor);
+            //LOGI("Ground Collision! v0: %f %f %f, v1: %f %f %f, angle: %f, bounce_factor: %f",phys->vel.x, phys->vel.y, phys->vel.z,reflection_vel.x,reflection_vel.y, reflection_vel.z, DEG(theta), bounce_factor);
 
             phys->vel.x += bounce_factor*reflection_vel.x;
             phys->vel.y = bounce_factor*reflection_vel.y;
@@ -226,6 +227,7 @@ void physics_simulate(PhysicsObj* phys)
     if(ABS(phys->vel.x) < 0.0001) phys->vel.x = 0.0;
     if(ABS(phys->vel.y) < 0.0001) phys->vel.y = 0.0;
     if(ABS(phys->vel.z) < 0.0001) phys->vel.z = 0.0;
+
 }
 
 void physics_print(PhysicsObj* phys, bool force)

@@ -205,6 +205,8 @@ void particles_update()
 
 void particles_draw()
 {
+    gfx_enable_blending();
+
     for(int i = 0; i < particle_generator_count; ++i)
     {
         ParticleGenerator *pg = &particle_generators[i];
@@ -233,4 +235,6 @@ void particles_draw()
             gfx_draw_particle(pg->texture, &pg->color0,&pg->color1,opaqueness, &pos, &rot, &sca);
         }
     }
+
+    gfx_disable_blending();
 }

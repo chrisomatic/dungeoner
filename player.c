@@ -242,7 +242,7 @@ void player_update()
 
     //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     
-    physics_print(&player.phys, false);
+    //physics_print(&player.phys, false);
 
     if(player.primary_action)
     {

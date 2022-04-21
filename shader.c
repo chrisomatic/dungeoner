@@ -8,9 +8,11 @@
 #include "common.h"
 #include "3dmath.h"
 #include "light.h"
-#include "shader.h"
 #include "gfx.h"
+#include "player.h"
 #include "log.h"
+
+#include "shader.h"
 
 GLuint program_basic;
 GLuint program_sky;
@@ -95,6 +97,8 @@ void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca,
         shader_set_vec3(program,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
         shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
         shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
+        shader_set_vec3(program,"player_position",player.phys.pos.x, player.phys.pos.y, player.phys.pos.z);
+
         if(clip_plane)
             shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);
 

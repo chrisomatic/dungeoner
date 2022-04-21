@@ -23,6 +23,7 @@
 #include "log.h"
 #include "text.h"
 #include "water.h"
+#include "creature.h"
 
 // =========================
 // Global Vars
@@ -46,6 +47,7 @@ GLuint t_blend_map;
 GLuint t_sky_day;
 GLuint t_sky_night;
 GLuint t_outfit;
+GLuint t_rat;
 GLuint t_particle_explosion;
 GLuint t_particle_star;
 
@@ -57,6 +59,7 @@ Mesh m_terrain;
 Mesh m_human;
 Mesh m_sphere;
 Mesh m_tree;
+Mesh m_rat;
 
 // =========================
 // Function Prototypes
@@ -108,7 +111,7 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
-        printf("fps: %f\n",1.0/(t1-t0));
+        //printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();
@@ -147,6 +150,7 @@ void init()
     model_import(&m_human,"models/human.obj");
     model_import(&m_sphere,"models/sphere.obj");
     model_import(&m_tree,"models/tree.obj");
+    model_import(&m_rat,"models/rat.obj");
 
     LOGI(" - Fonts.");
     text_init();
@@ -159,6 +163,7 @@ void init()
     t_grass  = load_texture("textures/grass2.png");
     t_dirt   = load_texture("textures/dirt.png");
     t_tree   = load_texture("textures/tree_bark.png");
+    t_rat    = load_texture("textures/rat.png");
     t_blend_map = load_texture("textures/blend_map.png");
     t_outfit = load_texture("textures/outfit.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
@@ -186,6 +191,18 @@ void init()
 
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
+    LOGI(" - Creatures.");
+    int terrain_length = 64;
+    float terrain_length_half = terrain_length / 2.0;
+
+    for(int i = 0; i < 100; ++i)
+    {
+        float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
+        float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
+
+        creature_spawn(x,z,CREATURE_TYPE_RAT);
+    }
+
     Vector pos = {1.0,10.0,1.0};
     particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
 
@@ -202,6 +219,7 @@ void deinit()
 void simulate()
 {
     player_update();
+    creature_update();
     projectile_update();
     particles_update();
     water_update();
@@ -216,6 +234,9 @@ void render_scene()
     terrain_draw();
     projectile_draw();
     particles_draw();
+
+    player_draw();
+    creature_draw();
 }
 
 void render_water_textures()
@@ -254,10 +275,10 @@ void render()
     render_scene();
     water_draw();
 
-    player_draw();
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};
     //text_print(10.0f,25.0f,"Dungeoner",color);
+    gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 }
 

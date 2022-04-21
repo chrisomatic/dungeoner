@@ -11,6 +11,7 @@ extern GLuint t_stone;
 extern GLuint t_grass;
 extern GLuint t_dirt;
 extern GLuint t_tree;
+extern GLuint t_rat;
 extern GLuint t_blend_map;
 extern GLuint t_sky_day;
 extern GLuint t_sky_night;
@@ -22,6 +23,7 @@ extern Mesh m_terrain;
 extern Mesh m_human;
 extern Mesh m_sphere;
 extern Mesh m_tree;
+extern Mesh m_rat;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;

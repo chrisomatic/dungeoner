@@ -387,6 +387,17 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
+void gfx_disable_blending()
+{
+    glDisable(GL_BLEND);
+}
+
+void gfx_enable_blending()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca)
 {
     glUseProgram(program_particle);
@@ -671,9 +682,6 @@ void gfx_init(int width, int height)
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
     glEnable(GL_CLIP_DISTANCE0);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);

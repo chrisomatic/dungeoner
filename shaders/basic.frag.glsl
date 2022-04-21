@@ -4,6 +4,7 @@ uniform sampler2D sampler;
 in vec2 tex_coord0;
 in vec3 normal0;
 in float visibility;
+in float distance_from_player;
 
 out vec4 frag_color;
 
@@ -20,8 +21,8 @@ uniform int wireframe;
 uniform vec3 sky_color;
 uniform vec3 model_color;
 
-void main() {
-
+void main()
+{
     if(wireframe == 1)
     {
         frag_color = vec4(0.0f,1.0f,0.0f,1.0f);

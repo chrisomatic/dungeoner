@@ -33,6 +33,9 @@ void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opa
 void gfx_enable_clipping(float x, float y, float z, float w);
 void gfx_disable_clipping();
 
+void gfx_disable_blending();
+void gfx_enable_blending();
+
 GLuint gfx_create_fbo();
 GLuint gfx_create_texture_attachment(int width, int height);
 GLuint gfx_create_depth_texture_attachment(int width, int height);

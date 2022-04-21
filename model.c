@@ -20,7 +20,6 @@ int normal_count = 0;
 
 bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 {
-
     FILE* fp = fopen(obj_filepath, "r");
     if(!fp)
     {
