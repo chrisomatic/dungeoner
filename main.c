@@ -62,6 +62,12 @@ Mesh m_tree;
 Mesh m_rat;
 
 // =========================
+// Zones
+// =========================
+
+Zone rat_zone;
+
+// =========================
 // Function Prototypes
 // =========================
 
@@ -191,16 +197,21 @@ void init()
 
     t_sky_night = load_texture_cube(cube_sky_night, 6);
 
+    LOGI(" - Zones.");
+
+    rat_zone.x0 = -16.0; rat_zone.x1 = 16.0;
+    rat_zone.z0 = -16.0; rat_zone.z1 = 16.0;
+
     LOGI(" - Creatures.");
-    int terrain_length = 64;
+    int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
-    for(int i = 0; i < 100; ++i)
+    for(int i = 0; i < 1000; ++i)
     {
         float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
         float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
 
-        creature_spawn(x,z,CREATURE_TYPE_RAT);
+        creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
     }
 
     Vector pos = {1.0,10.0,1.0};

@@ -17,6 +17,8 @@ Player player = {0};
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
 
+static void player_spawn_projectile(ProjectileType type);
+
 void update_camera_rotation()
 {
    // const Vector3f v_axis = {0.0, 1.0, 0.0};
@@ -63,6 +65,7 @@ static void update_player_physics()
         phys->max_linear_speed = 20.0;
     }
 
+
     // zero out prior accel
     physics_begin(phys);
 
@@ -72,6 +75,18 @@ static void update_player_physics()
 
     if(player.jumped && phys->pos.y <= phys->ground.height)
         player.jumped = false;
+
+    if(player.secondary_action)
+    {
+        //physics_add_force(phys,
+        //        -3000.0*player.camera.lookat.x,
+        //        -3000.0*player.camera.lookat.y,
+        //        -3000.0*player.camera.lookat.z
+        //);
+        //player.phys.max_linear_speed = 3000.0;
+        player.secondary_action = false;
+        player_spawn_projectile(PROJECTILE_ICE);
+    }
 
     if(player.spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE) // tolerance to allow movement slightly above ground
     {
@@ -90,6 +105,7 @@ static void update_player_physics()
             physics_add_force_y(phys,250.0);
             player.jumped = true;
         }
+
 
         if(player.forward)
         {
@@ -248,12 +264,6 @@ void player_update()
     {
         player.primary_action = false;
         player_spawn_projectile(PROJECTILE_FIREBALL);
-    }
-
-    if(player.secondary_action)
-    {
-        player.secondary_action = false;
-        player_spawn_projectile(PROJECTILE_ICE);
     }
 
     if(!player.spectator)
