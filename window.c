@@ -173,6 +173,9 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
             case GLFW_KEY_F:
                 show_fog = !show_fog;
                 break;
+            case GLFW_KEY_F2:
+                show_collision = !show_collision;
+                break;
             case GLFW_KEY_P:
                 if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
                 {

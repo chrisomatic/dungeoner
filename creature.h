@@ -1,3 +1,4 @@
+#pragma once
 #define MAX_CREATURES 1000
 
 typedef enum
@@ -22,8 +23,7 @@ typedef enum
 typedef struct
 {
     PhysicsObj phys;
-    Mesh mesh;
-    GLuint texture;
+    Model model;
     float rot_y_target;
     float rot_y;
     Vector lookat;

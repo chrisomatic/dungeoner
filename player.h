@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "3dmath.h"
 #include "physics.h"
+#include "model.h"
 
 typedef enum
 {
@@ -41,6 +42,7 @@ typedef struct
     float angle_v;
 
     Camera camera;
+    Model  model;
 
     bool spectator;
     bool forward;

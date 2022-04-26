@@ -56,10 +56,9 @@ GLuint t_particle_star;
 // =========================
 
 Mesh m_terrain;
-Mesh m_human;
-Mesh m_sphere;
-Mesh m_tree;
-Mesh m_rat;
+Model m_sphere;
+Model m_tree;
+Model m_rat;
 
 // =========================
 // Zones
@@ -143,27 +142,6 @@ void init()
     LOGI(" - Shaders.");
     shader_load_all();
 
-    LOGI(" - Player.");
-    player_init();
-
-    LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap.png");
-
-    LOGI(" - Water.");
-    water_init(5.0);
-
-    LOGI(" - Models.");
-    model_import(&m_human,"models/human.obj");
-    model_import(&m_sphere,"models/sphere.obj");
-    model_import(&m_tree,"models/tree.obj");
-    model_import(&m_rat,"models/rat.obj");
-
-    LOGI(" - Fonts.");
-    text_init();
-
-    LOGI(" - Light.");
-    light_init();
-
     LOGI(" - Textures.");
     t_stone  = load_texture("textures/stonewall.png");
     t_grass  = load_texture("textures/grass2.png");
@@ -196,6 +174,26 @@ void init()
     };
 
     t_sky_night = load_texture_cube(cube_sky_night, 6);
+
+    LOGI(" - Models.");
+    model_import(&m_sphere,"models/sphere.obj");
+    model_import(&m_tree,"models/tree.obj");
+    model_import(&m_rat,"models/rat.obj");
+
+    LOGI(" - Terrain.");
+    terrain_build(&m_terrain, "textures/heightmap.png");
+
+    LOGI(" - Water.");
+    water_init(5.0);
+
+    LOGI(" - Player.");
+    player_init();
+
+    LOGI(" - Fonts.");
+    text_init();
+
+    LOGI(" - Light.");
+    light_init();
 
     LOGI(" - Zones.");
 
@@ -286,6 +284,10 @@ void render()
     render_scene();
     water_draw();
 
+    if(show_collision)
+    {
+        collision_draw(&player.model.collision_vol);
+    }
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

@@ -18,7 +18,7 @@ int index_count = 0;
 int tex_coord_count = 0;
 int normal_count = 0;
 
-bool model_import(Mesh* ret_mesh, const char* obj_filepath)
+bool model_import(Model* ret_model, const char* obj_filepath)
 {
     FILE* fp = fopen(obj_filepath, "r");
     if(!fp)
@@ -147,7 +147,10 @@ bool model_import(Mesh* ret_mesh, const char* obj_filepath)
 
     fclose(fp);
 
-    gfx_create_mesh(ret_mesh, vertices, vertex_count, indices, index_count);
+    gfx_create_mesh(&ret_model->mesh, vertices, vertex_count, indices, index_count);
+
+    ret_model->collision_vol.type = COLLISION_VOLUME_TYPE_BOUNDING_BOX;
+    collision_calc_bounding_box(vertices,vertex_count,&ret_model->collision_vol.box);
 
     return true;
 }

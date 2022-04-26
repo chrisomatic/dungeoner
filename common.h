@@ -20,7 +20,6 @@ extern GLuint t_particle_explosion;
 extern GLuint t_particle_star;
 
 extern Mesh m_terrain;
-extern Mesh m_human;
 extern Mesh m_sphere;
 extern Mesh m_tree;
 extern Mesh m_rat;

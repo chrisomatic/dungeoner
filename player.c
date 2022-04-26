@@ -225,6 +225,9 @@ void player_init()
 
     memcpy(&player.camera.target_pos,&player.camera.phys.pos,sizeof(Vector));
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
+
+    model_import(&player.model,"models/human.obj");
+    player.model.texture = t_outfit;
 }
 
 void player_snap_camera()
@@ -255,6 +258,8 @@ void player_update()
 {
     update_camera_rotation();
     update_player_physics();
+
+    copy_vector(&player.model.collision_vol.pos,player.phys.pos);
 
     //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     
@@ -290,7 +295,7 @@ void player_draw()
         Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
         Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&m_human,t_outfit,NULL, &pos, &rot, &sca);
+        gfx_draw_mesh(&player.model.mesh,player.model.texture,NULL, &pos, &rot, &sca);
     }
 }
 

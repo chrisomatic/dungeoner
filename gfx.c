@@ -20,6 +20,7 @@ GLuint sky_vao;
 #define FOG_COLOR_G 0.8
 #define FOG_COLOR_B 0.9
 
+int show_collision = 0;
 int show_wireframe = 0;
 int show_fog = 0;
 
@@ -467,15 +468,11 @@ void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opa
     glUseProgram(0);
 }
 
-void gfx_draw_cube(GLuint texture, float x, float y, float z, float scale)
+void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe)
 {
     glUseProgram(program_basic);
 
-    Vector3f pos = {x,y,z};
-    Vector3f rot = {0.0f,0.0f,0.0f};
-    Vector3f sca = {scale,scale,scale};
-
-    shader_set_variables(program_basic,&pos,&rot,&sca, &clip_plane);
+    shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);

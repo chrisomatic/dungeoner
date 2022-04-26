@@ -3,6 +3,7 @@
 #include "common.h"
 #include "physics.h"
 #include "3dmath.h"
+#include "model.h"
 #include "gfx.h"
 #include "log.h"
 
@@ -50,8 +51,7 @@ void creature_spawn(Zone* zone, CreatureType type)
     {
         case CREATURE_TYPE_RAT:
 
-            c->mesh = m_rat;
-            c->texture = t_rat;
+            c->model.texture = t_rat;
 
             c->phys.pos.x = x;
             c->phys.pos.y = ground.height; // @NEG
@@ -61,6 +61,7 @@ void creature_spawn(Zone* zone, CreatureType type)
             c->phys.max_linear_speed = 3.5; // m/s
 
             c->zone = zone;
+            memcpy(&c->model.mesh,&m_rat,sizeof(Mesh));
 
             choose_random_direction(c);
 
@@ -76,7 +77,6 @@ void creature_update()
 {
     for(int i = 0; i < creature_count; ++i)
     {
-
         Creature* c = &creatures[i];
 
         c->action_time += g_delta_t;
@@ -185,6 +185,6 @@ void creature_draw()
         Vector3f rot = {0.0,c->rot_y,0.0};
         Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&creatures[i].mesh,creatures[i].texture,NULL, &pos, &rot, &sca);
+        gfx_draw_mesh(&creatures[i].model.mesh,creatures[i].model.texture,NULL, &pos, &rot, &sca);
     }
 }

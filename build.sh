@@ -3,6 +3,7 @@ gcc main.c \
     3dmath.c \
     gfx.c \
     creature.c \
+    collision.c \
     light.c \
     model.c \
     physics.c \
