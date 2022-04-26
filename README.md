@@ -2,7 +2,7 @@
 
 This is a work-in-progress game.
 
-[](screenshot.png)
+![](screenshot.png)
 
 ## Build and Run
 
