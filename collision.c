@@ -1,4 +1,5 @@
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include "common.h"
 #include "3dmath.h"
 #include "collision.h"
@@ -28,6 +29,92 @@ void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox
     box->l = max_x - min_x;
     box->w = max_z - min_z;
     box->h = max_y - min_y;
+
+    box->vertices[0].x = min_x; box->vertices[0].y = min_y; box->vertices[0].z = min_z;
+    box->vertices[1].x = max_x; box->vertices[1].y = min_y; box->vertices[1].z = min_z;
+    box->vertices[2].x = max_x; box->vertices[2].y = min_y; box->vertices[2].z = max_z;
+    box->vertices[3].x = min_x; box->vertices[3].y = min_y; box->vertices[3].z = max_z;
+
+    box->vertices[4].x = min_x; box->vertices[4].y = max_y; box->vertices[4].z = min_z;
+    box->vertices[5].x = max_x; box->vertices[5].y = max_y; box->vertices[5].z = min_z;
+    box->vertices[6].x = max_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
+    box->vertices[7].x = min_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
+}
+
+void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
+{
+    for(int i = 0; i < 8; ++i)
+    {
+        mult_v3f_mat4(&col->box.vertices[i], transform, &col->box_transformed.vertices[i]);
+    }
+
+    /*
+    printf("\nbox:   %f %f %f\n",col->box.vertices[0].x, col->box.vertices[0].y, col->box.vertices[0].z);
+    printf("box_t: %f %f %f\n\n",col->box_transformed.vertices[0].x, col->box_transformed.vertices[0].y, col->box_transformed.vertices[0].z);
+
+    */
+    float min_x = 10000.0; float max_x = 0.0;
+    float min_y = 10000.0; float max_y = 0.0;
+    float min_z = 10000.0; float max_z = 0.0;
+
+    for(int i = 0; i < 8; ++i)
+    {
+        Vector3f* v = &col->box_transformed.vertices[i];
+
+        if(v->x < min_x) min_x = v->x;
+        else if(v->x > max_x) max_x = v->x;
+        if(v->y < min_y) min_y = v->y;
+        else if(v->y > max_y) max_y = v->y;
+        if(v->z < min_z) min_z = v->z;
+        else if(v->z > max_z) max_z = v->z;
+    }
+
+    BoundingBox* box = &col->box_transformed;
+
+    box->l = max_x - min_x;
+    box->w = max_z - min_z;
+    box->h = max_y - min_y;
+
+    box->vertices[0].x = min_x; box->vertices[0].y = min_y; box->vertices[0].z = min_z;
+    box->vertices[1].x = max_x; box->vertices[1].y = min_y; box->vertices[1].z = min_z;
+    box->vertices[2].x = max_x; box->vertices[2].y = min_y; box->vertices[2].z = max_z;
+    box->vertices[3].x = min_x; box->vertices[3].y = min_y; box->vertices[3].z = max_z;
+
+    box->vertices[4].x = min_x; box->vertices[4].y = max_y; box->vertices[4].z = min_z;
+    box->vertices[5].x = max_x; box->vertices[5].y = max_y; box->vertices[5].z = min_z;
+    box->vertices[6].x = max_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
+    box->vertices[7].x = min_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
+
+    box->center.x = box->vertices[0].x + box->l/2.0;
+    box->center.y = box->vertices[0].y + box->h/2.0;
+    box->center.z = box->vertices[0].z + box->w/2.0;
+
+
+    printf("\nl,w,h: %f, %f,%f; center: %f %f %f\n",box->l, box->w, box->h, box->center.x, box->center.y, box->center.z);
+}
+
+bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
+{
+    if(vol1->type == COLLISION_VOLUME_TYPE_BOUNDING_BOX && vol2->type == COLLISION_VOLUME_TYPE_BOUNDING_BOX)
+    {
+        BoundingBox* b1 = &vol1->box_transformed;
+        BoundingBox* b2 = &vol2->box_transformed;
+
+        Vector3f* b1_min = &b1->vertices[0];
+        Vector3f* b1_max = &b1->vertices[6];
+
+        Vector3f* b2_min = &b2->vertices[0];
+        Vector3f* b2_max = &b2->vertices[6];
+
+        return(b1_max->x > b2_min->x &&
+               b1_min->x < b2_max->x &&
+               b1_max->y > b2_min->y &&
+               b1_min->y < b2_max->y &&
+               b1_max->z > b2_min->z &&
+               b1_min->z < b2_max->z);
+    }
+
+    return false;
 }
 
 void collision_draw(CollisionVolume* col)
@@ -36,9 +123,9 @@ void collision_draw(CollisionVolume* col)
     {
         case COLLISION_VOLUME_TYPE_BOUNDING_BOX:
         {
-            Vector3f pos = {col->pos.x, col->pos.y, col->pos.z};
+            Vector3f pos = {col->box_transformed.center.x, col->box_transformed.center.y, col->box_transformed.center.z};
             Vector3f rot = {0.0,0.0,0.0};
-            Vector3f sca = {col->box.l, col->box.h, col->box.w};
+            Vector3f sca = {col->box_transformed.l/2.0, col->box_transformed.h/2.0, col->box_transformed.w/2.0};
 
             gfx_draw_cube(0, &pos, &rot, &sca, true);
 

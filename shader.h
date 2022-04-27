@@ -23,3 +23,4 @@ void shader_set_vec4(GLuint program, const char* name, float x, float y, float z
 void shader_set_mat4(GLuint program, const char* name, Matrix* mat);
 
 void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane);
+void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f* clip_plane);

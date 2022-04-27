@@ -35,6 +35,10 @@ void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t*
     m->vertex_count = vertex_count;
     m->index_count = index_count;
 
+    int vertices_size = vertex_count*sizeof(Vertex);
+    m->vertices = malloc(vertices_size);
+    memcpy(m->vertices,vertices,vertices_size);
+
  	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertex_count*sizeof(Vertex), vertices, GL_STATIC_DRAW);
@@ -283,6 +287,48 @@ void gfx_enable_clipping(float x, float y, float z, float w)
 void gfx_disable_clipping()
 {
     glDisable(GL_CLIP_DISTANCE0);
+}
+
+void gfx_draw_model(Model* model)
+{
+    glUseProgram(program_basic);
+
+    //print_matrix(&model->transform);
+    shader_set_variables_new(program_basic,&model->transform,&clip_plane);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, model->texture);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, model->mesh.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)20);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,model->mesh.ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDrawElements(GL_TRIANGLES,model->mesh.index_count,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+
 }
 
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, Vector3f *rot, Vector3f *sca)

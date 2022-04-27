@@ -79,6 +79,49 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
 
 }
 
+void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f* clip_plane)
+{
+    Matrix view, proj, wv, wvp;
+    get_view_proj_transforms(&view, &proj);
+
+    get_wvp(model_transform, &view, &proj, &wvp);
+    get_wv(model_transform, &view, &wv);
+
+    if(program == program_basic)
+    {
+        shader_set_int(program,"sampler",0);
+        shader_set_int(program,"wireframe",show_wireframe);
+        shader_set_mat4(program,"wv",&wv);
+        shader_set_mat4(program,"wvp",&wvp);
+        shader_set_mat4(program,"world",model_transform);
+        shader_set_vec3(program,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
+        shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
+        shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
+        shader_set_vec3(program,"player_position",player.phys.pos.x, player.phys.pos.y, player.phys.pos.z);
+
+        if(clip_plane)
+            shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);
+
+        shader_set_float(program,"dl.ambient_intensity",sunlight.base.ambient_intensity);
+        shader_set_float(program,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+
+        shader_set_vec3(program_basic,"model_color",0.0, 0.0, 0.0);
+
+        if(show_fog)
+        {
+            shader_set_float(program,"fog_density",fog_density);
+            shader_set_float(program,"fog_gradient",fog_gradient);
+        }
+        else
+        {
+            shader_set_float(program,"fog_density",0.0);
+            shader_set_float(program,"fog_gradient",1.0);
+        }
+
+    }
+
+}
+
 void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane)
 {
     Matrix world, view, proj, wv, wvp;
@@ -104,6 +147,8 @@ void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca,
 
         shader_set_float(program,"dl.ambient_intensity",sunlight.base.ambient_intensity);
         shader_set_float(program,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+
+        shader_set_vec3(program_basic,"model_color",0.0, 0.0, 0.0);
 
         if(show_fog)
         {

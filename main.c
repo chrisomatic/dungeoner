@@ -7,9 +7,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "3dmath.h"
 #include "gfx.h"
 #include "terrain.h"
-#include "3dmath.h"
 #include "settings.h"
 #include "window.h"
 #include "shader.h"
@@ -116,7 +116,7 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
-        //printf("fps: %f\n",1.0/(t1-t0));
+        printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();
@@ -204,7 +204,7 @@ void init()
     int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
-    for(int i = 0; i < 1000; ++i)
+    for(int i = 0; i < 10; ++i)
     {
         float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
         float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
@@ -283,11 +283,6 @@ void render()
     render_water_textures();
     render_scene();
     water_draw();
-
-    if(show_collision)
-    {
-        collision_draw(&player.model.collision_vol);
-    }
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

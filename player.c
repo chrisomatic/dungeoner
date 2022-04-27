@@ -226,8 +226,13 @@ void player_init()
     memcpy(&player.camera.target_pos,&player.camera.phys.pos,sizeof(Vector));
     player.camera.mode = CAMERA_MODE_FIRST_PERSON;
 
+
     model_import(&player.model,"models/human.obj");
+    player.model.collision_vol.type = COLLISION_VOLUME_TYPE_BOUNDING_BOX;
+    collision_calc_bounding_box(player.model.mesh.vertices,player.model.mesh.vertex_count,&player.model.collision_vol.box);
+
     player.model.texture = t_outfit;
+
 }
 
 void player_snap_camera()
@@ -254,12 +259,22 @@ void player_snap_camera()
     }
 }
 
+static void update_player_model_transform()
+{
+    Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z}; // @NEG
+    Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
+    Vector3f sca = {1.0,1.0,1.0};
+
+    get_model_transform(&pos,&rot,&sca,&player.model.transform);
+}
+
 void player_update()
 {
     update_camera_rotation();
     update_player_physics();
+    update_player_model_transform();
 
-    copy_vector(&player.model.collision_vol.pos,player.phys.pos);
+    collision_transform_bounding_box(&player.model.collision_vol, &player.model.transform);
 
     //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     
@@ -295,7 +310,19 @@ void player_draw()
         Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
         Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&player.model.mesh,player.model.texture,NULL, &pos, &rot, &sca);
+        gfx_draw_model(&player.model);
+        //gfx_draw_mesh(&player.model.mesh,player.model.texture,NULL, &pos, &rot, &sca);
+
+        if(show_collision)
+        {
+            /*
+            CollisionVolume *vol = &player.model.collision_vol;
+            Vector3f col_sca = {vol->box.l/2.0, vol->box.h/2.0, vol->box.w/2.0};
+            gfx_draw_cube(0, &pos, &rot, &col_sca, true);
+            */
+            
+            collision_draw(&player.model.collision_vol);
+        }
     }
 }
 

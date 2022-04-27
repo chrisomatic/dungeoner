@@ -57,14 +57,15 @@ void normalize(Vector* v);
 
 void calc_vertex_normals(const uint32_t* indices, uint32_t index_count, Vertex* vertices, uint32_t vertex_count);
 
-float barry_centric(Vector p1, Vector p2, Vector p3, Vector2f pos);
-
 void subtract(Vector* a, Vector b);
 void add(Vector* a, Vector b);
 void mult(Vector* a, float c);
 void dot_product_mat(Matrix a, Matrix b, Matrix* result);
+void mult_v3f_mat4(Vector3f* v, Matrix* m, Vector3f* result);
 
 void get_transforms(Vector* pos, Vector* rotation, Vector* scale, Matrix* world, Matrix* view, Matrix* proj);
+void get_model_transform(Vector* pos, Vector* rotation, Vector* scale, Matrix* model);
+void get_view_proj_transforms(Matrix* view, Matrix* proj);
 void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top);
 void get_wvp(Matrix* world, Matrix* view, Matrix* proj, Matrix* wvp);
 void get_wv(Matrix* world, Matrix* view, Matrix* wv);

@@ -1,6 +1,5 @@
 #!/bin/sh
-gcc main.c \
-    3dmath.c \
+gcc 3dmath.c \
     gfx.c \
     creature.c \
     collision.c \
@@ -17,6 +16,7 @@ gcc main.c \
     util.c \
     water.c \
     window.c \
+    main.c \
     -lglfw -lGLU -lGLEW -lGL -lm \
     -o dungeoner
 

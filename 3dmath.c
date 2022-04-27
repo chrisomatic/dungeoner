@@ -38,16 +38,6 @@ static void multiply_q(Quaternion a,Quaternion b, Quaternion* ret)
     ret->z = (a.z * b.w) + (a.w * b.z) + (a.x * b.y) - (a.y * b.x);
 }
 
-float barry_centric(Vector3f p1, Vector3f p2, Vector3f p3, Vector2f pos)
-{
-    float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
-    float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
-    float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
-    float l3 = 1.0f - l1 - l2;
-
-    return l1 * p1.y + l2 * p2.y + l3 * p3.y;
-}
-
 float magn(Vector3f v)
 {
     return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
@@ -185,6 +175,13 @@ void mult(Vector3f* a, float c)
     a->z *= c;
 }
 
+void mult_v3f_mat4(Vector3f* v, Matrix* m, Vector3f* result)
+{
+    result->x = m->m[0][3] + (m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z);
+    result->y = m->m[1][3] + (m->m[1][0] * v->x + m->m[1][1] * v->y + m->m[1][2] * v->z);
+    result->z = m->m[2][3] + (m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z);
+}
+
 void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm)
 {
     subtract(&b,a);
@@ -235,6 +232,7 @@ void dot_product_mat(Matrix a, Matrix b, Matrix* result)
         }
     }
 }
+
 static void get_scale_transform(Matrix* mat, Vector3f* scale)
 {
     memset(mat,0,sizeof(Matrix));
@@ -338,11 +336,24 @@ void get_camera_transform(Matrix* mat, Vector3f lookat, Vector3f up)
     mat->m[3][3] = 1.0f;
 }
 
-void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* world, Matrix* view, Matrix* proj)
+void get_model_transform(Vector* pos, Vector* rotation, Vector* scale, Matrix* model)
 {
     Matrix scale_trans            = {0};
     Matrix rotation_trans         = {0};
     Matrix translate_trans        = {0};
+
+    get_scale_transform(&scale_trans, scale);
+    get_rotation_transform(&rotation_trans, rotation);
+    get_translate_transform(&translate_trans, pos);
+
+    memcpy(model,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(*model, translate_trans, model);
+    dot_product_mat(*model, rotation_trans,  model);
+    dot_product_mat(*model, scale_trans,     model);
+}
+
+void get_view_proj_transforms(Matrix* view, Matrix* proj)
+{
     Matrix perspective_trans      = {0};
     Matrix camera_translate_trans = {0};
     Matrix camera_rotate_trans    = {0};
@@ -354,17 +365,9 @@ void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* 
         cam->phys.pos.z + cam->offset.z
     };
 
-    get_scale_transform(&scale_trans, scale);
-    get_rotation_transform(&rotation_trans, rotation);
-    get_translate_transform(&translate_trans, pos);
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &camera_pos);
     get_camera_transform(&camera_rotate_trans, player.camera.lookat, player.camera.up);
-
-    memcpy(world,&identity_matrix,sizeof(Matrix));
-    dot_product_mat(*world, translate_trans, world);
-    dot_product_mat(*world, rotation_trans,  world);
-    dot_product_mat(*world, scale_trans,     world);
 
     memcpy(view,&identity_matrix,sizeof(Matrix));
     dot_product_mat(*view, camera_rotate_trans,    view);
@@ -372,6 +375,12 @@ void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* 
 
     memcpy(proj,&identity_matrix,sizeof(Matrix));
     dot_product_mat(*proj, perspective_trans, proj);
+}
+
+void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* world, Matrix* view, Matrix* proj)
+{
+    get_model_transform(pos,rotation,scale,world);
+    get_view_proj_transforms(view,proj);
 }
 
 void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top)
@@ -414,18 +423,6 @@ float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c)
 // This function accepts a point and a plane definition, and will find the point on the plane projected from the original point
 Vector3f get_projected_point_on_plane(Vector3f* point, Vector3f* plane_normal, Vector3f* point_on_plane)
 {
-    /*
-
-        1. Make a vector from your orig point to the point of interest:
-            v = point-orig (in each dimension);
-
-        2. Take the dot product of that vector with the unit normal vector n:
-            dist = vx*nx + vy*ny + vz*nz; dist = scalar distance from point to plane along the normal
-
-        3. Multiply the unit normal vector by the distance, and subtract that vector from your point.
-            projected_point = point - dist*normal;
-    */
-
     Vector3f v = {
         point->x - point_on_plane->x,
         point->y - point_on_plane->y,

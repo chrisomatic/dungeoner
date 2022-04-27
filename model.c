@@ -3,9 +3,10 @@
 #include "common.h"
 #include "3dmath.h"
 #include "log.h"
-#include "model.h"
 #include "util.h"
 #include "shader.h"
+
+#include "model.h"
 
 Vertex vertices[1000] = {0};
 Vector2f tex_coords[1000] = {0};
@@ -148,9 +149,6 @@ bool model_import(Model* ret_model, const char* obj_filepath)
     fclose(fp);
 
     gfx_create_mesh(&ret_model->mesh, vertices, vertex_count, indices, index_count);
-
-    ret_model->collision_vol.type = COLLISION_VOLUME_TYPE_BOUNDING_BOX;
-    collision_calc_bounding_box(vertices,vertex_count,&ret_model->collision_vol.box);
 
     return true;
 }
