@@ -228,8 +228,7 @@ void player_init()
 
 
     model_import(&player.model,"models/human.obj");
-    player.model.collision_vol.type = COLLISION_VOLUME_TYPE_BOUNDING_BOX;
-    collision_calc_bounding_box(player.model.mesh.vertices,player.model.mesh.vertex_count,&player.model.collision_vol.box);
+    //collision_calc_bounding_box(player.model.mesh.vertices,player.model.mesh.vertex_count,&player.model.collision_vol.box);
 
     player.model.texture = t_outfit;
 
@@ -313,16 +312,11 @@ void player_draw()
         gfx_draw_model(&player.model);
         //gfx_draw_mesh(&player.model.mesh,player.model.texture,NULL, &pos, &rot, &sca);
 
-        if(show_collision)
-        {
-            /*
-            CollisionVolume *vol = &player.model.collision_vol;
-            Vector3f col_sca = {vol->box.l/2.0, vol->box.h/2.0, vol->box.w/2.0};
-            gfx_draw_cube(0, &pos, &rot, &col_sca, true);
-            */
-            
-            collision_draw(&player.model.collision_vol);
-        }
+    }
+
+    if(show_collision)
+    {
+        collision_draw(&player.model.collision_vol);
     }
 }
 

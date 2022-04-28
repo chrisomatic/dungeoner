@@ -177,9 +177,10 @@ void mult(Vector3f* a, float c)
 
 void mult_v3f_mat4(Vector3f* v, Matrix* m, Vector3f* result)
 {
-    result->x = m->m[0][3] + (m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z);
-    result->y = m->m[1][3] + (m->m[1][0] * v->x + m->m[1][1] * v->y + m->m[1][2] * v->z);
-    result->z = m->m[2][3] + (m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z);
+    // assuming w is 1.0 for Vector
+    result->x = (m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z + m->m[0][3]);
+    result->y = (m->m[1][0] * v->x + m->m[1][1] * v->y + m->m[1][2] * v->z + m->m[1][3]);
+    result->z = (m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z + m->m[2][3]);
 }
 
 void normal(Vector3f a, Vector3f b, Vector3f c, Vector3f* norm)

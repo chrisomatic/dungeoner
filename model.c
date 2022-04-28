@@ -150,5 +150,8 @@ bool model_import(Model* ret_model, const char* obj_filepath)
 
     gfx_create_mesh(&ret_model->mesh, vertices, vertex_count, indices, index_count);
 
+    ret_model->collision_vol.type = COLLISION_VOLUME_TYPE_BOUNDING_BOX;
+    collision_calc_bounding_box(vertices,vertex_count,&ret_model->collision_vol.box);
+
     return true;
 }

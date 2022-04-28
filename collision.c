@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "common.h"
 #include "3dmath.h"
+#include "log.h"
+
 #include "collision.h"
 
 void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox* box)
 {
-    float min_x = 10000.0; float max_x = 0.0;
-    float min_y = 10000.0; float max_y = 0.0;
-    float min_z = 10000.0; float max_z = 0.0;
+    float min_x = 10000.0; float max_x = -10000.0;
+    float min_y = 10000.0; float max_y = -10000.0;
+    float min_z = 10000.0; float max_z = -10000.0;
 
     for(int i = 0; i < vertex_count; ++i)
     {
@@ -20,7 +23,7 @@ void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox
         else if(x > max_x) max_x = x;
 
         if(y < min_y)      min_y = y;
-        else if(y > max_y) max_x = y;
+        else if(y > max_y) max_y = y;
 
         if(z < min_z)      min_z = z;
         else if(z > max_z) max_z = z;
@@ -48,23 +51,25 @@ void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
         mult_v3f_mat4(&col->box.vertices[i], transform, &col->box_transformed.vertices[i]);
     }
 
-    /*
-    printf("\nbox:   %f %f %f\n",col->box.vertices[0].x, col->box.vertices[0].y, col->box.vertices[0].z);
-    printf("box_t: %f %f %f\n\n",col->box_transformed.vertices[0].x, col->box_transformed.vertices[0].y, col->box_transformed.vertices[0].z);
+    //printf("\nbox:   %f %f %f\n",col->box.vertices[0].x, col->box.vertices[0].y, col->box.vertices[0].z);
+    //printf("box_t: %f %f %f\n\n",col->box_transformed.vertices[0].x, col->box_transformed.vertices[0].y, col->box_transformed.vertices[0].z);
 
-    */
-    float min_x = 10000.0; float max_x = 0.0;
-    float min_y = 10000.0; float max_y = 0.0;
-    float min_z = 10000.0; float max_z = 0.0;
+    float min_x = 10000.0; float max_x = -10000.0;
+    float min_y = 10000.0; float max_y = -10000.0;
+    float min_z = 10000.0; float max_z = -10000.0;
 
     for(int i = 0; i < 8; ++i)
     {
         Vector3f* v = &col->box_transformed.vertices[i];
 
+        mult(v,-1.0);
+
         if(v->x < min_x) min_x = v->x;
         else if(v->x > max_x) max_x = v->x;
+
         if(v->y < min_y) min_y = v->y;
         else if(v->y > max_y) max_y = v->y;
+
         if(v->z < min_z) min_z = v->z;
         else if(v->z > max_z) max_z = v->z;
     }
@@ -89,8 +94,8 @@ void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
     box->center.y = box->vertices[0].y + box->h/2.0;
     box->center.z = box->vertices[0].z + box->w/2.0;
 
+    //printf("center: %f %f %f, x: %f %f   y: %f %f  z: %f %f   l,w,h: %f %f %f\n", box->center.x, box->center.y, box->center.z, min_x, max_x, min_y, max_y, min_z, max_z, box->l, box->w, box->h);
 
-    printf("\nl,w,h: %f, %f,%f; center: %f %f %f\n",box->l, box->w, box->h, box->center.x, box->center.y, box->center.z);
 }
 
 bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
@@ -117,17 +122,51 @@ bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
     return false;
 }
 
+bool collision_add_to_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
+{
+    if(vol->hurt_list_count >= MAX_COLLISION_HURT_LIST)
+    {
+        LOGW("Hurt list is full");
+        return false;
+    }
+
+    vol->hurt_list[vol->hurt_list_count] = (struct CollisionVolume*)hurt;
+    vol->hurt_list_count++;
+    return true;
+}
+
+bool collision_is_in_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
+{
+    for(int i = 0; i < vol->hurt_list_count; ++i)
+    {
+        if(vol->hurt_list[i] == (struct CollisionVolume*)hurt)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void collision_set_flags(CollisionVolume* vol, CollisionFlags flags)
+{
+    vol->flags = flags;
+}
+
 void collision_draw(CollisionVolume* col)
 {
     switch(col->type)
     {
         case COLLISION_VOLUME_TYPE_BOUNDING_BOX:
         {
-            Vector3f pos = {col->box_transformed.center.x, col->box_transformed.center.y, col->box_transformed.center.z};
+            Vector3f pos = {-col->box_transformed.center.x, -col->box_transformed.center.y, -col->box_transformed.center.z};
             Vector3f rot = {0.0,0.0,0.0};
             Vector3f sca = {col->box_transformed.l/2.0, col->box_transformed.h/2.0, col->box_transformed.w/2.0};
+            
+            Vector3f color = {1.0,0.0,1.0};
+            gfx_draw_cube_debug(color, &pos, &rot, &sca);
+            //gfx_draw_cube(0, &pos, &rot, &sca, true);
 
-            gfx_draw_cube(0, &pos, &rot, &sca, true);
+            //printf("drawing collision: %p @ %f %f %f, scale: %f %f %f\n",col, pos.x, pos.y, pos.z, sca.x, sca.y, sca.z);
 
         } break;
     }

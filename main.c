@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "common.h"
 #include "3dmath.h"
 #include "gfx.h"
 #include "terrain.h"
@@ -201,10 +202,11 @@ void init()
     rat_zone.z0 = -16.0; rat_zone.z1 = 16.0;
 
     LOGI(" - Creatures.");
+
     int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
-    for(int i = 0; i < 10; ++i)
+    for(int i = 0; i < 100; ++i)
     {
         float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
         float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
@@ -232,6 +234,35 @@ void simulate()
     projectile_update();
     particles_update();
     water_update();
+
+    // check collisions
+    for(int i = 0; i < creature_count; ++i)
+    {
+        CollisionVolume* c = &creatures[i].model.collision_vol;
+        if(collision_check(c, &player.model.collision_vol))
+        {
+            //printf("player colliding with creature %d\n",i);
+        }
+
+        for(int j = 0; j < projectile_count; ++j)
+        {
+            CollisionVolume* p = &projectiles[j].model.collision_vol;
+
+            if(collision_check(p, c))
+            {
+                if(BIT_SET(p->flags, COLLISION_FLAG_HURT))
+                {
+                    if(!collision_is_in_hurt_list(p,c))
+                    {
+                        //printf("Projectile %d hurt creature %d!\n",j,i);
+                        projectiles[j].phys.collided = true;
+                        creatures[i].hp -= projectiles[j].damage;
+                        collision_add_to_hurt_list(p,c);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void render_scene()
@@ -243,9 +274,6 @@ void render_scene()
     terrain_draw();
     projectile_draw();
     particles_draw();
-
-    player_draw();
-    creature_draw();
 }
 
 void render_water_textures()
@@ -261,7 +289,7 @@ void render_water_textures()
     player.camera.angle_v *= -1;
     update_camera_rotation();
 
-    gfx_enable_clipping(0,-1,0,-water_height);
+    gfx_enable_clipping(0,-1,0,-water_height-0.01);
     render_scene();
     gfx_unbind_frame_current_buffer();
 
@@ -273,6 +301,8 @@ void render_water_textures()
     water_bind_refraction_fbo();
     gfx_enable_clipping(0,1,0,water_height);
     render_scene();
+    player_draw();
+    creature_draw();
     gfx_unbind_frame_current_buffer();
 
     gfx_disable_clipping();
@@ -283,6 +313,8 @@ void render()
     render_water_textures();
     render_scene();
     water_draw();
+    player_draw();
+    creature_draw();
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

@@ -9,7 +9,6 @@ typedef struct
     GLuint vbo;
     GLuint ibo;
 
-    Vertex* vertices;
     uint32_t vertex_count;
     uint32_t index_count;
 } Mesh;

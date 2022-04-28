@@ -20,6 +20,7 @@ void gfx_draw_model(Model* model);
 
 void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca);
 void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe);
+void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca);
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();
 void gfx_draw_debug_lines(Vector* position, Vector* vel);

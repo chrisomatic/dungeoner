@@ -3,7 +3,8 @@
 #include <GL/glew.h>
 #include "gfx.h"
 
-#define STR_EQUAL(x,y)    (strncmp((x),(y),strlen((x))) == 0 && strlen(x) == strlen(y))
+#define STR_EQUAL(x,y)  (strncmp((x),(y),strlen((x))) == 0 && strlen(x) == strlen(y))
+#define BIT_SET(v,b)    (((v) & (b)) == (b))
 
 extern double g_delta_t;
 
@@ -20,9 +21,9 @@ extern GLuint t_particle_explosion;
 extern GLuint t_particle_star;
 
 extern Mesh m_terrain;
-extern Mesh m_sphere;
-extern Mesh m_tree;
-extern Mesh m_rat;
+extern Model m_sphere;
+extern Model m_tree;
+extern Model m_rat;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;

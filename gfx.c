@@ -35,10 +35,6 @@ void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t*
     m->vertex_count = vertex_count;
     m->index_count = index_count;
 
-    int vertices_size = vertex_count*sizeof(Vertex);
-    m->vertices = malloc(vertices_size);
-    memcpy(m->vertices,vertices,vertices_size);
-
  	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertex_count*sizeof(Vertex), vertices, GL_STATIC_DRAW);
@@ -65,6 +61,7 @@ void gfx_draw_sky()
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {1.0,1.0,1.0};
 
+
     Matrix world, view, proj, wvp;
     get_transforms(&pos, &rot, &sca, &world, &view, &proj);
     get_wvp(&world, &view, &proj, &wvp);
@@ -77,6 +74,16 @@ void gfx_draw_sky()
     glBindTexture(GL_TEXTURE_CUBE_MAP, t_sky_day);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,sky.ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glDepthFunc(GL_LESS);
@@ -512,6 +519,35 @@ void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opa
 
     glBindVertexArray(0);
     glUseProgram(0);
+}
+
+void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca)
+{
+    glUseProgram(program_debug);
+
+    Matrix world, view, proj, wvp;
+    get_transforms(pos, rot, sca, &world, &view, &proj);
+    get_wvp(&world, &view, &proj, &wvp);
+
+    shader_set_mat4(program_debug,"wvp",&wvp);
+    shader_set_vec3(program_debug,"color",color.x,color.y,color.z);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, cube.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,cube.ibo);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+
 }
 
 void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe)

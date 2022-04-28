@@ -9,8 +9,21 @@
 
 #include "creature.h"
 
-static Creature creatures[MAX_CREATURES] = {0};
-static int creature_count = 0;
+Creature creatures[MAX_CREATURES] = {0};
+int creature_count = 0;
+
+static void remove_creature(int index)
+{
+    if(index < 0 || index >= creature_count)
+    {
+        LOGE("Creature index out of range (%d)", index);
+        return;
+    }
+
+    memcpy(&creatures[index], &creatures[creature_count-1], sizeof(Creature));
+
+    creature_count--;
+}
 
 static void update_lookat(Creature* c)
 {
@@ -25,7 +38,6 @@ static void choose_random_direction(Creature* c)
     c->rot_y_target = (rand() % 360) - 180.0;
 
     update_lookat(c);
-
 }
 
 void creature_spawn(Zone* zone, CreatureType type)
@@ -61,7 +73,9 @@ void creature_spawn(Zone* zone, CreatureType type)
             c->phys.max_linear_speed = 3.5; // m/s
 
             c->zone = zone;
-            memcpy(&c->model.mesh,&m_rat,sizeof(Mesh));
+            memcpy(&c->model,&m_rat,sizeof(Model));
+            c->model.texture = t_rat;
+            c->hp = 10.0;
 
             choose_random_direction(c);
 
@@ -73,11 +87,26 @@ void creature_spawn(Zone* zone, CreatureType type)
     creature_count++;
 }
 
+static void creature_update_model_transform(Creature* c)
+{
+    Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z};
+    Vector3f rot = {0.0,c->rot_y,0.0};
+    Vector3f sca = {1.0,1.0,1.0};
+
+    get_model_transform(&pos,&rot,&sca,&c->model.transform);
+}
+
 void creature_update()
 {
-    for(int i = 0; i < creature_count; ++i)
+    for(int i = creature_count-1; i >= 0; --i)
     {
         Creature* c = &creatures[i];
+
+        if(c->hp <= 0.0)
+        {
+            remove_creature(i);
+            continue;
+        }
 
         c->action_time += g_delta_t;
 
@@ -171,7 +200,8 @@ void creature_update()
             update_lookat(c);
         }
 
-
+        creature_update_model_transform(c);
+        collision_transform_bounding_box(&c->model.collision_vol, &c->model.transform);
     }
 }
 
@@ -185,6 +215,12 @@ void creature_draw()
         Vector3f rot = {0.0,c->rot_y,0.0};
         Vector3f sca = {1.0,1.0,1.0};
 
-        gfx_draw_mesh(&creatures[i].model.mesh,creatures[i].model.texture,NULL, &pos, &rot, &sca);
+        //gfx_draw_mesh(&creatures[i].model.mesh,creatures[i].model.texture,NULL, &pos, &rot, &sca);
+        gfx_draw_model(&creatures[i].model);
+
+        if(show_collision)
+        {
+            collision_draw(&c->model.collision_vol);
+        }
     }
 }

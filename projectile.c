@@ -8,20 +8,6 @@
 #include "particles.h"
 #include "projectile.h"
 
-#define MAX_PROJECTILES 100
-
-typedef struct
-{
-    PhysicsObj phys;
-    ProjectileType type;
-    Mesh* mesh;
-    Player* player;
-    float life_max; // seconds
-    float life; // seconds
-    float size;
-    Vector color;
-} Projectile;
-
 Projectile projectiles[MAX_PROJECTILES];
 int projectile_count = 0;
 
@@ -34,6 +20,7 @@ static void remove_projectile(int index)
     }
 
     memcpy(&projectiles[index], &projectiles[projectile_count-1], sizeof(Projectile));
+
     projectile_count--;
 }
 
@@ -42,6 +29,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
     Projectile* proj = &projectiles[projectile_count];
 
     proj->type = type;
+    memcpy(&proj->model, &m_sphere, sizeof(Model));
 
     float speed = 10.0;
 
@@ -54,6 +42,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.x = 0.5;
             proj->color.y = 0.0;
             proj->color.z = 0.0;
+            proj->damage = 10.0;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;
@@ -62,13 +51,17 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.x = 0.6;
             proj->color.y = 0.6;
             proj->color.z = 1.0;
+            proj->damage = 5.0;
             break;
         case PROJECTILE_ARROW:
             speed = 30.0;
             proj->size = 1.0;
             proj->life_max = 60.0;
+            proj->damage = 3.0;
             break;
     }
+    
+    proj->phys.collided = false;
 
     Vector vel = {-speed*player->camera.lookat.x, -speed*player->camera.lookat.y,-speed*player->camera.lookat.z}; // @NEG
 
@@ -84,9 +77,21 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
     proj->phys.vel.y = vel.y + player->phys.vel.y;
     proj->phys.vel.z = vel.z + player->phys.vel.z;
 
+    collision_set_flags(&proj->model.collision_vol, COLLISION_FLAG_HURT);
+    proj->model.collision_vol.hurt_list_count = 0;
+
     proj->life = 0.0;
 
     projectile_count++;
+}
+
+static void update_projectile_model_transform(Projectile* p)
+{
+    Vector3f pos = {-p->phys.pos.x, -p->phys.pos.y, -p->phys.pos.z}; // @NEG
+    Vector3f rot = {0.0,0.0,0.0};
+    Vector3f sca = {p->size,p->size,p->size};
+
+    get_model_transform(&pos,&rot,&sca,&p->model.transform);
 }
 
 void projectile_update()
@@ -99,7 +104,10 @@ void projectile_update()
         physics_add_kinetic_friction(&projectiles[i].phys, 0.80);
         physics_simulate(&projectiles[i].phys);
         
+        update_projectile_model_transform(&projectiles[i]);
+        collision_transform_bounding_box(&projectiles[i].model.collision_vol, &projectiles[i].model.transform);
         projectiles[i].life += g_delta_t;
+
     }
 
     for(int i = projectile_count-1; i >= 0; --i)
@@ -114,6 +122,7 @@ void projectile_update()
             remove_projectile(i);
         }
     }
+
 }
 
 void projectile_draw()
@@ -126,7 +135,12 @@ void projectile_draw()
         Vector pos = {-phys->pos.x, -phys->pos.y, -phys->pos.z}; // @NEG
         Vector sca = {projectiles[i].size,projectiles[i].size,projectiles[i].size};
 
-        gfx_draw_mesh(&m_sphere, 0, &projectiles[i].color,&pos,&rot, &sca);
+        gfx_draw_mesh(&m_sphere.mesh, 0, &projectiles[i].color,&pos,&rot, &sca);
+
+        if(show_collision)
+        {
+            collision_draw(&projectiles[i].model.collision_vol);
+        }
     }
 
 }

@@ -76,7 +76,6 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
         LOGE("Invalid shader program: '%s'", info);
         exit(1);
     }
-
 }
 
 void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f* clip_plane)

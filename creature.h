@@ -1,4 +1,5 @@
 #pragma once
+
 #define MAX_CREATURES 1000
 
 typedef enum
@@ -27,6 +28,7 @@ typedef struct
     float rot_y_target;
     float rot_y;
     Vector lookat;
+    float hp;
 
     Action action;
     // ai?
@@ -36,6 +38,9 @@ typedef struct
     Zone* zone;
 
 } Creature;
+
+extern Creature creatures[MAX_CREATURES];
+extern int creature_count;
 
 void creature_spawn(Zone* zone, CreatureType type);
 void creature_update();

@@ -12,7 +12,6 @@ void physics_begin(PhysicsObj* phys)
     phys->accel.y = 0.0f;
     phys->accel.z = 0.0f;
 
-    phys->collided = false;
     phys->user_force_applied = false;
 }
 
@@ -192,9 +191,8 @@ void physics_simulate(PhysicsObj* phys)
     phys->pos.y += ((phys->vel.y + v0.y)/2.0)*g_delta_t;
     phys->pos.z += ((phys->vel.z + v0.z)/2.0)*g_delta_t;
 
-
     // set collision to uncollided initially
-    phys->collided = false;
+    //phys->collided = false;
 
     //printf("pos.y: %f, ground.height: %f, vel.y: %f\n",phys->pos.y, phys->ground.height, phys->vel.y);
     if(phys->pos.y < phys->ground.height)

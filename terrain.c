@@ -86,6 +86,8 @@ typedef struct
 {
     Vector pos;
     Vector rot;
+    Vector sca;
+    Model model;
 } Tree;
 
 int num_trees;
@@ -127,7 +129,14 @@ static void generate_trees()
                 t->rot.y = theta;
                 t->rot.z = 0.0;
 
+                t->sca.x = 1.0;
+                t->sca.y = 1.0 + ((rand() % 10) / 10.0);
+                t->sca.z = 1.0;
+
                 //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+
+                t->model.texture = t_tree;
+                get_model_transform(&t->pos,&t->rot,&t->sca,&t->model.transform);
 
                 num_trees++;
             }
@@ -235,7 +244,8 @@ void terrain_draw()
 
     for(int i = 0; i < num_trees; ++i)
     {
-        gfx_draw_mesh(&m_tree, t_tree, NULL, &trees[i].pos,&trees[i].rot, &sca);
+        gfx_draw_model(&trees[i].model);
+        //gfx_draw_mesh(&m_tree.mesh, t_tree, NULL, &trees[i].pos,&trees[i].rot, &sca);
     }
 
 }
