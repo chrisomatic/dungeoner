@@ -272,6 +272,8 @@ void render_scene()
 
     gfx_draw_sky();
     terrain_draw();
+    player_draw();
+    creature_draw();
     projectile_draw();
     particles_draw();
 }
@@ -283,10 +285,14 @@ void render_water_textures()
     // pass 1: render reflection
     water_bind_reflection_fbo();
 
-    float distance = 2 * (player.camera.phys.pos.y - water_height);
+    float camera_pos = player.camera.phys.pos.y + player.camera.offset.y;
+    float distance = 2 * (camera_pos - water_height);
 
-    player.camera.phys.pos.y -= distance;
+    player.camera.phys.pos.y -= (distance);
+
+    float temp_angle = player.camera.angle_v;
     player.camera.angle_v *= -1;
+
     update_camera_rotation();
 
     gfx_enable_clipping(0,-1,0,-water_height-0.01);
@@ -294,15 +300,13 @@ void render_water_textures()
     gfx_unbind_frame_current_buffer();
 
     player.camera.phys.pos.y += distance;
-    player.camera.angle_v *= -1;
+    player.camera.angle_v = temp_angle;
     update_camera_rotation();
 
     // pass 2: render refraction
     water_bind_refraction_fbo();
     gfx_enable_clipping(0,1,0,water_height);
     render_scene();
-    player_draw();
-    creature_draw();
     gfx_unbind_frame_current_buffer();
 
     gfx_disable_clipping();
@@ -313,12 +317,18 @@ void render()
     render_water_textures();
     render_scene();
     water_draw();
-    player_draw();
-    creature_draw();
+
+    GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
+
+    Vector3f pos = {-11.4, -7.0, -18.0};
+    Vector3f rot = {0.0, 180.0, 0.0};
+    Vector3f sca = {2.0, 2.0, 2.0};
+
+    gfx_draw_quad(ref,NULL,&pos,&rot,&sca);
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};
     //text_print(10.0f,25.0f,"Dungeoner",color);
-    gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
+    //gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
 }
 

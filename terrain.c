@@ -9,8 +9,12 @@
 #include "shader.h"
 #include "util.h"
 
+#include "terrain.h"
+
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
 #define TERRAIN_HEIGHT_SCALE 30.0f // distance between vertices in y direction
+
+#define TERRAIN_BLOCK_DRAW_SIZE 128
 
 Vector* t_a;
 Vector* t_b;
@@ -147,6 +151,40 @@ static void generate_trees()
     util_unload_image(tree_data);
 }
 
+void terrain_update_local_block(int block_index_x, int block_index_y)
+{
+    uint32_t local_indices[TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6] = {0};
+
+    int x_start = (int)((terrain.w - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
+    int y_start = (int)((terrain.l - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
+
+    x_start += TERRAIN_BLOCK_DRAW_SIZE*block_index_x;
+    y_start += TERRAIN_BLOCK_DRAW_SIZE*block_index_y;
+
+    int start_index = (x_start + y_start*(terrain.w-1))*6;
+
+    uint32_t* p  = &terrain.indices[start_index];
+    uint32_t* lp = &local_indices[0];
+
+    LOGI("terrain local start index: %d",start_index);
+
+    for(int k = 0; k < TERRAIN_BLOCK_DRAW_SIZE; ++k)
+    {
+        //int index = k*TERRAIN_BLOCK_DRAW_SIZE*6;
+        memcpy(lp,p,TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
+
+        p += ((terrain.w-1)*6);
+        lp += TERRAIN_BLOCK_DRAW_SIZE*6;
+    }
+
+    //gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, terrain.indices, terrain.num_indices);
+    //gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, local_indices, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6);
+
+    gfx_sub_buffer_elements(m_terrain.ibo, local_indices, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
+
+}
+
+
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 {
     terrain.height_map = util_load_image(height_map_file, &terrain.w, &terrain.l, &terrain.n, 1);
@@ -226,12 +264,13 @@ void terrain_build(Mesh* ret_mesh, const char* height_map_file)
         //printf("vertex %d:  N %f %f %f\n",i, terrain_vertices[i].normal.x, terrain_vertices[i].normal.y, terrain_vertices[i].normal.z);
     }
 
-    gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, terrain.indices, terrain.num_indices);
+    gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, 0, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6);
+
+    terrain_update_local_block(0,0);
 
     util_unload_image(terrain.height_map);
 
     generate_trees();
-
 }
 
 void terrain_draw()

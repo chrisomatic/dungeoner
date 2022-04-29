@@ -41,6 +41,9 @@ typedef struct
     float angle_h;
     float angle_v;
 
+    int terrain_block_x;
+    int terrain_block_y;
+
     Camera camera;
     Model  model;
 

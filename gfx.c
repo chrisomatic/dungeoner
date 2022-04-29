@@ -32,8 +32,11 @@ static Mesh sky  = {};
 
 void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count)
 {
+
     m->vertex_count = vertex_count;
     m->index_count = index_count;
+
+    glBindVertexArray(vao);
 
  	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
@@ -42,6 +45,16 @@ void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t*
     glGenBuffers(1,&m->ibo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count*sizeof(uint32_t), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+}
+
+void gfx_sub_buffer_elements(GLuint ibo, uint32_t* indices, uint32_t index_count)
+{
+    glBindVertexArray(vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_count, indices);
+    glBindVertexArray(0);
 }
 
 void gfx_draw_sky()
@@ -155,6 +168,7 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     }
 
     glDrawElements(GL_TRIANGLES,mesh->index_count,GL_UNSIGNED_INT,0);
+    //glDrawElements(GL_TRIANGLES,300,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);

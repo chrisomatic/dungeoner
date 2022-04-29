@@ -6,6 +6,7 @@
 #include "model.h"
 #include "gfx.h"
 #include "log.h"
+#include "player.h"
 
 #include "creature.h"
 
@@ -75,7 +76,9 @@ void creature_spawn(Zone* zone, CreatureType type)
             c->zone = zone;
             memcpy(&c->model,&m_rat,sizeof(Model));
             c->model.texture = t_rat;
+
             c->hp = 10.0;
+            c->hp_max = 10.0;
 
             choose_random_direction(c);
 
@@ -104,6 +107,7 @@ void creature_update()
 
         if(c->hp <= 0.0)
         {
+            // die
             remove_creature(i);
             continue;
         }
@@ -221,6 +225,23 @@ void creature_draw()
         if(show_collision)
         {
             collision_draw(&c->model.collision_vol);
+        }
+
+        if(c->hp < c->hp_max)
+        {
+            Vector3f color_bg = {0.0,0.0,0.0};
+            Vector3f color    = {0.8,0.0,0.0};
+
+            pos.y -= 0.8;
+            rot.x = player.camera.angle_v; rot.y = -player.camera.angle_h; rot.z = 0.0;
+
+            sca.x = 0.25; sca.y = 0.025; sca.z = 0.25;
+            //gfx_draw_quad(0,&color_bg,&pos,&rot,&sca);
+
+            float pct = c->hp / c->hp_max;
+            sca.x *= pct; 
+            sca.z *= pct;
+            gfx_draw_quad(0,&color,&pos,&rot,&sca);
         }
     }
 }

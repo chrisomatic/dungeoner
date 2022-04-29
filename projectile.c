@@ -42,7 +42,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.x = 0.5;
             proj->color.y = 0.0;
             proj->color.z = 0.0;
-            proj->damage = 10.0;
+            proj->damage = 2.0;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;

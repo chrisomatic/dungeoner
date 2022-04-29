@@ -1,5 +1,11 @@
 #pragma once
 
+typedef enum
+{
+    WATER_PROPERTY_REFLECTION,
+    WATER_PROPERTY_REFRACTION,
+} WaterProperty;
+
 typedef struct
 {
     float height;
@@ -27,5 +33,6 @@ void water_bind_reflection_fbo();
 void water_bind_refraction_fbo();
 void water_update();
 void water_draw();
+GLuint water_get_texture(WaterProperty prop);
 
 float water_get_height();

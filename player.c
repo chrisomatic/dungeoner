@@ -196,6 +196,9 @@ void player_init()
     player.spectator = false;
     player.run = false;
 
+    player.terrain_block_x = 0;
+    player.terrain_block_y = 0;
+
     Vector3f h_lookat = {player.camera.lookat.x,0.0,player.camera.lookat.z};
     normalize(&h_lookat);
 
@@ -216,9 +219,13 @@ void player_init()
 
     player.camera.angle_v = -DEG(asin(player.camera.lookat.y));
     
-    player.phys.pos.x = 11.4;
-    player.phys.pos.y = 5.0;
-    player.phys.pos.z = 18.0;
+    //player.phys.pos.x = 11.4;
+    //player.phys.pos.y = 5.0;
+    //player.phys.pos.z = 18.0;
+
+    player.phys.pos.x = 0.0;
+    player.phys.pos.y = 0.0;
+    player.phys.pos.z = 0.0;
 
     player.camera.cursor_x = view_width / 2.0;
     player.camera.cursor_y = view_height / 2.0;
@@ -274,6 +281,19 @@ void player_update()
     update_player_model_transform();
 
     collision_transform_bounding_box(&player.model.collision_vol, &player.model.transform);
+
+    int curr_terrain_x = (int)(player.camera.phys.pos.x/TERRAIN_BLOCK_SIZE);
+    int curr_terrain_y = (int)(player.camera.phys.pos.z/TERRAIN_BLOCK_SIZE);
+
+    //printf("curr terrain block: %d,%d\n", curr_terrain_x, curr_terrain_y);
+
+    if(curr_terrain_x != player.terrain_block_x || curr_terrain_y != player.terrain_block_y)
+    {
+        player.terrain_block_x = curr_terrain_x;
+        player.terrain_block_y = curr_terrain_y;
+
+        terrain_update_local_block(-curr_terrain_x, -curr_terrain_y);
+    }
 
     //printf("Camera angles: %f, %f\n",player.camera.angle_h, player.camera.angle_v);
     

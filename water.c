@@ -36,6 +36,18 @@ void water_init(float height)
     water_body.sca.x = 128.0; water_body.sca.y = 128.0; water_body.sca.z = 128.0;
 }
 
+GLuint water_get_texture(WaterProperty prop)
+{
+    switch(prop)
+    {
+        case WATER_PROPERTY_REFLECTION:
+            return water_body.reflection_texture;
+        case WATER_PROPERTY_REFRACTION:
+            return water_body.refraction_texture;
+    }
+    return water_body.reflection_texture;
+}
+
 void water_deinit()
 {
     glDeleteFramebuffers(1, &water_body.reflection_frame_buffer);

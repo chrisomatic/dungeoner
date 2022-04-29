@@ -26,6 +26,8 @@ void gfx_draw_sky();
 void gfx_draw_debug_lines(Vector* position, Vector* vel);
 void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca);
 
+void gfx_sub_buffer_elements(GLuint ibo, uint32_t* indices, uint32_t index_count);
+
 void gfx_enable_clipping(float x, float y, float z, float w);
 void gfx_disable_clipping();
 

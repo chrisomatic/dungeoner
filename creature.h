@@ -29,6 +29,7 @@ typedef struct
     float rot_y;
     Vector lookat;
     float hp;
+    float hp_max;
 
     Action action;
     // ai?
