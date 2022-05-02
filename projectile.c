@@ -6,6 +6,7 @@
 #include "physics.h"
 #include "log.h"
 #include "particles.h"
+#include "creature.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];
@@ -42,7 +43,8 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.x = 0.5;
             proj->color.y = 0.0;
             proj->color.z = 0.0;
-            proj->damage = 2.0;
+            proj->damage = 5.0;
+            proj->blast_radius = 5.0;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;
@@ -52,12 +54,14 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.y = 0.6;
             proj->color.z = 1.0;
             proj->damage = 5.0;
+            proj->blast_radius = 0.0;
             break;
         case PROJECTILE_ARROW:
             speed = 30.0;
             proj->size = 1.0;
             proj->life_max = 60.0;
             proj->damage = 3.0;
+            proj->blast_radius = 0.0;
             break;
     }
     
@@ -119,6 +123,43 @@ void projectile_update()
                 Vector pos = {-projectiles[i].phys.pos.x,projectiles[i].phys.pos.y,-projectiles[i].phys.pos.z};
                 particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.25);
             }
+
+            if(projectiles[i].blast_radius > 0.0)
+            {
+                for(int j = 0; j < creature_count; ++j)
+                {
+                    Vector3f dist_v = {
+                        projectiles[i].phys.pos.x - creatures[j].phys.pos.x,
+                        projectiles[i].phys.pos.y - creatures[j].phys.pos.y,
+                        projectiles[i].phys.pos.z - creatures[j].phys.pos.z
+                    };
+
+                    float dist = magn(dist_v);
+
+                    if(dist <= projectiles[i].blast_radius)
+                    {
+                        float falloff = dist / projectiles[i].blast_radius;
+                        float damage_dealt = projectiles[i].damage * (1.0 - (falloff));
+
+                        float blast_magn = 20.0*falloff;
+
+                        Vector3f blast_v = {
+                            -dist_v.x * blast_magn,
+                            -dist_v.y * blast_magn,
+                            -dist_v.z * blast_magn
+                        };
+                        //copy_vector(&blast_v,dist_v);
+                        //mult(&blast_v, 20.0*falloff);
+
+                        add(&creatures[j].phys.vel,blast_v);
+                        creatures[j].hp -= damage_dealt;
+
+                        printf("Creature %d was in blast radius! falloff: %f\n", j, falloff);
+
+                    }
+                }
+            }
+
             remove_projectile(i);
         }
     }

@@ -33,7 +33,7 @@ void water_init(float height)
 
     water_body.pos.x = 0.0; water_body.pos.y = -height; water_body.pos.z = 0.0;
     water_body.rot.x = -90.0; water_body.rot.y = 0.0; water_body.rot.z = 0.0;
-    water_body.sca.x = 128.0; water_body.sca.y = 128.0; water_body.sca.z = 128.0;
+    water_body.sca.x = 256.0; water_body.sca.y = 256.0; water_body.sca.z = 256.0;
 }
 
 GLuint water_get_texture(WaterProperty prop)

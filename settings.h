@@ -12,7 +12,7 @@
 
 #define FOV       100.0f 
 #define Z_NEAR    0.01f
-#define Z_FAR     200.0f
+#define Z_FAR     1000.0f//196.0f
 #define BPP       4  // bits per pixel
 
 extern int view_width;

@@ -160,7 +160,7 @@ void collision_draw(CollisionVolume* col)
         {
             Vector3f pos = {-col->box_transformed.center.x, -col->box_transformed.center.y, -col->box_transformed.center.z};
             Vector3f rot = {0.0,0.0,0.0};
-            Vector3f sca = {col->box_transformed.l/2.0, col->box_transformed.h/2.0, col->box_transformed.w/2.0};
+            Vector3f sca = {col->box_transformed.l, col->box_transformed.h, col->box_transformed.w};
             
             Vector3f color = {1.0,0.0,1.0};
             gfx_draw_cube_debug(color, &pos, &rot, &sca);

@@ -117,7 +117,7 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
-        printf("fps: %f\n",1.0/(t1-t0));
+        //printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();
@@ -150,7 +150,7 @@ void init()
     t_tree   = load_texture("textures/tree_bark.png");
     t_rat    = load_texture("textures/rat.png");
     t_blend_map = load_texture("textures/blend_map.png");
-    t_outfit = load_texture("textures/outfit.png");
+    t_outfit = load_texture("textures/outfit2.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
     t_particle_star = load_texture("textures/particles/star.png");
 
@@ -295,7 +295,7 @@ void render_water_textures()
 
     update_camera_rotation();
 
-    gfx_enable_clipping(0,-1,0,-water_height-0.01);
+    gfx_enable_clipping(0,-1,0,-water_height);
     render_scene();
     gfx_unbind_frame_current_buffer();
 
@@ -318,6 +318,8 @@ void render()
     render_scene();
     water_draw();
 
+    /*
+    for debugging water reflection texture
     GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
 
     Vector3f pos = {-11.4, -7.0, -18.0};
@@ -325,6 +327,7 @@ void render()
     Vector3f sca = {2.0, 2.0, 2.0};
 
     gfx_draw_quad(ref,NULL,&pos,&rot,&sca);
+    */
 
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};

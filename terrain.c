@@ -14,11 +14,7 @@
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
 #define TERRAIN_HEIGHT_SCALE 30.0f // distance between vertices in y direction
 
-#define TERRAIN_BLOCK_DRAW_SIZE 128
-
-Vector* t_a;
-Vector* t_b;
-Vector* t_c;
+#define TERRAIN_BLOCK_DRAW_SIZE TERRAIN_BLOCK_SIZE*5
 
 Terrain terrain;
 
@@ -158,27 +154,36 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
     int x_start = (int)((terrain.w - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
     int y_start = (int)((terrain.l - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
 
-    x_start += TERRAIN_BLOCK_DRAW_SIZE*block_index_x;
-    y_start += TERRAIN_BLOCK_DRAW_SIZE*block_index_y;
+    x_start += TERRAIN_BLOCK_SIZE*block_index_x;
+    y_start += TERRAIN_BLOCK_SIZE*block_index_y;
 
-    int start_index = (x_start + y_start*(terrain.w-1))*6;
+    int start_index = MAX(0,(x_start + y_start*(terrain.w-1))*6);
+
+    printf("start_index: %d\n",start_index);
 
     uint32_t* p  = &terrain.indices[start_index];
     uint32_t* lp = &local_indices[0];
 
-    LOGI("terrain local start index: %d",start_index);
+    const uint64_t bytes_max = terrain.num_indices*sizeof(uint32_t);
+    uint64_t byte_index = start_index*sizeof(uint32_t);
+
+    LOGI("byte_start_index: %d, byte_max_index: %d",byte_index, bytes_max);
 
     for(int k = 0; k < TERRAIN_BLOCK_DRAW_SIZE; ++k)
     {
         //int index = k*TERRAIN_BLOCK_DRAW_SIZE*6;
-        memcpy(lp,p,TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
+        int copy_size = MIN(bytes_max - byte_index, TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
+        printf("%d: Copying %d bytes (remaining bytes: %d)\n",k,copy_size,bytes_max - byte_index);
+        if(copy_size == 0) break;
+
+        memcpy(lp,p,copy_size);
+        byte_index += copy_size;
 
         p += ((terrain.w-1)*6);
-        lp += TERRAIN_BLOCK_DRAW_SIZE*6;
+        lp += copy_size/sizeof(uint32_t);
     }
 
-    //gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, terrain.indices, terrain.num_indices);
-    //gfx_create_mesh(ret_mesh, terrain.vertices, terrain.num_vertices, local_indices, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6);
+    printf("done.\n");
 
     gfx_sub_buffer_elements(m_terrain.ibo, local_indices, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
 

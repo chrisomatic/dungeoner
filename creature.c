@@ -235,7 +235,7 @@ void creature_draw()
             pos.y -= 0.8;
             rot.x = player.camera.angle_v; rot.y = -player.camera.angle_h; rot.z = 0.0;
 
-            sca.x = 0.25; sca.y = 0.025; sca.z = 0.25;
+            sca.x = 0.50; sca.y = 0.050; sca.z = 0.50;
             //gfx_draw_quad(0,&color_bg,&pos,&rot,&sca);
 
             float pct = c->hp / c->hp_max;

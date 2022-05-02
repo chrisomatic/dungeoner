@@ -21,7 +21,7 @@ static void player_spawn_projectile(ProjectileType type);
 
 void update_camera_rotation()
 {
-   // const Vector3f v_axis = {0.0, 1.0, 0.0};
+    // const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis
     Vector3f view = {0.0, 0.0, 1.0};
@@ -282,10 +282,11 @@ void player_update()
 
     collision_transform_bounding_box(&player.model.collision_vol, &player.model.transform);
 
-    int curr_terrain_x = (int)(player.camera.phys.pos.x/TERRAIN_BLOCK_SIZE);
-    int curr_terrain_y = (int)(player.camera.phys.pos.z/TERRAIN_BLOCK_SIZE);
+    //float half_block_size = TERRAIN_BLOCK_SIZE / 2.0;
+    int curr_terrain_x = round(player.camera.phys.pos.x/TERRAIN_BLOCK_SIZE);
+    int curr_terrain_y = round(player.camera.phys.pos.z/TERRAIN_BLOCK_SIZE);
 
-    //printf("curr terrain block: %d,%d\n", curr_terrain_x, curr_terrain_y);
+    //printf("pos: %f %f, terrain block: %d,%d\n",player.camera.phys.pos.x, player.camera.phys.pos.z, curr_terrain_x, curr_terrain_y);
 
     if(curr_terrain_x != player.terrain_block_x || curr_terrain_y != player.terrain_block_y)
     {

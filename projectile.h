@@ -23,6 +23,7 @@ typedef struct
     float size;
     Vector color;
     float damage;
+    float blast_radius;
 } Projectile;
 
 
