@@ -12,6 +12,7 @@ typedef struct
     PhysicsObj phys;
     float life;
     float life_max;
+    float camera_dist;
 } Particle;
 
 typedef struct

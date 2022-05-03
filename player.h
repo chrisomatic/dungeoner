@@ -44,6 +44,8 @@ typedef struct
     int terrain_block_x;
     int terrain_block_y;
 
+    Vector2f lean_angle; // x, z
+
     Camera camera;
     Model  model;
 

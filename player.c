@@ -199,6 +199,9 @@ void player_init()
     player.terrain_block_x = 0;
     player.terrain_block_y = 0;
 
+    player.lean_angle.x = 0.0;
+    player.lean_angle.y = 0.0;
+
     Vector3f h_lookat = {player.camera.lookat.x,0.0,player.camera.lookat.z};
     normalize(&h_lookat);
 
@@ -267,8 +270,58 @@ void player_snap_camera()
 
 static void update_player_model_transform()
 {
+
+    // handle lean angle
+    /*
+    Vector3f forward  = {player.camera.lookat.x, 0.0, player.camera.lookat.z};
+    Vector3f accel_xz = {player.phys.accel.x, 0.0, player.phys.accel.z};
+
+    float dx = dot(forward, accel_xz);
+
+    if(dx == 0)
+    {
+        if(player.lean_angle.x > 0)
+            player.lean_angle.x -= 20*g_delta_t;
+        else
+            player.lean_angle.x += 20*g_delta_t;
+    }
+    else if(dx < 0)
+    {
+        player.lean_angle.x -= MIN(20*g_delta_t, ABS(player.lean_angle.x));
+    }
+    else 
+    {
+        player.lean_angle.x += MIN(20*g_delta_t, ABS(player.lean_angle.x));
+    }
+    */
+
+    /*
+    if(dz == 0)
+    {
+        if(player.lean_angle.y > 0)
+            player.lean_angle.y -= 15*g_delta_t;
+        else
+            player.lean_angle.y += 15*g_delta_t;
+    }
+    else if(dz < 0)
+    {
+        player.lean_angle.y -= 15*g_delta_t;
+    }
+    else 
+    {
+        player.lean_angle.y += 15*g_delta_t;
+    }
+    */
+
+    //if(player.lean_angle.x < -10)     player.lean_angle.x = -10;
+    //else if(player.lean_angle.x > 10) player.lean_angle.x = 10;
+
+    
+    //if(player.lean_angle.y < -15)     player.lean_angle.y = -15;
+    //else if(player.lean_angle.y > 15) player.lean_angle.y = 15;
+
     Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z}; // @NEG
-    Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
+    Vector3f rot = {player.lean_angle.x,-player.angle_h,player.lean_angle.y}; // @NEG
     Vector3f sca = {1.0,1.0,1.0};
 
     get_model_transform(&pos,&rot,&sca,&player.model.transform);
@@ -326,9 +379,6 @@ void player_draw()
 
         float lean_angle = mt == 0.0 || mv == 0.0 ? 0.0 : acos(d / (mt*mv));
         */
-        Vector3f pos = {-player.phys.pos.x, -player.phys.pos.y, -player.phys.pos.z}; // @NEG
-        Vector3f rot = {0.0,-player.angle_h,0.0}; // @NEG
-        Vector3f sca = {1.0,1.0,1.0};
 
         gfx_draw_model(&player.model);
         //gfx_draw_mesh(&player.model.mesh,player.model.texture,NULL, &pos, &rot, &sca);

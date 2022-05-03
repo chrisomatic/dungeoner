@@ -32,7 +32,6 @@ static Mesh sky  = {};
 
 void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count)
 {
-
     m->vertex_count = vertex_count;
     m->index_count = index_count;
 
@@ -455,6 +454,61 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
+void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca)
+{
+    glUseProgram(program_gui);
+
+    shader_set_int(program_gui,"guiTexture",0);
+    shader_set_vec2(program_gui,"scale",sca->x, sca->y);
+
+    if(texture)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    if(color)
+    {
+        shader_set_vec3(program_gui,"color",color->x, color->y, color->z);
+    }
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+void gfx_disable_depth_testing()
+{
+    glDisable(GL_DEPTH_TEST);
+}
+
+void gfx_enable_depth_testing()
+{
+    glEnable(GL_DEPTH_TEST);
+}
+
 void gfx_disable_blending()
 {
     glDisable(GL_BLEND);
@@ -464,6 +518,12 @@ void gfx_enable_blending()
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void gfx_enable_blending_additive()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 }
 
 void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca)

@@ -51,6 +51,7 @@ GLuint t_outfit;
 GLuint t_rat;
 GLuint t_particle_explosion;
 GLuint t_particle_star;
+GLuint t_crosshair;
 
 // =========================
 // Meshes
@@ -153,6 +154,7 @@ void init()
     t_outfit = load_texture("textures/outfit2.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
     t_particle_star = load_texture("textures/particles/star.png");
+    t_crosshair = load_texture("textures/crosshair.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.jpg",
@@ -275,7 +277,6 @@ void render_scene()
     player_draw();
     creature_draw();
     projectile_draw();
-    particles_draw();
 }
 
 void render_water_textures()
@@ -297,6 +298,7 @@ void render_water_textures()
 
     gfx_enable_clipping(0,-1,0,-water_height);
     render_scene();
+    particles_draw();
     gfx_unbind_frame_current_buffer();
 
     player.camera.phys.pos.y += distance;
@@ -307,6 +309,7 @@ void render_water_textures()
     water_bind_refraction_fbo();
     gfx_enable_clipping(0,1,0,water_height);
     render_scene();
+    particles_draw();
     gfx_unbind_frame_current_buffer();
 
     gfx_disable_clipping();
@@ -317,11 +320,19 @@ void render()
     render_water_textures();
     render_scene();
     water_draw();
+    particles_draw();
+
+    // for debugging water reflection texture
+    //GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
+
+    Vector2f pos = {0.5,0.5};
+    Vector2f sca = {0.025,0.025};
+
+    gfx_enable_blending();
+    gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca);
+    gfx_disable_blending();
 
     /*
-    for debugging water reflection texture
-    GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
-
     Vector3f pos = {-11.4, -7.0, -18.0};
     Vector3f rot = {0.0, 180.0, 0.0};
     Vector3f sca = {2.0, 2.0, 2.0};

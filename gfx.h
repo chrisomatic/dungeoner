@@ -19,6 +19,7 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, V
 void gfx_draw_model(Model* model);
 
 void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca);
+void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca);
 void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe);
 void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca);
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
@@ -33,6 +34,10 @@ void gfx_disable_clipping();
 
 void gfx_disable_blending();
 void gfx_enable_blending();
+void gfx_enable_blending_additive();
+
+void gfx_disable_depth_testing();
+void gfx_enable_depth_testing();
 
 GLuint gfx_create_fbo();
 GLuint gfx_create_texture_attachment(int width, int height);

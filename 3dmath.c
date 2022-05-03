@@ -43,6 +43,25 @@ float magn(Vector3f v)
     return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
 }
 
+float dist_squared(Vector3f* a, Vector3f* b)
+{
+    Vector3f s = {
+        b->x - a->x,
+        b->y - a->y,
+        b->z - a->z
+    };
+
+    float d_sq = (s.x * s.x) + (s.y * s.y) + (s.z * s.z);
+    return d_sq;
+}
+
+float dist(Vector3f* a, Vector3f* b)
+{
+    float d = sqrt(dist_squared(a,b));
+    return d;
+}
+
+
 void copy_vector(Vector3f* dest, Vector3f src)
 {
     dest->x = src.x;
@@ -297,6 +316,36 @@ static void get_translate_transform(Matrix* mat, Vector3f* position)
 
 static void get_perspective_transform(Matrix* mat)
 {
+    /*
+    	projectionMatrix = new Matrix4f();
+		float aspectRatio = (float) Display.getWidth() / (float) Display.getHeight();
+		float y_scale = (float) ((1f / Math.tan(Math.toRadians(FOV / 2f))));
+		float x_scale = y_scale / aspectRatio;
+		float frustum_length = FAR_PLANE - NEAR_PLANE;
+
+		projectionMatrix.m00 = x_scale;
+		projectionMatrix.m11 = y_scale;
+		projectionMatrix.m22 = -((FAR_PLANE + NEAR_PLANE) / frustum_length);
+		projectionMatrix.m23 = -1;
+		projectionMatrix.m32 = -((2 * NEAR_PLANE * FAR_PLANE) / frustum_length);
+		projectionMatrix.m33 = 0;
+    }
+
+    const float ar           = view_width/(float)view_height;
+    const float y_scale      = 1.0f / tanf(RAD(FOV / 2.0f));
+    const float x_scale      = y_scale / ar;
+    const float frustum_len  = Z_FAR - Z_NEAR;
+
+    memset(mat,0,sizeof(Matrix));
+
+    mat->m[0][0] = x_scale;
+    mat->m[1][1] = y_scale;
+    mat->m[2][2] = -((Z_FAR + Z_NEAR) / frustum_len);
+    mat->m[2][3] = -1.0;
+    mat->m[3][2] = -((2 * Z_NEAR * Z_FAR) / frustum_len);
+    mat->m[3][3] = 0.0;
+    */
+
     const float ar           = view_width/(float)view_height;
     const float z_near       = Z_NEAR;
     const float z_far        = Z_FAR;

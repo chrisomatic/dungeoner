@@ -230,7 +230,7 @@ void creature_draw()
         if(c->hp < c->hp_max)
         {
             Vector3f color_bg = {0.0,0.0,0.0};
-            Vector3f color    = {0.8,0.0,0.0};
+            Vector3f color    = {1.0,0.0,0.0};
 
             pos.y -= 0.8;
             rot.x = player.camera.angle_v; rot.y = -player.camera.angle_h; rot.z = 0.0;
@@ -238,9 +238,20 @@ void creature_draw()
             sca.x = 0.50; sca.y = 0.050; sca.z = 0.50;
             //gfx_draw_quad(0,&color_bg,&pos,&rot,&sca);
 
+            const float offset_factor = 0.01;
+            Vector3f bg_offset = {
+                player.camera.lookat.x*offset_factor,
+                player.camera.lookat.y*offset_factor,
+                player.camera.lookat.z*offset_factor
+            };
+
+            Vector3f pos_bg = {pos.x + bg_offset.x, pos.y + bg_offset.y, pos.z + bg_offset.z};
+            gfx_draw_quad(0,&color_bg,&pos_bg,&rot,&sca);
+
             float pct = c->hp / c->hp_max;
             sca.x *= pct; 
             sca.z *= pct;
+
             gfx_draw_quad(0,&color,&pos,&rot,&sca);
         }
     }

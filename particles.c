@@ -26,6 +26,42 @@ static void delete_particle(int pg_index, int p_index)
     pg->particle_count--;
 }
 
+static void swap(Particle* a, Particle* b)
+{
+    Particle t = {0};
+    memcpy(&t, a, sizeof(Particle));
+    memcpy(a, b, sizeof(Particle));
+    memcpy(b, &t, sizeof(Particle));
+}
+
+static int partition(Particle arr[], int low, int high)
+{
+    Particle pivot = arr[high];
+    int i = (low - 1);
+
+    for (int j = low; j <= high- 1; j++)
+    {
+        if (arr[j].camera_dist <= pivot.camera_dist)
+        {
+            i++;
+            swap(&arr[i], &arr[j]);
+        }
+    }
+    swap(&arr[i + 1], &arr[high]);
+    return (i + 1);
+}
+
+static void quick_sort(Particle arr[], int low, int high)
+{
+    if (low < high)
+    {
+        int pi = partition(arr, low, high);
+
+        quick_sort(arr, low, pi - 1);
+        quick_sort(arr, pi + 1, high);
+    }
+}
+
 void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
 {
     ParticleGenerator *pg = &particle_generators[particle_generator_count];
@@ -198,14 +234,23 @@ void particles_update()
             if(p->life >= p->life_max)
             {
                 delete_particle(i,j);
+                continue;
             }
+
+            p->camera_dist = dist_squared(&player.camera.phys.pos, &p->phys.pos);
         }
+
+        // sort particles
+        quick_sort(pg->particles, 0, pg->particle_count-1);
     }
 }
 
 void particles_draw()
 {
-    gfx_enable_blending();
+    gfx_disable_depth_testing();
+    //gfx_enable_blending();
+    gfx_enable_blending_additive();
+    
 
     for(int i = 0; i < particle_generator_count; ++i)
     {
@@ -237,4 +282,5 @@ void particles_draw()
     }
 
     gfx_disable_blending();
+    gfx_enable_depth_testing();
 }
