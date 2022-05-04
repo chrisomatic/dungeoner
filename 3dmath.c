@@ -408,7 +408,7 @@ void get_view_proj_transforms(Matrix* view, Matrix* proj)
     Matrix camera_translate_trans = {0};
     Matrix camera_rotate_trans    = {0};
 
-    Camera* cam = &player.camera;
+    Camera* cam = &player->camera;
     Vector3f camera_pos = {
         cam->phys.pos.x + cam->offset.x,
         cam->phys.pos.y + cam->offset.y,
@@ -417,7 +417,7 @@ void get_view_proj_transforms(Matrix* view, Matrix* proj)
 
     get_perspective_transform(&perspective_trans);
     get_translate_transform(&camera_translate_trans, &camera_pos);
-    get_camera_transform(&camera_rotate_trans, player.camera.lookat, player.camera.up);
+    get_camera_transform(&camera_rotate_trans, player->camera.lookat, player->camera.up);
 
     memcpy(view,&identity_matrix,sizeof(Matrix));
     dot_product_mat(*view, camera_rotate_trans,    view);
@@ -464,6 +464,8 @@ float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c)
     float rx = n.x * x;
     float tz = n.z * z;
     float s  = n.y;
+
+    if(s == 0.0) return 0.0;
 
     float y = (k - rx - tz) / s;
 

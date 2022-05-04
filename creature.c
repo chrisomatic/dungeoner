@@ -215,11 +215,6 @@ void creature_draw()
     {
         Creature* c = &creatures[i];
 
-        Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z};
-        Vector3f rot = {0.0,c->rot_y,0.0};
-        Vector3f sca = {1.0,1.0,1.0};
-
-        //gfx_draw_mesh(&creatures[i].model.mesh,creatures[i].model.texture,NULL, &pos, &rot, &sca);
         gfx_draw_model(&creatures[i].model);
 
         if(show_collision)
@@ -229,20 +224,25 @@ void creature_draw()
 
         if(c->hp < c->hp_max)
         {
+
+            Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z};
+            Vector3f rot = {0.0,c->rot_y,0.0};
+            Vector3f sca = {1.0,1.0,1.0};
+
             Vector3f color_bg = {0.0,0.0,0.0};
             Vector3f color    = {1.0,0.0,0.0};
 
             pos.y -= 0.8;
-            rot.x = player.camera.angle_v; rot.y = -player.camera.angle_h; rot.z = 0.0;
+            rot.x = player->camera.angle_v; rot.y = -player->camera.angle_h; rot.z = 0.0;
 
             sca.x = 0.50; sca.y = 0.050; sca.z = 0.50;
             //gfx_draw_quad(0,&color_bg,&pos,&rot,&sca);
 
             const float offset_factor = 0.01;
             Vector3f bg_offset = {
-                player.camera.lookat.x*offset_factor,
-                player.camera.lookat.y*offset_factor,
-                player.camera.lookat.z*offset_factor
+                player->camera.lookat.x*offset_factor,
+                player->camera.lookat.y*offset_factor,
+                player->camera.lookat.z*offset_factor
             };
 
             Vector3f pos_bg = {pos.x + bg_offset.x, pos.y + bg_offset.y, pos.z + bg_offset.z};

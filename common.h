@@ -19,6 +19,7 @@ extern GLuint t_sky_night;
 extern GLuint t_outfit;
 extern GLuint t_particle_explosion;
 extern GLuint t_particle_star;
+extern GLuint t_crosshair;
 
 extern Mesh m_terrain;
 extern Model m_sphere;

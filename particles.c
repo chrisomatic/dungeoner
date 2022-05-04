@@ -237,11 +237,11 @@ void particles_update()
                 continue;
             }
 
-            p->camera_dist = dist_squared(&player.camera.phys.pos, &p->phys.pos);
+            //p->camera_dist = dist_squared(&player.camera.phys.pos, &p->phys.pos);
         }
 
         // sort particles
-        quick_sort(pg->particles, 0, pg->particle_count-1);
+        //quick_sort(pg->particles, 0, pg->particle_count-1);
     }
 }
 
@@ -250,7 +250,6 @@ void particles_draw()
     gfx_disable_depth_testing();
     //gfx_enable_blending();
     gfx_enable_blending_additive();
-    
 
     for(int i = 0; i < particle_generator_count; ++i)
     {
@@ -271,10 +270,10 @@ void particles_draw()
 
             Vector norm = {0.0,0.0,1.0};
 
-            //rotate_toward_point(norm, &p->phys.pos, &player.camera.phys.pos, &rot);
+            //rotate_toward_point(norm, &p->phys.pos, &player->camera.phys.pos, &rot);
 
-            rot.x = player.camera.angle_v;
-            rot.y = -player.camera.angle_h;
+            rot.x = player->camera.angle_v;
+            rot.y = -player->camera.angle_h;
             rot.z = 0.0; //-player.camera.angle_h;
             
             gfx_draw_particle(pg->texture, &pg->color0,&pg->color1,opaqueness, &pos, &rot, &sca);

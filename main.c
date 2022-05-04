@@ -10,6 +10,8 @@
 #include "common.h"
 #include "3dmath.h"
 #include "gfx.h"
+#include "gui.h"
+#include "entity.h"
 #include "terrain.h"
 #include "settings.h"
 #include "window.h"
@@ -61,6 +63,7 @@ Mesh m_terrain;
 Model m_sphere;
 Model m_tree;
 Model m_rat;
+Model m_arrow;
 
 // =========================
 // Zones
@@ -145,6 +148,7 @@ void init()
     shader_load_all();
 
     LOGI(" - Textures.");
+
     t_stone  = load_texture("textures/stonewall.png");
     t_grass  = load_texture("textures/grass2.png");
     t_dirt   = load_texture("textures/dirt.png");
@@ -241,7 +245,7 @@ void simulate()
     for(int i = 0; i < creature_count; ++i)
     {
         CollisionVolume* c = &creatures[i].model.collision_vol;
-        if(collision_check(c, &player.model.collision_vol))
+        if(collision_check(c, &player->model.collision_vol))
         {
             //printf("player colliding with creature %d\n",i);
         }
@@ -286,13 +290,13 @@ void render_water_textures()
     // pass 1: render reflection
     water_bind_reflection_fbo();
 
-    float camera_pos = player.camera.phys.pos.y + player.camera.offset.y;
+    float camera_pos = player->camera.phys.pos.y + player->camera.offset.y;
     float distance = 2 * (camera_pos - water_height);
 
-    player.camera.phys.pos.y -= (distance);
+    player->camera.phys.pos.y -= (distance);
 
-    float temp_angle = player.camera.angle_v;
-    player.camera.angle_v *= -1;
+    float temp_angle = player->camera.angle_v;
+    player->camera.angle_v *= -1;
 
     update_camera_rotation();
 
@@ -301,8 +305,8 @@ void render_water_textures()
     particles_draw();
     gfx_unbind_frame_current_buffer();
 
-    player.camera.phys.pos.y += distance;
-    player.camera.angle_v = temp_angle;
+    player->camera.phys.pos.y += distance;
+    player->camera.angle_v = temp_angle;
     update_camera_rotation();
 
     // pass 2: render refraction
@@ -321,16 +325,10 @@ void render()
     render_scene();
     water_draw();
     particles_draw();
+    gui_draw();
 
     // for debugging water reflection texture
     //GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
-
-    Vector2f pos = {0.5,0.5};
-    Vector2f sca = {0.025,0.025};
-
-    gfx_enable_blending();
-    gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca);
-    gfx_disable_blending();
 
     /*
     Vector3f pos = {-11.4, -7.0, -18.0};
@@ -343,6 +341,6 @@ void render()
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};
     //text_print(10.0f,25.0f,"Dungeoner",color);
-    //gfx_draw_debug_lines(&player.phys.pos, &player.phys.vel);
+    //gfx_draw_debug_lines(&player->phys.pos, &player->phys.vel);
 }
 

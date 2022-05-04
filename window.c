@@ -138,11 +138,11 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         if(mode == GLFW_CURSOR_NORMAL)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        player.primary_action = true;
+        player->primary_action = true;
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        player.secondary_action = true;
+        player->secondary_action = true;
     }
 }
 
@@ -153,22 +153,22 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
         switch(key)
         {
             case GLFW_KEY_W:
-                player.forward = true;
+                player->forward = true;
                 break;
             case GLFW_KEY_S:
-                player.back = true;
+                player->back = true;
                 break;
             case GLFW_KEY_A:
-                player.left = true;
+                player->left = true;
                 break;
             case GLFW_KEY_D:
-                player.right = true;
+                player->right = true;
                 break;
             case GLFW_KEY_SPACE:
-                player.jump = true;
+                player->jump = true;
                 break;
             case GLFW_KEY_LEFT_SHIFT:
-                player.run = true;
+                player->run = true;
                 break;
             case GLFW_KEY_F:
                 show_fog = !show_fog;
@@ -177,28 +177,28 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 show_collision = !show_collision;
                 break;
             case GLFW_KEY_P:
-                if(player.camera.mode == CAMERA_MODE_FIRST_PERSON)
+                if(player->camera.mode == CAMERA_MODE_FIRST_PERSON)
                 {
-                    player.camera.mode = CAMERA_MODE_THIRD_PERSON;
+                    player->camera.mode = CAMERA_MODE_THIRD_PERSON;
                 }
-                else if(player.camera.mode == CAMERA_MODE_THIRD_PERSON)
+                else if(player->camera.mode == CAMERA_MODE_THIRD_PERSON)
                 {
-                    player.camera.mode = CAMERA_MODE_FIRST_PERSON;
-                    player.camera.offset.x = 0.0f;
-                    player.camera.offset.y = 0.0f;
-                    player.camera.offset.z = 0.0f;
+                    player->camera.mode = CAMERA_MODE_FIRST_PERSON;
+                    player->camera.offset.x = 0.0f;
+                    player->camera.offset.y = 0.0f;
+                    player->camera.offset.z = 0.0f;
                 }
-                LOGI("Camera mode: %d",player.camera.mode);
+                LOGI("Camera mode: %d",player->camera.mode);
                 break;
             case GLFW_KEY_TAB:
                 show_wireframe = !show_wireframe;
                 LOGI("Wireframe: %d",show_wireframe);
                 break;
             case GLFW_KEY_M:
-                player.spectator = !player.spectator;
-                if(!player.spectator)
+                player->spectator = !player->spectator;
+                if(!player->spectator)
                     player_snap_camera();
-                LOGI("Camera mode: %d",player.camera.mode);
+                LOGI("Camera mode: %d",player->camera.mode);
                 break;
             case GLFW_KEY_ESCAPE:
             {
@@ -215,22 +215,22 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
         switch(key)
         {
             case GLFW_KEY_W:
-                player.forward = false;
+                player->forward = false;
                 break;
             case GLFW_KEY_S:
-                player.back = false;
+                player->back = false;
                 break;
             case GLFW_KEY_A:
-                player.left = false;
+                player->left = false;
                 break;
             case GLFW_KEY_D:
-                player.right = false;
+                player->right = false;
                 break;
             case GLFW_KEY_LEFT_SHIFT:
-                player.run = false;
+                player->run = false;
                 break;
             case GLFW_KEY_SPACE:
-                player.jump = false;
+                player->jump = false;
                 break;
         }
     }

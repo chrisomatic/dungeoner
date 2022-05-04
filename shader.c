@@ -96,7 +96,7 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
         shader_set_vec3(program,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
         shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
         shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
-        shader_set_vec3(program,"player_position",player.phys.pos.x, player.phys.pos.y, player.phys.pos.z);
+        shader_set_vec3(program,"player_position",player->phys.pos.x, player->phys.pos.y, player->phys.pos.z);
 
         if(clip_plane)
             shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);
@@ -139,7 +139,7 @@ void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca,
         shader_set_vec3(program,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
         shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
         shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
-        shader_set_vec3(program,"player_position",player.phys.pos.x, player.phys.pos.y, player.phys.pos.z);
+        shader_set_vec3(program,"player_position",player->phys.pos.x, player->phys.pos.y, player->phys.pos.z);
 
         if(clip_plane)
             shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);

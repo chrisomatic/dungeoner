@@ -22,3 +22,4 @@ typedef struct
 } Model;
 
 bool model_import(Model* ret_model, const char* obj_filepath);
+void model_print(Model* m);

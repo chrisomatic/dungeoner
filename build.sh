@@ -1,6 +1,9 @@
 #!/bin/sh
-gcc 3dmath.c \
+
+gcc entity.c \
+    3dmath.c \
     gfx.c \
+    gui.c \
     creature.c \
     collision.c \
     light.c \

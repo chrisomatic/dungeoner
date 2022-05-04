@@ -155,3 +155,10 @@ bool model_import(Model* ret_model, const char* obj_filepath)
 
     return true;
 }
+
+void model_print(Model* m)
+{
+    LOGI("Mesh: %p", &m->mesh);
+    LOGI(" vbo: %d (vertex_count: %d), ibo: %d (index_count: %d)", m->mesh.vbo, m->mesh.vertex_count, m->mesh.ibo, m->mesh.index_count);  
+    LOGI("Texture: %d", m->texture);  
+}

@@ -44,8 +44,6 @@ typedef struct
     int terrain_block_x;
     int terrain_block_y;
 
-    Vector2f lean_angle; // x, z
-
     Camera camera;
     Model  model;
 
@@ -62,7 +60,7 @@ typedef struct
     bool secondary_action;
 } Player;
 
-extern Player player;
+extern Player* player;
 
 void player_init();
 void player_update();

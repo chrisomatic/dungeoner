@@ -66,9 +66,9 @@ void gfx_draw_sky()
 
     // @NEG
     Vector3f pos = {
-        -player.camera.phys.pos.x-player.camera.offset.x,
-        -player.camera.phys.pos.y-player.camera.offset.y,
-        -player.camera.phys.pos.z-player.camera.offset.z
+        -player->camera.phys.pos.x-player->camera.offset.x,
+        -player->camera.phys.pos.y-player->camera.offset.y,
+        -player->camera.phys.pos.z-player->camera.offset.z
     };
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {1.0,1.0,1.0};
@@ -255,7 +255,7 @@ void gfx_draw_water(WaterBody* water)
     shader_set_int(program_water,"wireframe",show_wireframe);
     shader_set_mat4(program_water,"wvp",&wvp);
     shader_set_mat4(program_water,"world",&world);
-    shader_set_vec3(program_water,"camera_pos",player.camera.phys.pos.x, player.camera.phys.pos.y, player.camera.phys.pos.z);
+    shader_set_vec3(program_water,"camera_pos",player->camera.phys.pos.x, player->camera.phys.pos.y, player->camera.phys.pos.z);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, water->reflection_texture);

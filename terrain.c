@@ -18,6 +18,17 @@
 
 Terrain terrain;
 
+typedef struct
+{
+    Vector pos;
+    Vector rot;
+    Vector sca;
+    Model model;
+} Tree;
+
+int num_trees;
+Tree trees[100] = {0};
+
 void terrain_get_info(float x, float z, GroundInfo* ground)
 {
     float terrain_x = terrain.pos.x - x;
@@ -82,17 +93,6 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     //ground->normal.z = terrain.vertices[index].normal.z;
 }
 
-typedef struct
-{
-    Vector pos;
-    Vector rot;
-    Vector sca;
-    Model model;
-} Tree;
-
-int num_trees;
-Tree trees[100] = {0};
-
 static void generate_trees()
 {
     int w,h,n;
@@ -135,13 +135,15 @@ static void generate_trees()
 
                 //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
 
+                memcpy(&t->model, &m_tree, sizeof(Model));
                 t->model.texture = t_tree;
-                get_model_transform(&t->pos,&t->rot,&t->sca,&t->model.transform);
+
+                Vector3f pos = {-t->pos.x, -t->pos.y, -t->pos.z};
+                get_model_transform(&pos,&t->rot,&t->sca,&t->model.transform);
 
                 num_trees++;
             }
         }
-
     }
 
     util_unload_image(tree_data);
@@ -151,8 +153,14 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 {
     uint32_t local_indices[TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6] = {0};
 
-    int x_start = (int)((terrain.w - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
-    int y_start = (int)((terrain.l - TERRAIN_BLOCK_DRAW_SIZE)/2.0);
+    int terrain_block_draw_size = TERRAIN_BLOCK_DRAW_SIZE;
+    if(terrain.w < TERRAIN_BLOCK_SIZE || terrain.l < TERRAIN_BLOCK_DRAW_SIZE)
+    {
+        terrain_block_draw_size = MIN(terrain.w, terrain.l);
+    }
+
+    int x_start = (int)((terrain.w - terrain_block_draw_size)/2.0);
+    int y_start = (int)((terrain.l - terrain_block_draw_size)/2.0);
 
     x_start += TERRAIN_BLOCK_SIZE*block_index_x;
     y_start += TERRAIN_BLOCK_SIZE*block_index_y;
@@ -169,10 +177,10 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
     LOGI("byte_start_index: %d, byte_max_index: %d",byte_index, bytes_max);
 
-    for(int k = 0; k < TERRAIN_BLOCK_DRAW_SIZE; ++k)
+    for(int k = 0; k < terrain_block_draw_size; ++k)
     {
-        //int index = k*TERRAIN_BLOCK_DRAW_SIZE*6;
-        int copy_size = MIN(bytes_max - byte_index, TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
+        //int index = k*terrain_block_draw_size*6;
+        int copy_size = MIN(bytes_max - byte_index, terrain_block_draw_size*6*sizeof(uint32_t));
         printf("%d: Copying %d bytes (remaining bytes: %d)\n",k,copy_size,bytes_max - byte_index);
         if(copy_size == 0) break;
 
@@ -185,8 +193,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
     printf("done.\n");
 
-    gfx_sub_buffer_elements(m_terrain.ibo, local_indices, TERRAIN_BLOCK_DRAW_SIZE*TERRAIN_BLOCK_DRAW_SIZE*6*sizeof(uint32_t));
-
+    gfx_sub_buffer_elements(m_terrain.ibo, local_indices, terrain_block_draw_size*terrain_block_draw_size*6*sizeof(uint32_t));
 }
 
 
@@ -291,5 +298,4 @@ void terrain_draw()
         gfx_draw_model(&trees[i].model);
         //gfx_draw_mesh(&m_tree.mesh, t_tree, NULL, &trees[i].pos,&trees[i].rot, &sca);
     }
-
 }
