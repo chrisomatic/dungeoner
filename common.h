@@ -25,6 +25,7 @@ extern Mesh m_terrain;
 extern Model m_sphere;
 extern Model m_tree;
 extern Model m_rat;
+extern Model m_arrow;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;

@@ -19,9 +19,12 @@ typedef struct
     PhysicsObj phys;
     Model      model;
 
-    Player     player_data;
-    Creature   creature_data;
-    Projectile projectile_data;
+    union 
+    {
+        Player     player_data;
+        Creature   creature_data;
+        Projectile projectile_data;
+    } data;
 
     uint32_t hp;
     uint32_t max_hp;

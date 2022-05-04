@@ -17,6 +17,7 @@ void gfx_init(int width, int height);
 void gfx_create_mesh(Mesh* m, Vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count);
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_model(Model* model);
+void gfx_draw_model_custom_transform(Model* model, Matrix* transform);
 
 void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca);
 void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca);

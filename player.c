@@ -14,7 +14,7 @@
 #include "entity.h"
 
 Entity  p = {0};
-Player* player = &p.player_data;
+Player* player = &p.data.player_data;
 
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
@@ -221,9 +221,6 @@ void player_init()
 
     player->camera.angle_v = -DEG(asin(player->camera.lookat.y));
     
-    //player->phys.pos.x = 11.4;
-    //player->phys.pos.y = 5.0;
-    //player->phys.pos.z = 18.0;
     player->phys.pos.x = 0.0;
     player->phys.pos.y = 0.0;
     player->phys.pos.z = 0.0;
@@ -234,6 +231,9 @@ void player_init()
     memcpy(&player->camera.target_pos,&player->camera.phys.pos,sizeof(Vector));
     player->camera.mode = CAMERA_MODE_FIRST_PERSON;
 
+    m_arrow.base_color.x = 1.0;
+    m_arrow.base_color.y = 0.0;
+    m_arrow.base_color.z = 1.0;
 
     model_import(&player->model,"models/human.obj");
     //collision_calc_bounding_box(player->model.mesh.vertices,player->model.mesh.vertex_count,&player->model.collision_vol.box);
@@ -273,6 +273,7 @@ static void update_player_model_transform()
     Vector3f sca = {1.0,1.0,1.0};
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
+    //memcpy(&m_arrow.transform, &player->model.transform, sizeof(Matrix));
 }
 
 void player_update()
@@ -318,6 +319,7 @@ void player_draw()
     if(player->camera.mode == CAMERA_MODE_THIRD_PERSON || player->spectator)
     {
         gfx_draw_model(&player->model);
+        //gfx_draw_model(&m_arrow);
     }
 
     if(show_collision)

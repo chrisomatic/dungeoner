@@ -9,6 +9,7 @@ gcc entity.c \
     light.c \
     model.c \
     physics.c \
+    coin.c \
     player.c \
     particles.c \
     projectile.c \

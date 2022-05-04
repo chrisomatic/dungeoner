@@ -19,6 +19,7 @@ typedef struct
     GLuint texture;
     CollisionVolume collision_vol;
     Matrix transform;
+    Vector3f base_color;
 } Model;
 
 bool model_import(Model* ret_model, const char* obj_filepath);

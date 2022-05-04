@@ -91,33 +91,61 @@ bool model_import(Model* ret_model, const char* obj_filepath)
             uint32_t vt1, vt2, vt3;
             uint32_t vn1, vn2, vn3;
 
-            int res = sscanf(line,"f %d/%d/%d %d/%d/%d %d/%d/%d",&v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
-
-            if(res > 0)
+            if(tex_coord_count > 0)
             {
-                // CCW
-                indices[index_count+0] = v1-1;
-                indices[index_count+1] = v2-1;
-                indices[index_count+2] = v3-1;
+                int res = sscanf(line,"f %d/%d/%d %d/%d/%d %d/%d/%d",&v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
 
-                vertices[v1-1].tex_coord.x = tex_coords[vt1-1].x;
-                vertices[v1-1].tex_coord.y = tex_coords[vt1-1].y;
-                vertices[v2-1].tex_coord.x = tex_coords[vt2-1].x;
-                vertices[v2-1].tex_coord.y = tex_coords[vt2-1].y;
-                vertices[v3-1].tex_coord.x = tex_coords[vt3-1].x;
-                vertices[v3-1].tex_coord.y = tex_coords[vt3-1].y;
+                if(res > 0)
+                {
+                    // CCW
+                    indices[index_count+0] = v1-1;
+                    indices[index_count+1] = v2-1;
+                    indices[index_count+2] = v3-1;
 
-                vertices[v1-1].normal.x = normals[vn1-1].x;
-                vertices[v1-1].normal.y = normals[vn1-1].y;
-                vertices[v1-1].normal.z = normals[vn1-1].z;
-                vertices[v2-1].normal.x = normals[vn2-1].x;
-                vertices[v2-1].normal.y = normals[vn2-1].y;
-                vertices[v2-1].normal.z = normals[vn2-1].z;
-                vertices[v3-1].normal.x = normals[vn3-1].x;
-                vertices[v3-1].normal.y = normals[vn3-1].y;
-                vertices[v3-1].normal.z = normals[vn3-1].z;
+                    vertices[v1-1].tex_coord.x = tex_coords[vt1-1].x;
+                    vertices[v1-1].tex_coord.y = tex_coords[vt1-1].y;
+                    vertices[v2-1].tex_coord.x = tex_coords[vt2-1].x;
+                    vertices[v2-1].tex_coord.y = tex_coords[vt2-1].y;
+                    vertices[v3-1].tex_coord.x = tex_coords[vt3-1].x;
+                    vertices[v3-1].tex_coord.y = tex_coords[vt3-1].y;
 
-                index_count += 3;
+                    vertices[v1-1].normal.x = normals[vn1-1].x;
+                    vertices[v1-1].normal.y = normals[vn1-1].y;
+                    vertices[v1-1].normal.z = normals[vn1-1].z;
+                    vertices[v2-1].normal.x = normals[vn2-1].x;
+                    vertices[v2-1].normal.y = normals[vn2-1].y;
+                    vertices[v2-1].normal.z = normals[vn2-1].z;
+                    vertices[v3-1].normal.x = normals[vn3-1].x;
+                    vertices[v3-1].normal.y = normals[vn3-1].y;
+                    vertices[v3-1].normal.z = normals[vn3-1].z;
+
+                    index_count += 3;
+                }
+            }
+            else
+            {
+                int res = sscanf(line,"f %d//%d %d//%d %d//%d",&v1, &vn1, &v2, &vn2, &v3, &vn3);
+                printf("res: %d\n",res);
+
+                if(res > 0)
+                {
+                    // CCW
+                    indices[index_count+0] = v1-1;
+                    indices[index_count+1] = v2-1;
+                    indices[index_count+2] = v3-1;
+
+                    vertices[v1-1].normal.x = normals[vn1-1].x;
+                    vertices[v1-1].normal.y = normals[vn1-1].y;
+                    vertices[v1-1].normal.z = normals[vn1-1].z;
+                    vertices[v2-1].normal.x = normals[vn2-1].x;
+                    vertices[v2-1].normal.y = normals[vn2-1].y;
+                    vertices[v2-1].normal.z = normals[vn2-1].z;
+                    vertices[v3-1].normal.x = normals[vn3-1].x;
+                    vertices[v3-1].normal.y = normals[vn3-1].y;
+                    vertices[v3-1].normal.z = normals[vn3-1].z;
+
+                    index_count += 3;
+                }
             }
         }
     }

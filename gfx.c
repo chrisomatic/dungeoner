@@ -309,15 +309,22 @@ void gfx_disable_clipping()
     glDisable(GL_CLIP_DISTANCE0);
 }
 
-void gfx_draw_model(Model* model)
+void gfx_draw_model_custom_transform(Model* model, Matrix* transform)
 {
     glUseProgram(program_basic);
 
     //print_matrix(&model->transform);
-    shader_set_variables_new(program_basic,&model->transform,&clip_plane);
+    shader_set_variables_new(program_basic,transform,&clip_plane);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, model->texture);
+    if(model->texture > 0)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, model->texture);
+    }
+    else
+    {
+        shader_set_vec3(program_basic,"model_color",model->base_color.x, model->base_color.y, model->base_color.z);
+    }
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
@@ -349,6 +356,11 @@ void gfx_draw_model(Model* model)
     glBindVertexArray(0);
     glUseProgram(0);
 
+}
+
+void gfx_draw_model(Model* model)
+{
+    gfx_draw_model_custom_transform(model, &model->transform);
 }
 
 void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, Vector3f *rot, Vector3f *sca)

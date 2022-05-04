@@ -26,6 +26,7 @@
 #include "log.h"
 #include "text.h"
 #include "water.h"
+#include "coin.h"
 #include "creature.h"
 
 // =========================
@@ -186,6 +187,10 @@ void init()
     model_import(&m_sphere,"models/sphere.obj");
     model_import(&m_tree,"models/tree.obj");
     model_import(&m_rat,"models/rat.obj");
+    model_import(&m_arrow,"models/arrow.obj");
+
+    LOGI(" - Coins.");
+    coin_init();
 
     LOGI(" - Terrain.");
     terrain_build(&m_terrain, "textures/heightmap.png");
@@ -209,6 +214,7 @@ void init()
 
     LOGI(" - Creatures.");
 
+    // <TEMP>
     int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
@@ -219,6 +225,10 @@ void init()
 
         creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
     }
+
+    coin_spawn_pile(0.0,0.0,0.0);
+
+    // <\TEMP>
 
     Vector pos = {1.0,10.0,1.0};
     particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
@@ -240,8 +250,10 @@ void simulate()
     projectile_update();
     particles_update();
     water_update();
+    coin_update_piles();
 
     // check collisions
+    // @TODO: Move this code to collision file
     for(int i = 0; i < creature_count; ++i)
     {
         CollisionVolume* c = &creatures[i].model.collision_vol;
@@ -280,6 +292,7 @@ void render_scene()
     terrain_draw();
     player_draw();
     creature_draw();
+    coin_draw_piles();
     projectile_draw();
 }
 
