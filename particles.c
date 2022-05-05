@@ -125,6 +125,31 @@ void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetim
             pg->color1.x = 0.9;
             pg->color1.y = 0.9;
             pg->color1.z = 0.5;
+
+        case PARTICLE_EFFECT_SPARKLE:
+
+            pg->texture = t_particle_star;
+
+            pg->spawn_time_min  = 0.250;
+            pg->spawn_time_max  = 0.500;
+            pg->gravity_factor  = 0.0;
+            pg->initial_vel_min = 0.2;
+            pg->initial_vel_max = 0.5;
+            pg->particle_scale  = 0.2;
+            pg->particle_lifetime = 1.5;
+            pg->particle_burst_count = 1;
+
+            pg->particle_size_atten = 0.20;
+            pg->particle_speed_atten = 0.10;
+            pg->particle_opaque_atten = 0.80;
+
+            pg->color0.x = 1.0;
+            pg->color0.y = 1.0;
+            pg->color0.z = 1.0;
+
+            pg->color1.x = 0.5;
+            pg->color1.y = 0.5;
+            pg->color1.z = 0.5;
         default:
             break;
     }
@@ -247,7 +272,8 @@ void particles_update()
 
 void particles_draw()
 {
-    gfx_disable_depth_testing();
+    gfx_disable_depth_mask();
+
     //gfx_enable_blending();
     gfx_enable_blending_additive();
 
@@ -266,7 +292,7 @@ void particles_draw()
 
             Vector rot = {0.0,0.0,0.0};
             Vector sca = {scale, scale, scale};
-            Vector pos = {p->phys.pos.x, -p->phys.pos.y, p->phys.pos.z};
+            Vector pos = {-p->phys.pos.x, -p->phys.pos.y, -p->phys.pos.z};
 
             Vector norm = {0.0,0.0,1.0};
 
@@ -281,5 +307,5 @@ void particles_draw()
     }
 
     gfx_disable_blending();
-    gfx_enable_depth_testing();
+    gfx_enable_depth_mask();
 }

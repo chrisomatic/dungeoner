@@ -37,8 +37,8 @@ void gfx_disable_blending();
 void gfx_enable_blending();
 void gfx_enable_blending_additive();
 
-void gfx_disable_depth_testing();
-void gfx_enable_depth_testing();
+void gfx_disable_depth_mask();
+void gfx_enable_depth_mask();
 
 GLuint gfx_create_fbo();
 GLuint gfx_create_texture_attachment(int width, int height);

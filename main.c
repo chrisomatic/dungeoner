@@ -226,11 +226,9 @@ void init()
         creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
     }
 
-    coin_spawn_pile(0.0,0.0,0.0);
-
     // <\TEMP>
 
-    Vector pos = {1.0,10.0,1.0};
+    Vector pos = {-1.0,10.0,-1.0};
     particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
 
     LOGI(" - Renderer.");

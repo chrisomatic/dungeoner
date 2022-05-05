@@ -4,6 +4,7 @@
 #include "3dmath.h"
 #include "physics.h"
 #include "gfx.h"
+#include "particles.h"
 #include "log.h"
 #include "coin.h"
 
@@ -13,7 +14,6 @@
 
 typedef struct
 {
-    int value;
     PhysicsObj phys;
     Matrix transform;
 } Coin;
@@ -22,6 +22,7 @@ typedef struct
 {
     Coin coins[COINS_PER_PILE];
     Vector3f pos;
+    int value;
 } CoinPile;
 
 CoinPile coin_piles[MAX_COIN_PILES] = {0};
@@ -41,13 +42,15 @@ static void update_coin_model_transform(Coin* c)
 void coin_init()
 {
     model_import(&m_coin,"models/coin.obj");
+    m_coin.reflectivity = 0.8;
 
-    m_coin.base_color.x = 1.0;
-    m_coin.base_color.y = 1.0;
-    m_coin.base_color.z = 0.0;
+    // gold color
+    m_coin.base_color.x = 0.54;
+    m_coin.base_color.y = 0.43;
+    m_coin.base_color.z = 0.03;
 }
 
-void coin_spawn_pile(float x, float y, float z)
+void coin_spawn_pile(float x, float y, float z, int value)
 {
     CoinPile* cp = &coin_piles[coin_pile_count];
 
@@ -55,26 +58,26 @@ void coin_spawn_pile(float x, float y, float z)
     cp->pos.y = y;
     cp->pos.z = z;
 
+    cp->value = value;
+
     for(int i = 0; i < COINS_PER_PILE; ++i)
     {
         Coin* c = &cp->coins[i];
-
-        c->value = 1;
 
         c->phys.pos.x = cp->pos.x;
         c->phys.pos.y = cp->pos.y;
         c->phys.pos.z = cp->pos.z;
 
-        c->phys.vel.x = ((rand() % 2000) - 1000) / 1000.0;
+        c->phys.vel.x = ((rand() % 300) - 150) / 1000.0;
         c->phys.vel.y = (rand() % 1000) / 1000.0;
-        c->phys.vel.z = ((rand() % 2000) - 1000) / 1000.0;
-        c->phys.max_linear_speed = 20.0f;
+        c->phys.vel.z = ((rand() % 300) - 150) / 1000.0;
+        c->phys.max_linear_speed = 10.0f;
 
-        float vel_magn = (rand() % 100) / 10.0;
+        float vel_magn = (rand() % 100) / 20.0;
         mult(&cp->coins[i].phys.vel,vel_magn);
-
-        LOGI("Coin Vel: %f %f %f",c->phys.vel.x, c->phys.vel.y, c->phys.vel.z);
     }
+
+    particles_create_generator(&cp->pos, PARTICLE_EFFECT_SPARKLE, 0.0);
 
     coin_pile_count++;
 }
@@ -99,7 +102,6 @@ void coin_update_piles()
 
 void coin_draw_piles()
 {
-
     for(int i = 0; i < coin_pile_count; ++i)
     {
         for(int j = 0; j < COINS_PER_PILE; ++j)

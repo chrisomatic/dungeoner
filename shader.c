@@ -90,6 +90,7 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
     {
         shader_set_int(program,"sampler",0);
         shader_set_int(program,"wireframe",show_wireframe);
+        shader_set_mat4(program,"view",&view);
         shader_set_mat4(program,"wv",&wv);
         shader_set_mat4(program,"wvp",&wvp);
         shader_set_mat4(program,"world",model_transform);
@@ -133,6 +134,7 @@ void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca,
     {
         shader_set_int(program,"sampler",0);
         shader_set_int(program,"wireframe",show_wireframe);
+        shader_set_mat4(program,"view",&view);
         shader_set_mat4(program,"wv",&wv);
         shader_set_mat4(program,"wvp",&wvp);
         shader_set_mat4(program,"world",&world);

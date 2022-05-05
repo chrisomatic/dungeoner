@@ -6,6 +6,7 @@
 #include "model.h"
 #include "gfx.h"
 #include "log.h"
+#include "coin.h"
 #include "player.h"
 
 #include "creature.h"
@@ -108,6 +109,7 @@ void creature_update()
         if(c->hp <= 0.0)
         {
             // die
+            coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z);
             remove_creature(i);
             continue;
         }

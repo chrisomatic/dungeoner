@@ -316,6 +316,9 @@ void gfx_draw_model_custom_transform(Model* model, Matrix* transform)
     //print_matrix(&model->transform);
     shader_set_variables_new(program_basic,transform,&clip_plane);
 
+    shader_set_float(program_basic,"shine_damper",4.0);
+    shader_set_float(program_basic,"reflectivity",model->reflectivity);
+
     if(model->texture > 0)
     {
         glActiveTexture(GL_TEXTURE0);
@@ -511,14 +514,14 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
     glUseProgram(0);
 }
 
-void gfx_disable_depth_testing()
+void gfx_disable_depth_mask()
 {
-    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
 }
 
-void gfx_enable_depth_testing()
+void gfx_enable_depth_mask()
 {
-    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
 }
 
 void gfx_disable_blending()

@@ -20,6 +20,7 @@ typedef struct
     CollisionVolume collision_vol;
     Matrix transform;
     Vector3f base_color;
+    float reflectivity;
 } Model;
 
 bool model_import(Model* ret_model, const char* obj_filepath);

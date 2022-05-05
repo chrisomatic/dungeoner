@@ -5,6 +5,7 @@ typedef enum
 {
     PARTICLE_EFFECT_EXPLOSION,
     PARTICLE_EFFECT_HEAL,
+    PARTICLE_EFFECT_SPARKLE,
 } ParticleEffect;
 
 typedef struct

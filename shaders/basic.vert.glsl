@@ -8,7 +8,9 @@ out vec2 tex_coord0;
 out vec3 normal0;
 out float visibility;
 out float distance_from_player;
+out vec3 to_camera_vector;
 
+uniform mat4 view;
 uniform mat4 wv;
 uniform mat4 wvp;
 uniform mat4 world;
@@ -30,6 +32,9 @@ void main()
 
     gl_ClipDistance[0] = dot(world_pos,clip_plane);
     gl_Position = wvp *vec4(position,1.0);
+
+    // calculate reflectivity variables
+    to_camera_vector = (inverse(view) * vec4(0.0,0.0,0.0,1.0)).xyz - world_pos.xyz;
 
     // calculate visibility
     vec4 position_rel_to_camera = wv*vec4(position,1.0);
