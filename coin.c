@@ -16,6 +16,7 @@ typedef struct
 {
     PhysicsObj phys;
     Matrix transform;
+    Vector3f rotation;
 } Coin;
 
 typedef struct
@@ -33,7 +34,7 @@ static Model m_coin;
 static void update_coin_model_transform(Coin* c)
 {
     Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z}; // @NEG
-    Vector3f rot = {0.0,0.0,0.0}; // @NEG
+    Vector3f rot = {c->rotation.x,c->rotation.y,c->rotation.z}; // @NEG
     Vector3f sca = {0.1,0.1,0.1};
 
     get_model_transform(&pos,&rot,&sca,&c->transform);
@@ -73,6 +74,10 @@ void coin_spawn_pile(float x, float y, float z, int value)
         c->phys.vel.z = ((rand() % 300) - 150) / 1000.0;
         c->phys.max_linear_speed = 10.0f;
 
+        c->rotation.x = rand() % 359;
+        c->rotation.y = rand() % 359;
+        c->rotation.z = rand() % 359;
+
         float vel_magn = (rand() % 100) / 20.0;
         mult(&cp->coins[i].phys.vel,vel_magn);
     }
@@ -95,6 +100,14 @@ void coin_update_piles()
             physics_add_kinetic_friction(&c->phys, 0.80);
             physics_simulate(&c->phys);
             
+            if(c->phys.pos.y-0.05 > c->phys.ground.height)
+            {
+                // rotate coin
+                c->rotation.x += 270 * g_delta_t;
+                c->rotation.y += 270 * g_delta_t;
+                c->rotation.z += 270 * g_delta_t;
+            }
+
             update_coin_model_transform(c);
         }
     }

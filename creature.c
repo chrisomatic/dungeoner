@@ -109,7 +109,8 @@ void creature_update()
         if(c->hp <= 0.0)
         {
             // die
-            coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z);
+            int coin_value = (rand() % 90) + 10;
+            coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
             remove_creature(i);
             continue;
         }
