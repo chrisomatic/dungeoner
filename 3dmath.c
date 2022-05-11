@@ -433,7 +433,7 @@ void get_transforms(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* 
     get_view_proj_transforms(view,proj);
 }
 
-void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top)
+void get_ortho_transform2(Matrix* m, float left, float right, float bottom, float top)
 {
     memset(m,0,sizeof(Matrix));
 
@@ -443,6 +443,18 @@ void get_ortho_transform(Matrix* m, float left, float right, float bottom, float
     m->m[3][3] = 1.0f;
     m->m[0][3] = -(right+left) / (right - left);
     m->m[1][3] = (top+bottom) / (top-bottom);
+}
+
+void get_ortho_transform(Matrix* m, float left, float right, float bottom, float top)
+{
+    memset(m,0,sizeof(Matrix));
+
+    m->m[0][0] = 2.0f/(right-left);
+    m->m[1][1] = 2.0f/(top-bottom);
+    m->m[2][2] = 1.0f;
+    m->m[3][3] = 1.0f;
+    m->m[0][3] = -(right+left) / (right - left);
+    m->m[1][3] = -(top+bottom) / (top-bottom);
 }
 
 float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c)

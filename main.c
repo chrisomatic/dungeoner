@@ -73,6 +73,12 @@ Model m_arrow;
 Zone rat_zone;
 
 // =========================
+// Other
+// =========================
+
+double t0=0.0,t1=0.0;
+
+// =========================
 // Function Prototypes
 // =========================
 
@@ -103,8 +109,6 @@ void start_game()
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
 
-    double t0=0.0,t1=0.0;
-
     // main game loop
     for(;;)
     {
@@ -122,7 +126,6 @@ void start_game()
         timer_wait_for_frame(&game_timer);
         window_swap_buffers();
         t1 = timer_get_time();
-        //printf("fps: %f\n",1.0/(t1-t0));
     }
 
     deinit();
@@ -292,6 +295,7 @@ void render_scene()
     creature_draw();
     coin_draw_piles();
     projectile_draw();
+    gui_update();
 }
 
 void render_water_textures()
@@ -330,6 +334,7 @@ void render_water_textures()
     gfx_disable_clipping();
 }
 
+
 void render()
 {
     render_water_textures();
@@ -337,22 +342,5 @@ void render()
     water_draw();
     particles_draw();
     gui_draw();
-
-    // for debugging water reflection texture
-    //GLuint ref = water_get_texture(WATER_PROPERTY_REFLECTION);
-
-    /*
-    Vector3f pos = {-11.4, -7.0, -18.0};
-    Vector3f rot = {0.0, 180.0, 0.0};
-    Vector3f sca = {2.0, 2.0, 2.0};
-
-    gfx_draw_quad(ref,NULL,&pos,&rot,&sca);
-    */
-
-    // hud
-    //Vector3f color = {0.0f,0.0f,1.0f};
-    //text_print(10.0f,25.0f,"Dungeoner",color);
-    //text_print_all();
-    //gfx_draw_debug_lines(&player->phys.pos, &player->phys.vel);
 }
 
