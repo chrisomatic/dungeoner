@@ -21,7 +21,7 @@ gcc entity.c \
     water.c \
     window.c \
     main.c \
-    -lglfw -lGLU -lGLEW -lGL -lm \
+    -lglfw -lGLU -lGLEW -lGL -lm -O2 \
     -o dungeoner
 
 if [ $? -eq 0 ]

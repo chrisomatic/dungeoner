@@ -39,11 +39,11 @@ void terrain_get_info(float x, float z, GroundInfo* ground)
     memset(ground,0,sizeof(GroundInfo));
 
     int grid_x = (int)floor(terrain_x / grid_square_size);
-    if(grid_x < 0 || grid_x >= terrain.w)
+    if(grid_x < 0 || grid_x >= terrain.w-1)
         return;
 
     int grid_z = (int)floor(terrain_z / grid_square_size);
-    if(grid_z < 0 || grid_z >= terrain.w)
+    if(grid_z < 0 || grid_z >= terrain.l-1)
         return;
 
     /*
@@ -167,7 +167,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
     int start_index = MAX(0,(x_start + y_start*(terrain.w-1))*6);
 
-    printf("start_index: %d\n",start_index);
+    //printf("start_index: %d\n",start_index);
 
     uint32_t* p  = &terrain.indices[start_index];
     uint32_t* lp = &local_indices[0];
@@ -181,7 +181,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
     {
         //int index = k*terrain_block_draw_size*6;
         int copy_size = MIN(bytes_max - byte_index, terrain_block_draw_size*6*sizeof(uint32_t));
-        printf("%d: Copying %d bytes (remaining bytes: %d)\n",k,copy_size,bytes_max - byte_index);
+        //printf("%d: Copying %d bytes (remaining bytes: %d)\n",k,copy_size,bytes_max - byte_index);
         if(copy_size == 0) break;
 
         memcpy(lp,p,copy_size);
@@ -191,7 +191,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
         lp += copy_size/sizeof(uint32_t);
     }
 
-    printf("done.\n");
+    //printf("done.\n");
 
     gfx_sub_buffer_elements(m_terrain.ibo, local_indices, terrain_block_draw_size*terrain_block_draw_size*6*sizeof(uint32_t));
 }

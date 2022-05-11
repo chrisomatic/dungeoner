@@ -125,7 +125,6 @@ bool model_import(Model* ret_model, const char* obj_filepath)
             else
             {
                 int res = sscanf(line,"f %d//%d %d//%d %d//%d",&v1, &vn1, &v2, &vn2, &v3, &vn3);
-                printf("res: %d\n",res);
 
                 if(res > 0)
                 {

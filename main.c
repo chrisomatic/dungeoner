@@ -162,12 +162,12 @@ void init()
     t_crosshair = load_texture("textures/crosshair.png");
 
     char* cube_sky_day[] = {
-        "textures/skybox/day_right.jpg",
-        "textures/skybox/day_left.jpg",
-        "textures/skybox/day_bottom.jpg",
-        "textures/skybox/day_top.jpg",
-        "textures/skybox/day_front.jpg",
-        "textures/skybox/day_back.jpg",
+        "textures/skybox/day_right.png",
+        "textures/skybox/day_left.png",
+        "textures/skybox/day_bottom.png",
+        "textures/skybox/day_top.png",
+        "textures/skybox/day_front.png",
+        "textures/skybox/day_back.png",
     };
 
     t_sky_day = load_texture_cube(cube_sky_day, 6);
@@ -352,6 +352,7 @@ void render()
     // hud
     //Vector3f color = {0.0f,0.0f,1.0f};
     //text_print(10.0f,25.0f,"Dungeoner",color);
+    //text_print_all();
     //gfx_draw_debug_lines(&player->phys.pos, &player->phys.vel);
 }
 

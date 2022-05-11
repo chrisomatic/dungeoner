@@ -95,13 +95,13 @@ void coin_update_piles()
         {
             Coin* c = &coin_piles[i].coins[j];
 
-            physics_begin(&c->phys);
-            physics_add_gravity(&c->phys, 1.0);
-            physics_add_kinetic_friction(&c->phys, 0.80);
-            physics_simulate(&c->phys);
-            
-            if(c->phys.pos.y-0.05 > c->phys.ground.height)
+            if(c->phys.pos.y-0.01 > c->phys.ground.height)
             {
+                physics_begin(&c->phys);
+                physics_add_gravity(&c->phys, 1.0);
+                physics_add_kinetic_friction(&c->phys, 0.80);
+                physics_simulate(&c->phys);
+            
                 // rotate coin
                 c->rotation.x += 270 * g_delta_t;
                 c->rotation.y += 270 * g_delta_t;
