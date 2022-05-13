@@ -16,10 +16,6 @@
 GLuint vao;
 GLuint sky_vao;
 
-#define FOG_COLOR_R 0.7
-#define FOG_COLOR_G 0.8
-#define FOG_COLOR_B 0.9
-
 int show_collision = 0;
 int show_wireframe = 0;
 int show_fog = 0;
@@ -113,8 +109,10 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     get_wv(&world, &view, &wv);
 
     shader_set_int(program_terrain,"texture_r",0);
-    shader_set_int(program_terrain,"texture_b",1);
-    shader_set_int(program_terrain,"blend_map",2);
+    shader_set_int(program_terrain,"texture_g",1);
+    shader_set_int(program_terrain,"texture_b",2);
+    shader_set_int(program_terrain,"texture_a",3);
+    shader_set_int(program_terrain,"blend_map",4);
 
     shader_set_int(program_terrain,"wireframe",show_wireframe);
     shader_set_mat4(program_terrain,"wv",&wv);
@@ -139,10 +137,14 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
     }
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, t_grass);
-    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, t_dirt);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, t_rockface);
     glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, t_snow);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, t_grass);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, t_blend_map);
 
     glBindVertexArray(vao);
@@ -241,6 +243,7 @@ void gfx_unbind_frame_current_buffer()
 
 void gfx_draw_water(WaterBody* water)
 {
+    glDisable(GL_CULL_FACE);
     glUseProgram(program_water);
 
     Matrix world, view, proj, wvp;
@@ -268,11 +271,9 @@ void gfx_draw_water(WaterBody* water)
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
-    //glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    //glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
 
@@ -288,10 +289,10 @@ void gfx_draw_water(WaterBody* water)
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);
-    //glDisableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glUseProgram(0);
+    glEnable(GL_CULL_FACE);
 }
 
 void gfx_enable_clipping(float x, float y, float z, float w)
@@ -473,13 +474,16 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
 {
     glUseProgram(program_gui);
 
+    shader_set_int(program_gui,"use_texture",texture);
     shader_set_int(program_gui,"guiTexture",0);
     shader_set_vec2(program_gui,"scale",sca->x, sca->y);
+    shader_set_vec2(program_gui,"translate",pos->x, pos->y);
 
     if(texture)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+
     }
     else
     {
@@ -489,6 +493,10 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
     if(color)
     {
         shader_set_vec3(program_gui,"color",color->x, color->y, color->z);
+    }
+    else
+    {
+        shader_set_vec3(program_gui,"color",1.0,1.0,1.0);
     }
 
     glBindVertexArray(vao);
@@ -507,6 +515,51 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca)
+{
+    glUseProgram(program_postprocess);
+
+    bool in_water = (player->camera.phys.pos.y <= water_get_height());
+
+    shader_set_int(program_postprocess,"guiTexture",0);
+    shader_set_int(program_postprocess,"in_water",in_water);
+    shader_set_vec2(program_postprocess,"scale",sca->x, sca->y);
+    shader_set_vec2(program_postprocess,"translate",pos->x, pos->y);
+
+    if(texture)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    if(color)
+    {
+        shader_set_vec3(program_postprocess,"color",color->x, color->y, color->z);
+    }
+    else
+    {
+        shader_set_vec3(program_postprocess,"color",1.0,1.0,1.0);
+    }
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);

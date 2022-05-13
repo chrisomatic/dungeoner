@@ -138,7 +138,7 @@ void text_print(float x, float y, char *text, Vector3f color)
             indices[index+4] = j+2;
             indices[index+5] = j+3;
 
-#if 1 
+#if 0 
             printf("C %c P %f %f %f %f %f %f %f %f : %f %f %f %f %f %f %f %f\n",
                 *text,
                 glyphs[i].points[0].position.x, glyphs[i].points[0].position.y,

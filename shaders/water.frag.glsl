@@ -56,7 +56,7 @@ void main() {
             frag_color = vec4(0.0,1.0,0.0,1.0);
         }
         */
-        frag_color = mix(reflection_color, refraction_color, refractive_factor);
+        frag_color = mix(reflection_color, refraction_color, 0.5); //refractive_factor);
         frag_color = mix(frag_color, vec4(0.0,0.2,0.5,1.0), 0.1); // make slightly blue
     }
 }

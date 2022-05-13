@@ -30,7 +30,7 @@ GLuint load_texture(const char* texture_path)
         return 0;
     }
     
-    LOGI("Loaded file %s. w: %d h: %d",texture_path,x,y);
+    LOGI("Loaded file %s. w: %d h: %d n: %d",texture_path,x,y,n);
 
     GLenum format;
     GLuint texture;

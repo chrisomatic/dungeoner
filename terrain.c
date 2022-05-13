@@ -12,7 +12,7 @@
 #include "terrain.h"
 
 #define TERRAIN_PLANAR_SCALE 1.0f // distance between vertices in x-z plane
-#define TERRAIN_HEIGHT_SCALE 30.0f // distance between vertices in y direction
+#define TERRAIN_HEIGHT_SCALE 80.0f // distance between vertices in y direction
 
 #define TERRAIN_BLOCK_DRAW_SIZE TERRAIN_BLOCK_SIZE*5
 

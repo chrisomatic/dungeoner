@@ -449,12 +449,22 @@ void get_ortho_transform(Matrix* m, float left, float right, float bottom, float
 {
     memset(m,0,sizeof(Matrix));
 
+#if 0 
     m->m[0][0] = 2.0f/(right-left);
     m->m[1][1] = 2.0f/(top-bottom);
     m->m[2][2] = 1.0f;
     m->m[3][3] = 1.0f;
     m->m[0][3] = -(right+left) / (right - left);
     m->m[1][3] = -(top+bottom) / (top-bottom);
+#else
+    m->m[0][0] = 2.0f/(right-left);
+    m->m[1][1] = 2.0f/(top-bottom);
+    m->m[2][2] = -1.0f;
+    m->m[3][3] = 1.0f;
+    m->m[0][3] = -(right+left) / (right - left);
+    m->m[1][3] = -(top+bottom) / (top-bottom);
+
+#endif
 }
 
 float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c)

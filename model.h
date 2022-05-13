@@ -1,7 +1,7 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <stdbool.h>
-#include "gfx.h"
 #include "collision.h"
 
 typedef struct

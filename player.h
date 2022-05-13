@@ -44,6 +44,9 @@ typedef struct
     int terrain_block_x;
     int terrain_block_y;
 
+    float hp;
+    float hp_max;
+
     Camera camera;
     Model  model;
 

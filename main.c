@@ -39,14 +39,20 @@ double g_delta_t = 0.0f;
 float fog_density = 0.010;
 float fog_gradient = 5.0;
 
+GLuint frame_buffer;
+GLuint frame_buffer_color_texture;
+GLuint frame_buffer_depth_texture;
+
 // =========================
 // Textures
 // =========================
 
 GLuint t_stone;
 GLuint t_grass;
-GLuint t_tree;
 GLuint t_dirt;
+GLuint t_rockface;
+GLuint t_snow;
+GLuint t_tree;
 GLuint t_blend_map;
 GLuint t_sky_day;
 GLuint t_sky_night;
@@ -154,11 +160,13 @@ void init()
     LOGI(" - Textures.");
 
     t_stone  = load_texture("textures/stonewall.png");
-    t_grass  = load_texture("textures/grass2.png");
+    t_grass  = load_texture("textures/grass.png");
     t_dirt   = load_texture("textures/dirt.png");
+    t_rockface = load_texture("textures/rockface.png");
+    t_snow     = load_texture("textures/snow.png");
     t_tree   = load_texture("textures/tree_bark.png");
     t_rat    = load_texture("textures/rat.png");
-    t_blend_map = load_texture("textures/blend_map.png");
+    t_blend_map = load_texture("textures/terrain_splat2.png");
     t_outfit = load_texture("textures/outfit2.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
     t_particle_star = load_texture("textures/particles/star.png");
@@ -196,10 +204,11 @@ void init()
     coin_init();
 
     LOGI(" - Terrain.");
-    terrain_build(&m_terrain, "textures/heightmap.png");
+    //terrain_build(&m_terrain, "textures/heightmap.png");
+    terrain_build(&m_terrain, "textures/heightmap16.png");
 
     LOGI(" - Water.");
-    water_init(5.0);
+    water_init(10.0);
 
     LOGI(" - Player.");
     player_init();
@@ -212,8 +221,8 @@ void init()
 
     LOGI(" - Zones.");
 
-    rat_zone.x0 = -16.0; rat_zone.x1 = 16.0;
-    rat_zone.z0 = -16.0; rat_zone.z1 = 16.0;
+    rat_zone.x0 = 250.0; rat_zone.x1 = 350.0;
+    rat_zone.z0 = 50.0; rat_zone.z1 = 150.0;
 
     LOGI(" - Creatures.");
 
@@ -236,6 +245,10 @@ void init()
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+
+    frame_buffer = gfx_create_fbo();
+    frame_buffer_color_texture = gfx_create_texture_attachment(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+    frame_buffer_depth_texture = gfx_create_depth_texture_attachment(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 }
 
 void deinit()
@@ -252,6 +265,7 @@ void simulate()
     particles_update();
     water_update();
     coin_update_piles();
+    gui_update();
 
     // check collisions
     // @TODO: Move this code to collision file
@@ -295,52 +309,37 @@ void render_scene()
     creature_draw();
     coin_draw_piles();
     projectile_draw();
-    gui_update();
-}
-
-void render_water_textures()
-{
-    float water_height = water_get_height();
-
-    // pass 1: render reflection
-    water_bind_reflection_fbo();
-
-    float camera_pos = player->camera.phys.pos.y + player->camera.offset.y;
-    float distance = 2 * (camera_pos - water_height);
-
-    player->camera.phys.pos.y -= (distance);
-
-    float temp_angle = player->camera.angle_v;
-    player->camera.angle_v *= -1;
-
-    update_camera_rotation();
-
-    gfx_enable_clipping(0,-1,0,-water_height);
-    render_scene();
     particles_draw();
-    gfx_unbind_frame_current_buffer();
-
-    player->camera.phys.pos.y += distance;
-    player->camera.angle_v = temp_angle;
-    update_camera_rotation();
-
-    // pass 2: render refraction
-    water_bind_refraction_fbo();
-    gfx_enable_clipping(0,1,0,water_height);
-    render_scene();
-    particles_draw();
-    gfx_unbind_frame_current_buffer();
-
-    gfx_disable_clipping();
 }
-
 
 void render()
 {
-    render_water_textures();
+    glClearColor(FOG_COLOR_R,FOG_COLOR_G,FOG_COLOR_B,1.0);
+    glEnable(GL_DEPTH_TEST);
+
+    bool in_water = (player->camera.phys.pos.y <= water_get_height());
+
+    fog_density = in_water ? 0.06 : 0.01;
+    water_draw_textures();
+
+    //gfx_bind_frame_buffer(frame_buffer,STARTING_VIEW_WIDTH,STARTING_VIEW_HEIGHT);
+    gfx_unbind_frame_current_buffer();
     render_scene();
     water_draw();
-    particles_draw();
+
+    /*
+    glClearDepth(1.0f);
+    glClearColor(0.0,0.0,0.0,1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    Vector2f pos = {0.0,0.0};
+    Vector2f sca = {2.00,2.00};
+
+    glDisable(GL_DEPTH_TEST);
+    //gfx_draw_quad2d(frame_buffer_color_texture,NULL,&pos,&sca);
+    gfx_draw_post_process_quad(frame_buffer_color_texture,NULL,&pos,&sca);
+    */
     gui_draw();
+
 }
 

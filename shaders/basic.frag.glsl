@@ -70,7 +70,7 @@ void main()
             base_color = texture2D(sampler,tex_coord0.xy);
         }
 
-        vec4 out_color = base_color * (ambient_color + diffuse_color + vec4(final_specular,1.0));
+        vec4 out_color = base_color*(ambient_color + diffuse_color + vec4(final_specular,1.0));
         frag_color = mix(vec4(sky_color,1.0), out_color, visibility);
     }
 }

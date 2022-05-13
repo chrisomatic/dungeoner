@@ -160,6 +160,16 @@ void physics_simulate(PhysicsObj* phys)
     // get terrain info for object
     terrain_get_info(phys->pos.x, phys->pos.z, &phys->ground);
 
+    if(phys->pos.y <= water_get_height())
+    {
+        // add buoyant force
+        if(phys->density > 0.0)
+        {
+            float density_factor = WATER_DENSITY / phys->density;
+            physics_add_force_y(phys,density_factor*GRAVITY);
+        }
+    }
+
     // update velocity
     // v1 = v0 + a*t
     Vector v0 = {phys->vel.x, phys->vel.y, phys->vel.z};

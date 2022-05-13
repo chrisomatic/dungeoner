@@ -22,6 +22,7 @@ GLuint program_debug;
 GLuint program_particle;
 GLuint program_water;
 GLuint program_gui;
+GLuint program_postprocess;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
@@ -35,6 +36,7 @@ void shader_load_all()
     shader_build_program(&program_particle,"shaders/particle.vert.glsl","shaders/particle.frag.glsl");
     shader_build_program(&program_water,"shaders/water.vert.glsl","shaders/water.frag.glsl");
     shader_build_program(&program_gui,"shaders/gui.vert.glsl","shaders/gui.frag.glsl");
+    shader_build_program(&program_postprocess,"shaders/postprocess.vert.glsl","shaders/postprocess.frag.glsl");
 }
 
 void shader_deinit()
@@ -47,6 +49,7 @@ void shader_deinit()
     glDeleteProgram(program_particle);
     glDeleteProgram(program_water);
     glDeleteProgram(program_gui);
+    glDeleteProgram(program_postprocess);
 }
 
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path)

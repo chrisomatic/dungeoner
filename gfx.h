@@ -1,6 +1,9 @@
 #pragma once
 
-#include <GL/glew.h>
+#define FOG_COLOR_R 0.7
+#define FOG_COLOR_G 0.8
+#define FOG_COLOR_B 0.9
+
 #include "3dmath.h"
 #include "water.h"
 #include "model.h"
@@ -21,6 +24,7 @@ void gfx_draw_model_custom_transform(Model* model, Matrix* transform);
 
 void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca);
 void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca);
+void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca);
 void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe);
 void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca);
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);

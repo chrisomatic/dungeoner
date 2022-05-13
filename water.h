@@ -1,5 +1,7 @@
 #pragma once
 
+//#include "physics.h"
+
 typedef enum
 {
     WATER_PROPERTY_REFLECTION,
@@ -34,5 +36,7 @@ void water_bind_refraction_fbo();
 void water_update();
 void water_draw();
 GLuint water_get_texture(WaterProperty prop);
+void water_draw_textures();
 
 float water_get_height();
+//bool is_in_water(PhysicsObj* p);

@@ -1,17 +1,17 @@
 #pragma once
 
-#include <stdbool.h>
-#include "3dmath.h"
 #include "terrain.h"
 
 #define GRAVITY_EARTH 9.81
 
 #define GRAVITY GRAVITY_EARTH
 #define TERMINAL_VEL 60.0
+#define WATER_DENSITY 1000.0
 
 typedef struct
 {
     float mass;
+    float density;
     float max_linear_speed;
 
     GroundInfo ground;

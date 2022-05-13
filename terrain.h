@@ -1,5 +1,6 @@
 #pragma once
 
+#include "model.h"
 #include "gfx.h"
 
 #define GROUND_TOLERANCE 0.25

@@ -52,6 +52,7 @@ static void update_player_physics()
     PhysicsObj* phys = &player->phys;
 
     float accel_force = 4.0;
+    bool in_water = (player->phys.pos.y <= water_get_height());
     phys->max_linear_speed = player->walk_speed;
 
     if(player->run)
@@ -67,6 +68,11 @@ static void update_player_physics()
         phys->max_linear_speed = 20.0;
     }
 
+    if(in_water)
+    {
+        accel_force /= 2.0;
+        phys->max_linear_speed /= 2.0;
+    }
 
     // zero out prior accel
     physics_begin(phys);
@@ -75,7 +81,7 @@ static void update_player_physics()
 
     //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground.height);
 
-    if(player->jumped && phys->pos.y <= phys->ground.height)
+    if(player->jumped && (phys->pos.y <= phys->ground.height))
         player->jumped = false;
 
     if(player->secondary_action)
@@ -90,7 +96,7 @@ static void update_player_physics()
         player_spawn_projectile(PROJECTILE_ICE);
     }
 
-    if(player->spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE) // tolerance to allow movement slightly above ground
+    if(player->spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE || in_water) // tolerance to allow movement slightly above ground
     {
         // where the player is looking
         Vector3f lookat = {
@@ -111,7 +117,7 @@ static void update_player_physics()
 
         if(player->forward)
         {
-            Vector3f forward = {-lookat.x,player->spectator ? -lookat.y : 0.0,-lookat.z};
+            Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
             normalize(&forward);
             mult(&forward,accel_force);
 
@@ -120,7 +126,7 @@ static void update_player_physics()
 
         if(player->back)
         {
-            Vector3f back = {lookat.x,player->spectator ? lookat.y : 0.0,lookat.z};
+            Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
             normalize(&back);
             mult(&back,accel_force);
 
@@ -168,8 +174,7 @@ static void update_player_physics()
     }
 
     if(!player->spectator)
-        physics_add_gravity(phys,1.0);
-
+        physics_add_gravity(phys, 1.0);
 
     physics_simulate(phys);
 }
@@ -187,7 +192,7 @@ void player_init()
     
     // initialize player camera
     memset(&player->camera.phys, 0, sizeof(PhysicsObj));
-    player->camera.lookat.z   = -1.0;
+    player->camera.lookat.z   = 1.0;
     player->camera.up.y       = 1.0;
 
     player->height = 1.50; // meters
@@ -197,6 +202,7 @@ void player_init()
     player->walk_speed = 4.5; // m/s
     player->spectator = false;
     player->run = false;
+    player->phys.density = 1005.0f;
 
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;
@@ -221,9 +227,9 @@ void player_init()
 
     player->camera.angle_v = -DEG(asin(player->camera.lookat.y));
     
-    player->phys.pos.x = 0.0;
+    player->phys.pos.x = 300.0;//0.0;
     player->phys.pos.y = 0.0;
-    player->phys.pos.z = 0.0;
+    player->phys.pos.z = 77.0;//0.0;
 
     player->camera.cursor_x = view_width / 2.0;
     player->camera.cursor_y = view_height / 2.0;
