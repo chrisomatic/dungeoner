@@ -113,6 +113,11 @@ void coin_update_piles()
     }
 }
 
+static void coin_render(Coin* c)
+{
+
+}
+
 void coin_draw_piles()
 {
     for(int i = 0; i < coin_pile_count; ++i)

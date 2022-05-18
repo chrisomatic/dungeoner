@@ -160,13 +160,26 @@ void physics_simulate(PhysicsObj* phys)
     // get terrain info for object
     terrain_get_info(phys->pos.x, phys->pos.z, &phys->ground);
 
-    if(phys->pos.y <= water_get_height())
+    float com_y = phys->pos.y + phys->com_offset.y;
+    float water_height = water_get_height();
+
+    // handle water physics
+    if(com_y <= water_height)
     {
         // add buoyant force
         if(phys->density > 0.0)
         {
             float density_factor = WATER_DENSITY / phys->density;
-            physics_add_force_y(phys,density_factor*GRAVITY);
+            float amt_submerged = water_height - com_y;
+
+            float pct_submerged = MIN(1.0,amt_submerged/(phys->height - phys->com_offset.y));
+            float buoyancy_strength = 1.50;
+            if(amt_submerged >= 1.0)
+                buoyancy_strength = 1.00;
+
+            float buoyancy = buoyancy_strength*pct_submerged*density_factor*GRAVITY;
+
+            physics_add_force_y(phys,buoyancy);
         }
     }
 

@@ -23,12 +23,15 @@ extern GLuint t_outfit;
 extern GLuint t_particle_explosion;
 extern GLuint t_particle_star;
 extern GLuint t_crosshair;
+extern GLuint t_boat;
 
 extern Mesh m_terrain;
 extern Model m_sphere;
 extern Model m_tree;
 extern Model m_rat;
 extern Model m_arrow;
+extern Model m_wall;
+extern Model m_boat;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;

@@ -45,9 +45,11 @@ void gfx_disable_depth_mask();
 void gfx_enable_depth_mask();
 
 GLuint gfx_create_fbo();
+GLuint gfx_resolve_fbo(GLuint in_fbo, int in_width, int in_height, GLuint out_fbo, int out_width, int out_height);
 GLuint gfx_create_texture_attachment(int width, int height);
 GLuint gfx_create_depth_texture_attachment(int width, int height);
-GLuint gfx_create_depth_buffer(int width, int height);
+GLuint gfx_create_depth_buffer(int width, int height, bool mulitsampled);
+GLuint gfx_create_color_buffer(int width, int height, bool mulitsampled);
 
 void gfx_bind_frame_buffer(GLuint frame_buffer,int width, int height);
 void gfx_unbind_frame_current_buffer();

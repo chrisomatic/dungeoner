@@ -71,8 +71,10 @@ void creature_spawn(Zone* zone, CreatureType type)
             c->phys.pos.y = ground.height; // @NEG
             c->phys.pos.z = z;
 
+            c->phys.density = 800.0;
             c->phys.mass = 62.0; // kg
             c->phys.max_linear_speed = 3.5; // m/s
+            c->phys.height = c->model.collision_vol.box.h;
 
             c->zone = zone;
             memcpy(&c->model,&m_rat,sizeof(Model));

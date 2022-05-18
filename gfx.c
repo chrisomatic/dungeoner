@@ -23,6 +23,7 @@ int show_fog = 0;
 static Vector4f clip_plane;
 
 static Mesh quad = {};
+static Mesh quad_fullscreen = {};
 static Mesh cube = {};
 static Mesh sky  = {};
 
@@ -187,6 +188,13 @@ GLuint gfx_create_fbo()
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
     return fbo;
 }
+GLuint gfx_resolve_fbo(GLuint in_fbo, int in_width, int in_height, GLuint out_fbo, int out_width, int out_height)
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, out_fbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, in_fbo);
+    glBlitFramebuffer(0,0, in_width, in_height, 0,0,out_width,out_height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    gfx_unbind_frame_current_buffer();
+}
 
 GLuint gfx_create_texture_attachment(int width, int height)
 {
@@ -217,14 +225,43 @@ GLuint gfx_create_depth_texture_attachment(int width, int height)
     return texture;
 }
 
-GLuint gfx_create_depth_buffer(int width, int height)
+GLuint gfx_create_color_buffer(int width, int height, bool multisampled)
 {
     GLuint buffer;
     glGenRenderbuffers(1,&buffer);
     glBindRenderbuffer(GL_RENDERBUFFER,buffer);
 
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,width,height);
+    if(multisampled)
+    {
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8,width,height);
+    }
+    else
+    {
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8,width,height);
+    }
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER,buffer);
+
+    return buffer;
+}
+
+GLuint gfx_create_depth_buffer(int width, int height, bool multisampled)
+{
+    GLuint buffer;
+    glGenRenderbuffers(1,&buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER,buffer);
+
+    if(multisampled)
+    {
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT24,width,height);
+    }
+    else
+    {
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,width,height);
+    }
+
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,buffer);
+
     return buffer;
 }
 
@@ -254,6 +291,9 @@ void gfx_draw_water(WaterBody* water)
     shader_set_int(program_water,"refraction_texture",1);
     shader_set_int(program_water,"dudv_map",2);
     shader_set_float(program_water,"wave_move_factor",water->wave_move_factor);
+
+    bool in_water = (player->camera.phys.pos.y + player->camera.offset.y <= water_get_height());
+    shader_set_int(program_water,"in_water",in_water);
 
     shader_set_int(program_water,"wireframe",show_wireframe);
     shader_set_mat4(program_water,"wvp",&wvp);
@@ -308,6 +348,16 @@ void gfx_enable_clipping(float x, float y, float z, float w)
 void gfx_disable_clipping()
 {
     glDisable(GL_CLIP_DISTANCE0);
+}
+
+void gfx_shader_begin(GLuint program)
+{
+    glUseProgram(program);
+}
+
+void gfx_shader_end()
+{
+    glUseProgram(0);
 }
 
 void gfx_draw_model_custom_transform(Model* model, Matrix* transform)
@@ -526,7 +576,7 @@ void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Ve
 {
     glUseProgram(program_postprocess);
 
-    bool in_water = (player->camera.phys.pos.y <= water_get_height());
+    bool in_water = (player->camera.phys.pos.y + player->camera.offset.y <= water_get_height());
 
     shader_set_int(program_postprocess,"guiTexture",0);
     shader_set_int(program_postprocess,"in_water",in_water);
@@ -555,9 +605,9 @@ void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Ve
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_fullscreen.vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad_fullscreen.ibo);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
@@ -819,6 +869,27 @@ static void init_quad()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
 }
 
+static void init_quad_fullscreen()
+{
+    Vertex vertices[4] = 
+    {
+        {{-1.0, -1.0, 0.0},{+0.0,+0.0}},
+        {{-1.0, +1.0, 0.0},{+0.0,+1.0}},
+        {{+1.0, +1.0, 0.0},{+1.0,+1.0}},
+        {{+1.0, -1.0, 0.0},{+1.0,+0.0}},
+    }; 
+
+    uint32_t indices[6] = {0,2,1,0,3,2};
+
+ 	glGenBuffers(1, &quad_fullscreen.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, quad_fullscreen.vbo);
+	glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Vertex), vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1,&quad_fullscreen.ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_fullscreen.ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
+}
+
 static void init_skybox()
 {
     float sky_vertices[] = {
@@ -903,6 +974,7 @@ void gfx_init(int width, int height)
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
     glEnable(GL_CLIP_DISTANCE0);
+    glEnable(GL_MULTISAMPLE);
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -915,6 +987,7 @@ void gfx_init(int width, int height)
     show_fog = 1;
 
     init_quad();
+    init_quad_fullscreen();
     init_cube();
     init_skybox();
     init_debug();

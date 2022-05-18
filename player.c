@@ -52,7 +52,7 @@ static void update_player_physics()
     PhysicsObj* phys = &player->phys;
 
     float accel_force = 4.0;
-    bool in_water = (player->phys.pos.y <= water_get_height());
+    bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
     phys->max_linear_speed = player->walk_speed;
 
     if(player->run)
@@ -108,10 +108,21 @@ static void update_player_physics()
 
         Vector3f user_force = {0.0,0.0,0.0};
 
-        if(player->jump && !player->jumped && !player->spectator)
+        if(player->jump)
         {
-            physics_add_force_y(phys,250.0);
-            player->jumped = true;
+            if(in_water)
+            {
+                float f = phys->pos.y <= phys->ground.height+GROUND_TOLERANCE ? 100.0 : accel_force;
+                physics_add_force_y(phys,f);
+            }
+            else
+            {
+                if(!player->jumped && !player->spectator)
+                {
+                    physics_add_force_y(phys,250.0);
+                    player->jumped = true;
+                }
+            }
         }
 
 
@@ -176,12 +187,34 @@ static void update_player_physics()
     if(!player->spectator)
         physics_add_gravity(phys, 1.0);
 
+    Vector3f p0 = {phys->pos.x, phys->pos.y, phys->pos.z};
+
     physics_simulate(phys);
+
+    if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
+    {
+        // undo the movement
+        normalize(&phys->vel);
+        phys->pos.x = p0.x-0.01*phys->vel.x;
+        phys->pos.y = p0.y-0.01*phys->vel.y;
+        phys->pos.z = p0.z-0.01*phys->vel.z;
+
+        phys->accel.x = 0.0;
+        phys->accel.y = 0.0;
+        phys->accel.z = 0.0;
+
+        phys->vel.x = 0.0;
+        phys->vel.y = 0.0;
+        phys->vel.z = 0.0;
+    }
+
+
+
 }
 
 static void player_spawn_projectile(ProjectileType type)
 {
-    Vector pos = {player->phys.pos.x, player->height+player->phys.pos.y, player->phys.pos.z};
+    Vector pos = {player->phys.pos.x, player->phys.height+player->phys.pos.y, player->phys.pos.z};
 
     projectile_spawn(player,type,&pos);
 }
@@ -195,7 +228,7 @@ void player_init()
     player->camera.lookat.z   = 1.0;
     player->camera.up.y       = 1.0;
 
-    player->height = 1.50; // meters
+    player->phys.height = 1.50; // meters
     player->phys.mass = 62.0; // kg
     player->phys.max_linear_speed = 8.0; // m/s
     player->run_factor = 2.0;
@@ -231,6 +264,9 @@ void player_init()
     player->phys.pos.y = 0.0;
     player->phys.pos.z = 77.0;//0.0;
 
+    player->phys.com_offset.x = 0.0;
+    player->phys.com_offset.y = player->phys.height / 2.0;
+
     player->camera.cursor_x = view_width / 2.0;
     player->camera.cursor_y = view_height / 2.0;
 
@@ -251,7 +287,7 @@ void player_init()
 void player_snap_camera()
 {
     player->camera.phys.pos.x = player->phys.pos.x;
-    player->camera.phys.pos.y = player->phys.pos.y + player->height;
+    player->camera.phys.pos.y = player->phys.pos.y + player->phys.height;
     player->camera.phys.pos.z = player->phys.pos.z;
 
     player->camera.angle_h = player->angle_h;

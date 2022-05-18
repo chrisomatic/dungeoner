@@ -39,6 +39,10 @@ double g_delta_t = 0.0f;
 float fog_density = 0.010;
 float fog_gradient = 5.0;
 
+GLuint frame_buffer_ms;
+GLuint frame_buffer_ms_color_texture;
+GLuint frame_buffer_ms_depth_texture;
+
 GLuint frame_buffer;
 GLuint frame_buffer_color_texture;
 GLuint frame_buffer_depth_texture;
@@ -61,9 +65,10 @@ GLuint t_rat;
 GLuint t_particle_explosion;
 GLuint t_particle_star;
 GLuint t_crosshair;
+GLuint t_boat;
 
 // =========================
-// Meshes
+// Models
 // =========================
 
 Mesh m_terrain;
@@ -71,6 +76,8 @@ Model m_sphere;
 Model m_tree;
 Model m_rat;
 Model m_arrow;
+Model m_wall;
+Model m_boat;
 
 // =========================
 // Zones
@@ -171,6 +178,7 @@ void init()
     t_particle_explosion = load_texture("textures/particles/explosion.png");
     t_particle_star = load_texture("textures/particles/star.png");
     t_crosshair = load_texture("textures/crosshair.png");
+    t_boat = load_texture("textures/boat.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.png",
@@ -199,6 +207,8 @@ void init()
     model_import(&m_tree,"models/tree.obj");
     model_import(&m_rat,"models/rat.obj");
     model_import(&m_arrow,"models/arrow.obj");
+    model_import(&m_wall,"models/wall.obj");
+    model_import(&m_boat,"models/boat.obj");
 
     LOGI(" - Coins.");
     coin_init();
@@ -238,17 +248,39 @@ void init()
         creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
     }
 
-    // <\TEMP>
-
     Vector pos = {-1.0,10.0,-1.0};
     particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 
+    frame_buffer_ms = gfx_create_fbo();
+    frame_buffer_ms_color_texture = gfx_create_color_buffer(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, true);
+    frame_buffer_ms_depth_texture = gfx_create_depth_buffer(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, true);
+
     frame_buffer = gfx_create_fbo();
     frame_buffer_color_texture = gfx_create_texture_attachment(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
     frame_buffer_depth_texture = gfx_create_depth_texture_attachment(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
+
+    // @TEST wall
+    Vector3f p = {-302.0, -10.0, -79.0};
+    Vector3f r = {0.0,0.0,0.0};
+    Vector3f s = {1.0,1.0,1.0};
+
+    m_wall.texture = t_stone;
+    get_model_transform(&p,&r,&s,&m_wall.transform);
+    collision_transform_bounding_box(&m_wall.collision_vol, &m_wall.transform);
+    
+    // @TEST boat
+    Vector3f p2 = {-296.0, -10.0, -70.0};
+    Vector3f r2 = {0.0,0.0,0.0};
+    Vector3f s2 = {1.0,1.0,1.0};
+
+    m_boat.texture = t_boat;
+    get_model_transform(&p2,&r2,&s2,&m_boat.transform);
+    collision_transform_bounding_box(&m_boat.collision_vol, &m_boat.transform);
+    
+    // <\TEMP>
 }
 
 void deinit()
@@ -296,6 +328,7 @@ void simulate()
             }
         }
     }
+
 }
 
 void render_scene()
@@ -310,6 +343,10 @@ void render_scene()
     coin_draw_piles();
     projectile_draw();
     particles_draw();
+
+    // @TEST
+    gfx_draw_model(&m_wall);
+    gfx_draw_model(&m_boat);
 }
 
 void render()
@@ -317,29 +354,26 @@ void render()
     glClearColor(FOG_COLOR_R,FOG_COLOR_G,FOG_COLOR_B,1.0);
     glEnable(GL_DEPTH_TEST);
 
-    bool in_water = (player->camera.phys.pos.y <= water_get_height());
+    bool in_water = (player->camera.phys.pos.y + player->camera.offset.y <= water_get_height());
 
-    fog_density = in_water ? 0.06 : 0.01;
+    fog_density = in_water ? 0.04 : 0.01;
     water_draw_textures();
 
-    //gfx_bind_frame_buffer(frame_buffer,STARTING_VIEW_WIDTH,STARTING_VIEW_HEIGHT);
-    gfx_unbind_frame_current_buffer();
+    gfx_bind_frame_buffer(frame_buffer_ms,STARTING_VIEW_WIDTH,STARTING_VIEW_HEIGHT);
     render_scene();
     water_draw();
+    gfx_unbind_frame_current_buffer();
+    gfx_resolve_fbo(frame_buffer_ms, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 
-    /*
-    glClearDepth(1.0f);
     glClearColor(0.0,0.0,0.0,1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     Vector2f pos = {0.0,0.0};
-    Vector2f sca = {2.00,2.00};
+    Vector2f sca = {1.00,1.00};
 
     glDisable(GL_DEPTH_TEST);
     //gfx_draw_quad2d(frame_buffer_color_texture,NULL,&pos,&sca);
     gfx_draw_post_process_quad(frame_buffer_color_texture,NULL,&pos,&sca);
-    */
     gui_draw();
-
 }
 

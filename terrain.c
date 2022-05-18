@@ -167,7 +167,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
     int start_index = MAX(0,(x_start + y_start*(terrain.w-1))*6);
 
-    //printf("start_index: %d\n",start_index);
+    printf("x_start: %d, y_start: %d, start_index: %d\n",x_start, y_start,start_index);
 
     uint32_t* p  = &terrain.indices[start_index];
     uint32_t* lp = &local_indices[0];
@@ -175,7 +175,8 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
     const uint64_t bytes_max = terrain.num_indices*sizeof(uint32_t);
     uint64_t byte_index = start_index*sizeof(uint32_t);
 
-    LOGI("byte_start_index: %d, byte_max_index: %d",byte_index, bytes_max);
+    LOGI("(%d, %d) byte_start_index: %d, byte_max_index: %d",block_index_x, block_index_y,byte_index, bytes_max);
+    int total_bytes_copied = 0;
 
     for(int k = 0; k < terrain_block_draw_size; ++k)
     {
@@ -186,12 +187,13 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
         memcpy(lp,p,copy_size);
         byte_index += copy_size;
+        total_bytes_copied += copy_size;
 
         p += ((terrain.w-1)*6);
         lp += copy_size/sizeof(uint32_t);
     }
 
-    //printf("done.\n");
+    printf("total_bytes_copied: %d\n", total_bytes_copied);
 
     gfx_sub_buffer_elements(m_terrain.ibo, local_indices, terrain_block_draw_size*terrain_block_draw_size*6*sizeof(uint32_t));
 }

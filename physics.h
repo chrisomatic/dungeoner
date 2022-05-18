@@ -13,12 +13,15 @@ typedef struct
     float mass;
     float density;
     float max_linear_speed;
+    float height;
 
     GroundInfo ground;
 
     Vector3f pos;
     Vector3f vel;
     Vector3f accel;
+
+    Vector2f com_offset; // center of mass
 
     bool collided;
     bool user_force_applied;

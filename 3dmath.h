@@ -44,6 +44,12 @@ typedef struct
     Vector normal;
 } Vertex;
 
+typedef struct
+{
+    int point_count;
+    Vector3f* points;
+} PointList;
+
 extern Matrix identity_matrix;
 
 float magn(Vector v);

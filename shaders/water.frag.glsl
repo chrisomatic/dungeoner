@@ -10,6 +10,7 @@ uniform int wireframe;
 uniform sampler2D reflection_texture;
 uniform sampler2D refraction_texture;
 uniform sampler2D dudv_map;
+uniform int in_water;
 
 uniform float wave_move_factor;
 
@@ -56,7 +57,15 @@ void main() {
             frag_color = vec4(0.0,1.0,0.0,1.0);
         }
         */
-        frag_color = mix(reflection_color, refraction_color, 0.5); //refractive_factor);
-        frag_color = mix(frag_color, vec4(0.0,0.2,0.5,1.0), 0.1); // make slightly blue
+        if(in_water == 1)
+        {
+            refractive_factor = 1.0;
+        }
+        else
+        {
+            refractive_factor = 0.5;
+        }
+        frag_color = mix(reflection_color, refraction_color, refractive_factor);
+        frag_color = mix(frag_color, vec4(0.1,0.3,0.6,1.0), 0.2); // make slightly blue
     }
 }

@@ -21,9 +21,9 @@ gcc entity.c \
     water.c \
     window.c \
     main.c \
-    -lglfw -lGLU -lGLEW -lGL -lm -O2 \
+    -lglfw -lGLU -lGLEW -lGL -lm \
     -o dungeoner
-
+ #-O2 \
 if [ $? -eq 0 ]
 then 
   echo "Successfully compiled." 

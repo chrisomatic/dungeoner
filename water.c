@@ -22,7 +22,7 @@ void water_init(float height)
     // reflection
     water_body.reflection_frame_buffer = gfx_create_fbo();
     water_body.reflection_texture = gfx_create_texture_attachment(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
-    water_body.reflection_depth_buffer = gfx_create_depth_buffer(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT);
+    water_body.reflection_depth_buffer = gfx_create_depth_buffer(WATER_REFLECTION_WIDTH, WATER_REFLECTION_HEIGHT, false);
 
     // refraction
     water_body.refraction_frame_buffer = gfx_create_fbo();
@@ -53,11 +53,10 @@ GLuint water_get_texture(WaterProperty prop)
 void water_draw_textures()
 {
     float water_height = water_get_height();
+    float camera_pos = player->camera.phys.pos.y + player->camera.offset.y;
 
-    // pass 1: render reflection
     water_bind_reflection_fbo();
 
-    float camera_pos = player->camera.phys.pos.y + player->camera.offset.y;
     float distance = 2 * (camera_pos - water_height);
 
     player->camera.phys.pos.y -= (distance);
@@ -67,7 +66,14 @@ void water_draw_textures()
 
     update_camera_rotation();
 
-    gfx_enable_clipping(0,-1,0,-water_height);
+    if(camera_pos > water_height)
+    {
+        gfx_enable_clipping(0,-1,0,-water_height);
+    }
+    else
+    {
+        gfx_enable_clipping(0,1,0,water_height);
+    }
     render_scene();
 
     player->camera.phys.pos.y += distance;
@@ -76,7 +82,14 @@ void water_draw_textures()
 
     // pass 2: render refraction
     water_bind_refraction_fbo();
-    gfx_enable_clipping(0,1,0,water_height);
+    if(camera_pos > water_height)
+    {
+        gfx_enable_clipping(0,1,0,water_height);
+    }
+    else
+    {
+        gfx_enable_clipping(0,-1,0,-water_height);
+    }
     render_scene();
 
     gfx_disable_clipping();

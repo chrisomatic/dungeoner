@@ -14,7 +14,7 @@ void main(void)
 
     if(in_water > 0)
     {
-        out_color = mix(base_color, vec4(0.7,0.8,0.9,1.0),0.6);
+        out_color = mix(base_color, vec4(0.5,0.6,0.8,1.0),0.5);
     }
     else
     {
