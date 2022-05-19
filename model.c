@@ -8,11 +8,11 @@
 
 #include "model.h"
 
-Vertex vertices[1000] = {0};
-Vector2f tex_coords[1000] = {0};
-Vector3f normals[1000] = {0};
+Vertex vertices[10000] = {0};
+Vector2f tex_coords[10000] = {0};
+Vector3f normals[10000] = {0};
 
-uint32_t indices[5000] = {0};
+uint32_t indices[10000] = {0};
 
 int vertex_count = 0;
 int index_count = 0;

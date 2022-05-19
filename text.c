@@ -118,10 +118,10 @@ void text_print(float x, float y, char *text, Vector3f color)
             glyphs[i].points[3].position.x = q.x0; glyphs[i].points[3].position.y = q.y1;
 
             /*
-            glyphs[i].points[0].position.x = (q.x0*2.0)/view_width - 1.0f; glyphs[i].points[0].position.y = (q.y0*2.0)/view_height - 1.0f;
-            glyphs[i].points[1].position.x = (q.x1*2.0)/view_width - 1.0f; glyphs[i].points[1].position.y = (q.y0*2.0)/view_height - 1.0f;
-            glyphs[i].points[2].position.x = (q.x1*2.0)/view_width - 1.0f; glyphs[i].points[2].position.y = (q.y1*2.0)/view_height - 1.0f;
-            glyphs[i].points[3].position.x = (q.x0*2.0)/view_width - 1.0f; glyphs[i].points[3].position.y = (q.y1*2.0)/view_height - 1.0f;
+            glyphs[i].points[0].position.x = ((q.x0*2.0)/view_width - 1.0f); glyphs[i].points[0].position.y = (q.y0*2.0)/view_height - 1.0f;
+            glyphs[i].points[1].position.x = ((q.x1*2.0)/view_width - 1.0f); glyphs[i].points[1].position.y = (q.y0*2.0)/view_height - 1.0f;
+            glyphs[i].points[2].position.x = ((q.x1*2.0)/view_width - 1.0f); glyphs[i].points[2].position.y = (q.y1*2.0)/view_height - 1.0f;
+            glyphs[i].points[3].position.x = ((q.x0*2.0)/view_width - 1.0f); glyphs[i].points[3].position.y = (q.y1*2.0)/view_height - 1.0f;
             */
 
             glyphs[i].points[0].tex_coord.x = q.s0; glyphs[i].points[0].tex_coord.y = q.t0;
