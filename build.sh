@@ -4,6 +4,7 @@ gcc entity.c \
     3dmath.c \
     gfx.c \
     gui.c \
+    boat.c \
     creature.c \
     collision.c \
     light.c \

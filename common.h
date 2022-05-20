@@ -31,11 +31,9 @@ extern Model m_tree;
 extern Model m_rat;
 extern Model m_arrow;
 extern Model m_wall;
-extern Model m_boat;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;
 extern float fog_gradient;
 
 void render_scene();
-

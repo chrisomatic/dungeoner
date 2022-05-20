@@ -27,6 +27,7 @@
 #include "text.h"
 #include "water.h"
 #include "coin.h"
+#include "boat.h"
 #include "creature.h"
 
 // =========================
@@ -208,7 +209,6 @@ void init()
     model_import(&m_rat,"models/rat.obj");
     model_import(&m_arrow,"models/arrow.obj");
     model_import(&m_wall,"models/wall.obj");
-    model_import(&m_boat,"models/boat.obj");
 
     LOGI(" - Coins.");
     coin_init();
@@ -228,6 +228,9 @@ void init()
 
     LOGI(" - Light.");
     light_init();
+
+    LOGI(" - Boats.");
+    boat_init();
 
     LOGI(" - Zones.");
 
@@ -272,13 +275,18 @@ void init()
     collision_transform_bounding_box(&m_wall.collision_vol, &m_wall.transform);
     
     // @TEST boat
+    boat_spawn(296.0,70.0);
+
+    /*
     Vector3f p2 = {-296.0, -10.0, -70.0};
     Vector3f r2 = {0.0,0.0,0.0};
     Vector3f s2 = {1.0,1.0,1.0};
 
+
     m_boat.texture = t_boat;
     get_model_transform(&p2,&r2,&s2,&m_boat.transform);
     collision_transform_bounding_box(&m_boat.collision_vol, &m_boat.transform);
+    */
     
     // <\TEMP>
 }
@@ -298,6 +306,7 @@ void simulate()
     water_update();
     coin_update_piles();
     gui_update();
+    boat_update();
 
     // check collisions
     // @TODO: Move this code to collision file
@@ -340,13 +349,13 @@ void render_scene()
     terrain_draw();
     player_draw();
     creature_draw();
+    boat_draw();
     coin_draw_piles();
     projectile_draw();
     particles_draw();
 
     // @TEST
     gfx_draw_model(&m_wall);
-    gfx_draw_model(&m_boat);
 }
 
 void render()
