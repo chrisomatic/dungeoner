@@ -164,6 +164,9 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
             case GLFW_KEY_D:
                 player->right = true;
                 break;
+            case GLFW_KEY_E:
+                player->use = true;
+                break;
             case GLFW_KEY_SPACE:
                 player->jump = true;
                 break;

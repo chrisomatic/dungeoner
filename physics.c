@@ -166,9 +166,34 @@ void physics_simulate(PhysicsObj* phys)
     // handle water physics
     if(com_y <= water_height)
     {
+        if(!phys->in_water)
+        {
+            phys->in_water = true;
+            phys->vel.x /= 2.0;
+            phys->vel.y /= 2.0;
+            phys->vel.z /= 2.0;
+        }
         // add buoyant force
         if(phys->density > 0.0)
         {
+            float distance_submerged = water_height - com_y;
+
+            float water_force = 1.01*GRAVITY;
+
+            float m = 0.50*MAX(distance_submerged,0.25);
+            water_force+=m;
+
+            /*
+            if(distance_submerged <= 1.0)
+            {
+                water_force += 2.0;//((distance_submerged*0.5) - 0.05));
+            }
+            else if(distance_submerged <= 2.0)
+            {
+                water_force -= 4.0;//((distance_submerged*0.5) - 0.05));
+            }
+            */
+            /*
             float density_factor = WATER_DENSITY / phys->density;
             float amt_submerged = water_height - com_y;
 
@@ -178,9 +203,15 @@ void physics_simulate(PhysicsObj* phys)
                 buoyancy_strength = 1.00;
 
             float buoyancy = buoyancy_strength*pct_submerged*density_factor*GRAVITY;
+            */
 
-            physics_add_force_y(phys,buoyancy);
+            //printf("water force: %f\n",water_force);
+            physics_add_force_y(phys,water_force);
         }
+    }
+    else
+    {
+        phys->in_water = false;
     }
 
     // update velocity

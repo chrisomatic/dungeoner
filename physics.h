@@ -21,10 +21,11 @@ typedef struct
     Vector3f vel;
     Vector3f accel;
 
-    Vector2f com_offset; // center of mass
+    Vector3f com_offset; // center of mass
 
     bool collided;
     bool user_force_applied;
+    bool in_water;
 
 } PhysicsObj;
 

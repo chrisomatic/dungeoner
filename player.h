@@ -4,6 +4,7 @@
 #include "3dmath.h"
 #include "physics.h"
 #include "model.h"
+#include "boat.h"
 
 typedef enum
 {
@@ -58,9 +59,13 @@ typedef struct
     bool jump;
     bool jumped;
     bool run;
+    bool use;
 
     bool primary_action;
     bool secondary_action;
+
+    bool in_boat;
+    Boat* boat;
 } Player;
 
 extern Player* player;

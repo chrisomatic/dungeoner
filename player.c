@@ -11,6 +11,7 @@
 #include "projectile.h"
 #include "log.h"
 #include "gfx.h"
+#include "boat.h"
 #include "entity.h"
 
 Entity  p = {0};
@@ -74,6 +75,16 @@ static void update_player_physics()
         phys->max_linear_speed /= 2.0;
     }
 
+    if(!player->spectator && player->in_boat)
+    {
+        player->phys.pos.x = player->boat->phys.pos.x;
+        player->phys.pos.y = player->boat->phys.pos.y;
+        player->phys.pos.z = player->boat->phys.pos.z;
+
+        phys = &player->boat->phys;
+        in_water = true;
+    }
+
     // zero out prior accel
     physics_begin(phys);
 
@@ -105,7 +116,6 @@ static void update_player_physics()
             player->camera.lookat.z
         };
 
-
         Vector3f user_force = {0.0,0.0,0.0};
 
         if(player->jump)
@@ -124,7 +134,6 @@ static void update_player_physics()
                 }
             }
         }
-
 
         if(player->forward)
         {
@@ -323,6 +332,34 @@ void player_update()
     update_camera_rotation();
     update_player_physics();
     update_player_model_transform();
+
+    if(player->use)
+    {
+        player->use = false;
+
+        if(player->in_boat)
+        {
+            player->in_boat = false;
+        }
+        else
+        {
+            Vector3f p = {
+                player->phys.pos.x + player->phys.com_offset.x,
+                player->phys.pos.y + player->phys.com_offset.y,
+                player->phys.pos.z + player->phys.com_offset.z,
+            };
+            int boat_index = boat_check_in_range(&p);
+            if(boat_index > -1)
+            {
+                player->in_boat = true;
+                player->boat = &boats[boat_index];
+
+                player->phys.pos.x = player->boat->phys.pos.x;
+                player->phys.pos.y = player->boat->phys.pos.y;
+                player->phys.pos.z = player->boat->phys.pos.z;
+            }
+        }
+    }
 
     collision_transform_bounding_box(&player->model.collision_vol, &player->model.transform);
 

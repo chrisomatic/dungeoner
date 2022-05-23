@@ -243,7 +243,7 @@ void init()
     int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
-    for(int i = 0; i < 100; ++i)
+    for(int i = 0; i < 1; ++i)
     {
         float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
         float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
@@ -275,7 +275,8 @@ void init()
     collision_transform_bounding_box(&m_wall.collision_vol, &m_wall.transform);
     
     // @TEST boat
-    boat_spawn(296.0,70.0);
+    boat_spawn(294.0,65.0);
+    boat_spawn(290.0,68.0);
 
     /*
     Vector3f p2 = {-296.0, -10.0, -70.0};
