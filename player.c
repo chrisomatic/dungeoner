@@ -30,11 +30,9 @@ void update_camera_rotation()
     Vector3f view = {0.0, 0.0, 1.0};
 
     Vector3f h_axis = {0};
+
     rotate_vector(&view, player->camera.angle_h, player->camera.angle_v, &h_axis);
-
     copy_vector(&player->camera.lookat,view);
-    normalize(&player->camera.lookat);
-
     normalize(&player->camera.lookat);
 
     //printf("lookat: %f %f %f\n", camera.lookat.x, camera.lookat.y, camera.lookat.z);
@@ -45,12 +43,84 @@ void update_camera_rotation()
     //printf("Up: %f %f %f\n", camera.up.x, camera.up.y, camera.up.z);
 }
 
-static void update_player_physics()
+static void handle_boat_control(PhysicsObj* phys)
+{
+    physics_begin(phys);
+
+    Boat* boat = player->boat;
+    float boat_angle = RAD(boat->angle_h);
+
+    bool in_water = (boat->phys.pos.y <= water_get_height());
+    float accel_force = in_water ? 10.0 : 2.0;
+
+    Vector3f user_force = {0.0,0.0,0.0};
+
+    Vector3f view = {0.0, 0.0, 1.0};
+    Vector3f h_axis = {0};
+
+    rotate_vector(&view, boat->angle_h, 0.0, &h_axis);
+    copy_vector(&boat->lookat,view);
+    normalize(&boat->lookat);
+
+    Vector3f lookat = {
+        boat->lookat.x,
+        boat->lookat.y,
+        boat->lookat.z
+    };
+
+    if(player->forward)
+    {
+        Vector3f forward = {-lookat.x, 0.0,-lookat.z};
+        normalize(&forward);
+        mult(&forward,accel_force);
+
+        add(&user_force,forward);
+    }
+
+    if(player->back)
+    {
+        Vector3f back = {lookat.x, 0.0,lookat.z};
+        normalize(&back);
+        mult(&back,accel_force);
+
+        add(&user_force,back);
+    }
+
+    if(player->left)
+    {
+        boat->angle_h += (90.0*g_delta_t);
+    }
+
+    if(player->right)
+    {
+        boat->angle_h -= (90.0*g_delta_t);
+    }
+
+    bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
+
+    if(!user_force_applied)
+    {
+        if(in_water)
+        {
+            physics_add_air_friction(phys, 0.70); // also works with water
+        }
+        else
+        {
+            physics_add_kinetic_friction(phys, 1.00);
+        }
+    }
+
+    physics_add_force(phys,user_force.x, user_force.y, user_force.z);
+
+    physics_add_gravity(phys, 1.0);
+    physics_simulate(phys);
+
+}
+
+static void handle_player_control(PhysicsObj* phys)
 {
     Vector3f* accel = &player->phys.accel;
     Vector3f* vel = &player->phys.vel;
-
-    PhysicsObj* phys = &player->phys;
 
     float accel_force = 4.0;
     bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
@@ -71,42 +141,21 @@ static void update_player_physics()
 
     if(in_water)
     {
-        accel_force /= 2.0;
-        phys->max_linear_speed /= 2.0;
+        accel_force /= 3.0;
+        phys->max_linear_speed /= 3.0;
     }
 
-    if(!player->spectator && player->in_boat)
-    {
-        player->phys.pos.x = player->boat->phys.pos.x;
-        player->phys.pos.y = player->boat->phys.pos.y;
-        player->phys.pos.z = player->boat->phys.pos.z;
-
-        phys = &player->boat->phys;
-        in_water = true;
-    }
-
-    // zero out prior accel
     physics_begin(phys);
-
-    //phys->ground.height = terrain_get_height(phys->pos.x, phys->pos.z);
-
-    //printf("pos.y: %f, ground: %f\n", phys->pos.y, phys->ground.height);
-
+ 
     if(player->jumped && (phys->pos.y <= phys->ground.height))
         player->jumped = false;
-
+ 
     if(player->secondary_action)
     {
-        //physics_add_force(phys,
-        //        -3000.0*player->camera.lookat.x,
-        //        -3000.0*player->camera.lookat.y,
-        //        -3000.0*player->camera.lookat.z
-        //);
-        //player->phys.max_linear_speed = 3000.0;
         player->secondary_action = false;
         player_spawn_projectile(PROJECTILE_ICE);
     }
-
+ 
     if(player->spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE || in_water) // tolerance to allow movement slightly above ground
     {
         // where the player is looking
@@ -115,7 +164,7 @@ static void update_player_physics()
             player->camera.lookat.y,
             player->camera.lookat.z
         };
-
+ 
         Vector3f user_force = {0.0,0.0,0.0};
 
         if(player->jump)
@@ -196,29 +245,36 @@ static void update_player_physics()
     if(!player->spectator)
         physics_add_gravity(phys, 1.0);
 
-    Vector3f p0 = {phys->pos.x, phys->pos.y, phys->pos.z};
-
     physics_simulate(phys);
+
+}
+
+static void update_player_physics()
+{
+    bool control_boat = !player->spectator && player->in_boat;
+
+    if(control_boat)
+    {
+        handle_boat_control(&player->boat->phys);
+
+        // set player pos to boat position
+        player->phys.pos.x = player->boat->phys.pos.x;
+        player->phys.pos.y = player->boat->phys.pos.y;
+        player->phys.pos.z = player->boat->phys.pos.z;
+
+        player->angle_h = player->boat->angle_h;
+        player->camera.angle_h = player->boat->angle_h + player->camera.angle_h_offset;
+    }
+    else
+    {
+        handle_player_control(&player->phys);
+    }
 
     if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
     {
         // undo the movement
-        normalize(&phys->vel);
-        phys->pos.x = p0.x-0.01*phys->vel.x;
-        phys->pos.y = p0.y-0.01*phys->vel.y;
-        phys->pos.z = p0.z-0.01*phys->vel.z;
-
-        phys->accel.x = 0.0;
-        phys->accel.y = 0.0;
-        phys->accel.z = 0.0;
-
-        phys->vel.x = 0.0;
-        phys->vel.y = 0.0;
-        phys->vel.z = 0.0;
+        printf("in wall!\n");
     }
-
-
-
 }
 
 static void player_spawn_projectile(ProjectileType type)
@@ -244,7 +300,7 @@ void player_init()
     player->walk_speed = 4.5; // m/s
     player->spectator = false;
     player->run = false;
-    player->phys.density = 1005.0f;
+    player->phys.density = 1002.0f;
 
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;
@@ -267,6 +323,8 @@ void player_init()
             player->camera.angle_h = 180.0 - DEG(asin(-h_lookat.z));
     }
 
+    player->camera.angle_h_offset = 0.0;
+
     player->camera.angle_v = -DEG(asin(player->camera.lookat.y));
     
     player->phys.pos.x = 300.0;//0.0;
@@ -287,10 +345,11 @@ void player_init()
     m_arrow.base_color.z = 1.0;
 
     model_import(&player->model,"models/human.obj");
+    player->model.reflectivity = 0.0;
     //collision_calc_bounding_box(player->model.mesh.vertices,player->model.mesh.vertex_count,&player->model.collision_vol.box);
 
     player->model.texture = t_outfit;
-
+    update_camera_rotation();
 }
 
 void player_snap_camera()
@@ -299,8 +358,14 @@ void player_snap_camera()
     player->camera.phys.pos.y = player->phys.pos.y + player->phys.height;
     player->camera.phys.pos.z = player->phys.pos.z;
 
-    player->camera.angle_h = player->angle_h;
+    //if(!player->in_boat)
+    int dir = player->angle_h > player->camera.angle_h ? 1.0 : -1.0;
+
+    player->camera.angle_h += (dir*g_delta_t*0.1);//player->angle_h);
     player->camera.angle_v = player->angle_v;
+
+    //if(ABS(player->camera.angle_h - player->angle_h) < 0.5)
+    //    player->camera.angle_h = player->angle_h;
 
     if(player->camera.mode == CAMERA_MODE_THIRD_PERSON)
     {
@@ -322,6 +387,7 @@ static void update_player_model_transform()
     Vector3f pos = {-player->phys.pos.x, -player->phys.pos.y, -player->phys.pos.z}; // @NEG
     Vector3f rot = {0.0,-player->angle_h,0.0}; // @NEG
     Vector3f sca = {1.0,1.0,1.0};
+    PhysicsObj* phys = &player->phys;
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
     //memcpy(&m_arrow.transform, &player->model.transform, sizeof(Matrix));
@@ -415,13 +481,27 @@ void player_update_camera_angle(int cursor_x, int cursor_y)
     prior_cursor_x = cursor_x;
     prior_cursor_y = cursor_y;
 
-    player->camera.angle_h += (float)delta_x / 16.0;
-    player->camera.angle_v += (float)delta_y / 16.0;
+    if(player->in_boat)
+    {
+        player->camera.angle_h_offset += (float)delta_x / 16.0;
+        if(player->camera.angle_h_offset > 45.0)
+            player->camera.angle_h_offset = 45.0;
+        if(player->camera.angle_h_offset < -45.0)
+            player->camera.angle_h_offset = -45.0;
 
-    if(player->camera.angle_h > 360)
-        player->camera.angle_h -= 360.0f;
-    else if(player->camera.angle_h < 0)
-        player->camera.angle_h += 360.f;
+        player->camera.angle_h = player->boat->angle_h + player->camera.angle_h_offset;
+    }
+    else
+    {
+        player->camera.angle_h += (float)delta_x / 16.0;
+
+        if(player->camera.angle_h > 360)
+            player->camera.angle_h -= 360.0f;
+        else if(player->camera.angle_h < 0)
+            player->camera.angle_h += 360.f;
+    }
+
+    player->camera.angle_v += (float)delta_y / 16.0;
 
     if(player->camera.angle_v > 90)
         player->camera.angle_v = 90.0;
@@ -430,7 +510,7 @@ void player_update_camera_angle(int cursor_x, int cursor_y)
 
     if(!player->spectator)
     {
-        player->angle_h = player->camera.angle_h;
+        player->angle_h = player->in_boat ? player->boat->angle_h : player->camera.angle_h;
         player->angle_v = player->camera.angle_v;
     }
 }

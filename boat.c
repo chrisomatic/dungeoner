@@ -31,16 +31,13 @@ void boat_spawn(float x, float z)
     boat->phys.pos.y = -water_get_height();
     boat->phys.pos.z = z;
 
-    boat->rotation.x = 0.0;
-    boat->rotation.y = 0.0;
-    boat->rotation.z = 0.0;
-
     boat->phys.mass = 1000.0;
-    boat->phys.density = 500.0;
-    boat->phys.max_linear_speed = 100.0;
+    boat->phys.density = 1000.0;
+    boat->phys.max_linear_speed = 8.0;
+    boat->angle_h = 0.0;
 
     boat->phys.height = 3.0;
-    boat->phys.com_offset.y = 0.0; //boat->phys.height/2.0;
+    boat->phys.com_offset.y = 0.0;
 
     boat->model.texture = t_boat;
     boat_count++;
@@ -53,7 +50,7 @@ void boat_update()
         Boat* b = &boats[i];
 
         Vector3f pos = {-b->phys.pos.x,-b->phys.pos.y,-b->phys.pos.z};
-        Vector3f rot = {b->rotation.x,b->rotation.y,b->rotation.z};
+        Vector3f rot = {0.0,180.0-b->angle_h,0.0};
         Vector3f sca = {1.0,1.0,1.0};
 
         get_model_transform(&pos, &rot, &sca, &b->model.transform);

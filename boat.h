@@ -4,8 +4,8 @@ typedef struct
 {
     Model model;
     PhysicsObj phys;
-    Vector3f rotation;
     Vector3f lookat;
+    float angle_h;
 } Boat;
 
 #define MAX_BOATS 10

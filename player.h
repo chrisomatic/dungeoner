@@ -25,6 +25,7 @@ typedef struct
     CameraMode mode;
 
     float angle_h;
+    float angle_h_offset; // for boat
     float angle_v;
 
     double cursor_x;
