@@ -6,6 +6,7 @@
 #include "3dmath.h"
 #include "model.h"
 #include "physics.h"
+#include "player.h"
 #include "boat.h"
 
 static Model m_boat;
@@ -33,7 +34,7 @@ void boat_spawn(float x, float z)
 
     boat->phys.mass = 1000.0;
     boat->phys.density = 1000.0;
-    boat->phys.max_linear_speed = 8.0;
+    boat->phys.max_linear_speed = 5.0;
     boat->angle_h = 0.0;
 
     boat->phys.height = 3.0;
@@ -49,6 +50,9 @@ void boat_update()
     {
         Boat* b = &boats[i];
 
+        bool player_controlled_boat = (b == player->boat);
+        bool in_water = (b->phys.pos.y <= water_get_height());
+
         Vector3f pos = {-b->phys.pos.x,-b->phys.pos.y,-b->phys.pos.z};
         Vector3f rot = {0.0,180.0-b->angle_h,0.0};
         Vector3f sca = {1.0,1.0,1.0};
@@ -56,10 +60,25 @@ void boat_update()
         get_model_transform(&pos, &rot, &sca, &b->model.transform);
         collision_transform_bounding_box(&b->model.collision_vol, &b->model.transform);
 
+        bool user_force = b->phys.user_force_applied;
+
         physics_begin(&b->phys);
         physics_add_gravity(&b->phys, 1.0);
-        physics_add_kinetic_friction(&b->phys, 0.80);
+
+        if(!player_controlled_boat)
+        {
+            if(!user_force)
+            {
+                if(in_water)
+                    physics_add_water_friction(&b->phys, 0.70); // also works with water
+                else
+                    physics_add_kinetic_friction(&b->phys, 1.00);
+            }
+
+        }
+
         physics_simulate(&b->phys);
+
         //physics_print(&b->phys, false);
     }
 }

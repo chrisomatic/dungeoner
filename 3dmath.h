@@ -80,6 +80,7 @@ Vector get_projected_point_on_plane(Vector* point, Vector* plane_normal, Vector*
 Vector get_center_of_triangle(Vector* a, Vector* b, Vector* c);
 float get_angle_between_vectors_rad(Vector* a, Vector* b);
 float get_y_value_on_plane(float x, float z, Vector* a, Vector* b, Vector* c);
+Vector3f get_intersection_plane_line(Vector3f* ray, Vector3f* ray_pt, Vector3f* plane_normal, Vector3f* plane_pt);
 
 float dist_squared(Vector3f* a, Vector3f* b);
 float dist(Vector3f* a, Vector3f* b);

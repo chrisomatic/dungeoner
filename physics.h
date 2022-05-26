@@ -39,6 +39,7 @@ void physics_add_force_z(PhysicsObj* phys, float force_y);
 void physics_add_gravity(PhysicsObj* phys, float gravity_factor);
 void physics_add_kinetic_friction(PhysicsObj* phys, float mu);
 void physics_add_air_friction(PhysicsObj* phys, float mu);
+void physics_add_water_friction(PhysicsObj* phys, float mu);
 
 void physics_add_user_force(PhysicsObj* phys, Vector3f* force);
 

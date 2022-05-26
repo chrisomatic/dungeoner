@@ -7,6 +7,49 @@
 
 #include "collision.h"
 
+static const uint32_t bb_indices[6*6] =
+{
+    0,2,1,2,0,3, // front
+    1,6,5,6,1,2, // right
+    7,5,6,5,7,4, // back
+    4,3,0,3,4,7, // left
+    4,1,5,1,4,0, // bottom
+    3,6,2,6,3,7  // top
+};
+
+static const Vector3f bb_normals[6] =
+{
+    { 0.0,-1.0, 0.0},
+    { 1.0, 0.0, 0.0},
+    { 0.0, 1.0, 0.0},
+    {-1.0, 0.0, 0.0},
+    { 0.0, 0.0,-1.0},
+    { 0.0, 0.0, 1.0}
+};
+
+static void calc_normals(BoundingBox* box)
+{
+    // calculate normals
+    for(int i = 0; i < 36; i+=3)
+    {
+        uint32_t idx = bb_indices[i];
+
+        Vector3f v0 = box->vertices[idx];
+        Vector3f v1 = box->vertices[idx+1];
+        Vector3f v2 = box->vertices[idx+2];
+
+        Vector3f n;
+        normal(v0,v1,v2,&n);
+
+        uint32_t ni = (int)i/3.0;
+        box->normals[ni].x = n.x;
+        box->normals[ni].y = n.y;
+        box->normals[ni].z = n.z;
+
+        //printf("normal %d: %f %f %f\n",ni,n.x,n.y,n.z);
+    }
+}
+
 void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox* box)
 {
     float min_x = 10000.0; float max_x = -10000.0;
@@ -93,7 +136,7 @@ void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
     box->center.x = box->vertices[0].x + box->l/2.0;
     box->center.y = box->vertices[0].y + box->h/2.0;
     box->center.z = box->vertices[0].z + box->w/2.0;
-
+    
     //printf("center: %f %f %f, x: %f %f   y: %f %f  z: %f %f   l,w,h: %f %f %f\n", box->center.x, box->center.y, box->center.z, min_x, max_x, min_y, max_y, min_z, max_z, box->l, box->w, box->h);
 
 }
@@ -122,6 +165,43 @@ bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
     return false;
 }
 
+float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vector3f* p1, Vector3f* return_normal)
+{
+    uint32_t min_norm_index = 0;
+
+    float min_dist1 = 100000.0;
+    float min_dist2 = 100000.0;
+
+    for(int i = 0; i < 36; i+=3)
+    {
+        uint32_t idx = bb_indices[i];
+
+        Vector3f v0 = box->vertices[idx];
+        uint32_t ni = (int)i/6.0;
+
+        Vector3f diff1 = { p0->x - v0.x, p0->y - v0.y, p0->z - v0.z };
+        Vector3f diff2 = { p1->x - v0.x, p1->y - v0.y, p1->z - v0.z };
+
+        float dist1 = ABS(dot(bb_normals[ni], diff1));
+        float dist2 = ABS(dot(bb_normals[ni], diff2));
+
+        if(dist1 < min_dist1)
+        {
+            min_dist1 = dist1;
+            min_dist2 = dist2;
+            
+            min_norm_index = ni;
+            printf("line intesects index %d with dist %f\n",ni, dist1);
+        }
+    }
+
+    return_normal->x = bb_normals[min_norm_index].x;
+    return_normal->y = bb_normals[min_norm_index].y;
+    return_normal->z = bb_normals[min_norm_index].z;
+
+    return min_dist2;
+}
+
 bool collision_add_to_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
 {
     if(vol->hurt_list_count >= MAX_COLLISION_HURT_LIST)
@@ -145,6 +225,20 @@ bool collision_is_in_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
         }
     }
     return false;
+}
+
+void collision_print_box(BoundingBox* box)
+{
+    LOGI("-----Box-----");
+
+    LOGI(" Vertices:");
+    for(int i =0; i < 8; ++i)
+        LOGI("   [ %f %f %f ]", box->vertices[i].x, box->vertices[i].y, box->vertices[i].z);
+        
+    LOGI(" Normals:");
+    for(int i =0; i < 12; ++i)
+        LOGI("   [ %f %f %f ]", box->normals[i].x, box->normals[i].y, box->normals[i].z);
+    LOGI("------------");
 }
 
 void collision_set_flags(CollisionVolume* vol, CollisionFlags flags)

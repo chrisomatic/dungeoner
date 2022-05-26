@@ -253,6 +253,48 @@ void dot_product_mat(Matrix a, Matrix b, Matrix* result)
     }
 }
 
+Vector3f get_intersection_plane_line(Vector3f* ray, Vector3f* ray_pt, Vector3f* plane_normal, Vector3f* plane_pt)
+{
+    Vector3f diff = {
+        ray_pt->x - plane_pt->x,
+        ray_pt->y - plane_pt->y,
+        ray_pt->z - plane_pt->z
+    };
+
+    //printf("plane normal: %f %f %f\n",plane_normal->x, plane_normal->y, plane_normal->z);
+    //printf("ray: %f %f %f\n",ray->x, ray->y, ray->z);
+
+    float prod1 = dot(diff, *plane_normal);
+    float prod2 = dot(*ray, *plane_normal);
+    float prod3 = prod1 / prod2;
+
+    /*
+    printf("ray_pt: %f %f %f, diff: %f %f %f, prod3: %f\n",
+            ray_pt->x,
+            ray_pt->y,
+            ray_pt->z,
+            diff.x,
+            diff.y,
+            diff.z,
+            prod3);
+        */
+
+    Vector3f intersection = {
+        ray_pt->x - (prod3*ray->x),
+        ray_pt->y - (prod3*ray->y),
+        ray_pt->z - (prod3*ray->z)
+    };
+
+    /*
+    printf("intersection: %f %f %f\n",
+            intersection.x,
+            intersection.y,
+            intersection.z);
+            */
+
+    return intersection;
+}
+
 static void get_scale_transform(Matrix* mat, Vector3f* scale)
 {
     memset(mat,0,sizeof(Matrix));

@@ -8,7 +8,8 @@
 #include "gui.h"
 
 static float fps_counter = 0.5;
-static char fps_str[8] = {0};
+static char fps_str[12]    = {0};
+static char coords_str[32] = {0};
 
 void gui_update()
 {
@@ -17,7 +18,8 @@ void gui_update()
     if(fps_counter >= 0.5)
     {
         fps_counter -= 0.5;
-        snprintf(fps_str,7,"%6.2f",1.0/g_delta_t);
+        snprintf(fps_str,11,"FPS: %6.2f",1.0/g_delta_t);
+        snprintf(coords_str, 31, "x %d  y %d  z %d",(int)player->phys.pos.x, (int)player->phys.pos.y, (int)player->phys.pos.z);
     }
 }
 
@@ -25,8 +27,10 @@ static void draw_debug()
 {
     // fps
     Vector3f color = {1.0f,1.0f,1.0f};
-    text_print(0.0f,32.0f,fps_str,color);
+    text_print(0.0f,64.0f,fps_str,color);
+    text_print(0.0f,32.0f,coords_str,color);
 }
+
 static void draw_hud(float x, float y)
 {
     float ndc_x = (2.0*x)/view_width - 1.0;
@@ -43,6 +47,7 @@ static void draw_hud(float x, float y)
     gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca);
     gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca);
 }
+
 static void draw_crosshair()
 {
     float offsetx = (8.0f / view_width);
@@ -54,7 +59,6 @@ static void draw_crosshair()
     gfx_enable_blending();
     gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca);
     gfx_disable_blending();
-
 }
 
 void gui_draw()

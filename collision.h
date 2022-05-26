@@ -21,6 +21,7 @@ typedef struct
 {
     Vector3f vertices[8];
     Vector3f center;
+    Vector3f normals[12];
     float l,w,h;
 } BoundingBox;
 
@@ -41,3 +42,5 @@ bool collision_add_to_hurt_list(CollisionVolume* vol, CollisionVolume* hurt);
 bool collision_is_in_hurt_list(CollisionVolume* vol, CollisionVolume* hurt);
 void collision_draw(CollisionVolume* col);
 void collision_set_flags(CollisionVolume* vol, CollisionFlags flags);
+float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vector3f* p1, Vector3f* return_normal);
+void collision_print_box(BoundingBox* box);

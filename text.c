@@ -6,6 +6,9 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "util/stb_truetype.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "util/stb_image_write.h"
+
 #include "common.h"
 #include "util.h"
 #include "3dmath.h"
@@ -62,6 +65,11 @@ void text_init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
+void text_write_baked_image()
+{
+    int result = stbi_write_png("out.png",512,512,1,temp_bitmap,512);
+}
+
 typedef struct
 {
     Vector2f position;
@@ -105,12 +113,20 @@ void text_print(float x, float y, char *text, Vector3f color)
     int i = 0;
     int j = 0;
 
+    float max_h = 0.0;
+
     while (*text)
     {
         if (*text >= 32 && *text < 128)
         {
             stbtt_aligned_quad q;
             stbtt_GetBakedQuad(cdata, 512,512, *text-32, &x,&y,&q,1);
+
+            float h = q.y1 - q.y0;
+            if(h > max_h)
+            {
+                max_h = h;
+            }
 
             glyphs[i].points[0].position.x = q.x0; glyphs[i].points[0].position.y = q.y0;
             glyphs[i].points[1].position.x = q.x1; glyphs[i].points[1].position.y = q.y0;
@@ -124,10 +140,10 @@ void text_print(float x, float y, char *text, Vector3f color)
             glyphs[i].points[3].position.x = ((q.x0*2.0)/view_width - 1.0f); glyphs[i].points[3].position.y = (q.y1*2.0)/view_height - 1.0f;
             */
 
-            glyphs[i].points[0].tex_coord.x = q.s0; glyphs[i].points[0].tex_coord.y = q.t0;
-            glyphs[i].points[1].tex_coord.x = q.s1; glyphs[i].points[1].tex_coord.y = q.t0;
-            glyphs[i].points[2].tex_coord.x = q.s1; glyphs[i].points[2].tex_coord.y = q.t1;
-            glyphs[i].points[3].tex_coord.x = q.s0; glyphs[i].points[3].tex_coord.y = q.t1;
+            glyphs[i].points[0].tex_coord.x = q.s0; glyphs[i].points[0].tex_coord.y = q.t1;
+            glyphs[i].points[1].tex_coord.x = q.s1; glyphs[i].points[1].tex_coord.y = q.t1;
+            glyphs[i].points[2].tex_coord.x = q.s1; glyphs[i].points[2].tex_coord.y = q.t0;
+            glyphs[i].points[3].tex_coord.x = q.s0; glyphs[i].points[3].tex_coord.y = q.t0;
 
             int index = i*6;
 
@@ -155,6 +171,19 @@ void text_print(float x, float y, char *text, Vector3f color)
         ++text;
         ++i;
         j += 4;
+    }
+
+    for(int i = 0; i < num_chars; ++i)
+    {
+        float h = glyphs[i].points[2].position.y - glyphs[i].points[0].position.y;
+        float delta = max_h - h;
+
+        /*
+        glyphs[i].points[0].position.y -= delta;
+        glyphs[i].points[1].position.y -= delta;
+        glyphs[i].points[2].position.y -= delta;
+        glyphs[i].points[3].position.y -= delta;
+        */
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, text_vbo);

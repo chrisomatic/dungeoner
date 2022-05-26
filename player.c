@@ -51,7 +51,7 @@ static void handle_boat_control(PhysicsObj* phys)
     float boat_angle = RAD(boat->angle_h);
 
     bool in_water = (boat->phys.pos.y <= water_get_height());
-    float accel_force = in_water ? 10.0 : 2.0;
+    float accel_force = in_water ? 4.0 : 2.0;
 
     Vector3f user_force = {0.0,0.0,0.0};
 
@@ -101,20 +101,15 @@ static void handle_boat_control(PhysicsObj* phys)
     if(!user_force_applied)
     {
         if(in_water)
-        {
-            physics_add_air_friction(phys, 0.70); // also works with water
-        }
+            physics_add_water_friction(phys, 0.70); // also works with water
         else
-        {
             physics_add_kinetic_friction(phys, 1.00);
-        }
     }
 
     physics_add_force(phys,user_force.x, user_force.y, user_force.z);
-
     physics_add_gravity(phys, 1.0);
-    physics_simulate(phys);
 
+    physics_simulate(phys);
 }
 
 static void handle_player_control(PhysicsObj* phys)
@@ -253,6 +248,12 @@ static void update_player_physics()
 {
     bool control_boat = !player->spectator && player->in_boat;
 
+    Vector3f p0 = {
+        player->phys.pos.x,
+        player->phys.pos.y,
+        player->phys.pos.z
+    };
+
     if(control_boat)
     {
         handle_boat_control(&player->boat->phys);
@@ -272,8 +273,21 @@ static void update_player_physics()
 
     if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
     {
-        // undo the movement
-        printf("in wall!\n");
+        // resolve
+        Vector3f n;
+        float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &player->phys.pos, &n);
+        Vector3f correction = {
+            dist*n.x,
+            dist*n.y,
+            dist*n.z
+        };
+        player->phys.pos.x += correction.x;
+        player->phys.pos.y += correction.y;
+        player->phys.pos.z += correction.z;
+
+        player->phys.vel.x *= n.x;
+        player->phys.vel.y *= n.y;
+        player->phys.vel.z *= n.z;
     }
 }
 
@@ -300,7 +314,7 @@ void player_init()
     player->walk_speed = 4.5; // m/s
     player->spectator = false;
     player->run = false;
-    player->phys.density = 1002.0f;
+    player->phys.density = 1050.0f;
 
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;

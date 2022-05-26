@@ -225,6 +225,7 @@ void init()
 
     LOGI(" - Fonts.");
     text_init();
+    text_write_baked_image();
 
     LOGI(" - Light.");
     light_init();
@@ -273,6 +274,7 @@ void init()
     m_wall.texture = t_stone;
     get_model_transform(&p,&r,&s,&m_wall.transform);
     collision_transform_bounding_box(&m_wall.collision_vol, &m_wall.transform);
+    collision_print_box(&m_wall.collision_vol.box_transformed);
     
     // @TEST boat
     boat_spawn(294.0,65.0);
@@ -282,7 +284,6 @@ void init()
     Vector3f p2 = {-296.0, -10.0, -70.0};
     Vector3f r2 = {0.0,0.0,0.0};
     Vector3f s2 = {1.0,1.0,1.0};
-
 
     m_boat.texture = t_boat;
     get_model_transform(&p2,&r2,&s2,&m_boat.transform);

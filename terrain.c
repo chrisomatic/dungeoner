@@ -27,7 +27,7 @@ typedef struct
 } Tree;
 
 int num_trees;
-Tree trees[100] = {0};
+Tree trees[1000] = {0};
 
 void terrain_get_info(float x, float z, GroundInfo* ground)
 {
@@ -116,12 +116,12 @@ static void generate_trees()
 
                 //printf("found tree at %f, %f\n",(float)i,(float)j);
 
-                t->pos.x = (float)i;
-                t->pos.z = (float)j;
+                t->pos.x = (float)i - terrain.pos.x;
+                t->pos.z = (float)j - terrain.pos.z;
 
                 GroundInfo ground;
-                terrain_get_info(-t->pos.x, -t->pos.z, &ground); // @NEG
-                t->pos.y = -ground.height; // @NEG
+                terrain_get_info(t->pos.x, t->pos.z, &ground); // @NEG
+                t->pos.y = ground.height; // @NEG
 
                 float theta = rand() % 359;
 
@@ -133,7 +133,9 @@ static void generate_trees()
                 t->sca.y = 1.0 + ((rand() % 10) / 10.0);
                 t->sca.z = 1.0;
 
-                //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+
+                printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+
 
                 memcpy(&t->model, &m_tree, sizeof(Model));
                 t->model.texture = t_tree;
@@ -197,7 +199,6 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
     gfx_sub_buffer_elements(m_terrain.ibo, local_indices, terrain_block_draw_size*terrain_block_draw_size*6*sizeof(uint32_t));
 }
-
 
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 {
