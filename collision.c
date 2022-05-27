@@ -17,14 +17,20 @@ static const uint32_t bb_indices[6*6] =
     3,6,2,6,3,7  // top
 };
 
-static const Vector3f bb_normals[6] =
+static const Vector3f bb_normals[12] =
 {
-    { 0.0,-1.0, 0.0},
-    { 1.0, 0.0, 0.0},
-    { 0.0, 1.0, 0.0},
-    {-1.0, 0.0, 0.0},
-    { 0.0, 0.0,-1.0},
-    { 0.0, 0.0, 1.0}
+    { 0.0,-1.0, 0.0}, // 0
+    { 0.0,-1.0, 0.0}, // 0
+    { 1.0, 0.0, 0.0}, // 1
+    { 1.0, 0.0, 0.0}, // 1
+    { 0.0, 1.0, 0.0}, // 2
+    { 0.0, 1.0, 0.0}, // 2
+    {-1.0, 0.0, 0.0}, // 3
+    {-1.0, 0.0, 0.0}, // 3
+    { 0.0, 0.0,-1.0}, // 4
+    { 0.0, 0.0,-1.0}, // 4
+    { 0.0, 0.0, 1.0}, // 5
+    { 0.0, 0.0, 1.0}  // 5
 };
 
 static void calc_normals(BoundingBox* box)
@@ -177,7 +183,7 @@ float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vect
         uint32_t idx = bb_indices[i];
 
         Vector3f v0 = box->vertices[idx];
-        uint32_t ni = (int)i/6.0;
+        uint32_t ni = (int)i/3.0;
 
         Vector3f diff1 = { p0->x - v0.x, p0->y - v0.y, p0->z - v0.z };
         Vector3f diff2 = { p1->x - v0.x, p1->y - v0.y, p1->z - v0.z };
@@ -191,13 +197,20 @@ float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vect
             min_dist2 = dist2;
             
             min_norm_index = ni;
-            printf("line intesects index %d with dist %f\n",ni, dist1);
         }
     }
 
     return_normal->x = bb_normals[min_norm_index].x;
     return_normal->y = bb_normals[min_norm_index].y;
     return_normal->z = bb_normals[min_norm_index].z;
+
+    printf("face index %d with n %f %f %f and dist %f\n",
+            min_norm_index,
+            return_normal->x,
+            return_normal->y,
+            return_normal->z,
+            min_dist2
+            );
 
     return min_dist2;
 }

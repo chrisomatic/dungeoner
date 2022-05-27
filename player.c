@@ -275,7 +275,15 @@ static void update_player_physics()
     {
         // resolve
         Vector3f n;
-        float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &player->phys.pos, &n);
+        Vector3f p1 = {
+            player->phys.pos.x + player->phys.com_offset.x,
+            player->phys.pos.y + player->phys.com_offset.y,
+            player->phys.pos.z + player->phys.com_offset.z
+        };
+
+        float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &p1, &n);
+        //dist -= (player->model.collision_vol.box_transformed.l/2.0);
+        dist += 0.05;
         Vector3f correction = {
             dist*n.x,
             dist*n.y,
@@ -285,9 +293,9 @@ static void update_player_physics()
         player->phys.pos.y += correction.y;
         player->phys.pos.z += correction.z;
 
-        player->phys.vel.x *= n.x;
-        player->phys.vel.y *= n.y;
-        player->phys.vel.z *= n.z;
+        player->phys.vel.x = n.x != 0.0 ? 0.0 : player->phys.vel.x;
+        player->phys.vel.y = n.y != 0.0 ? 0.0 : player->phys.vel.y;
+        player->phys.vel.z = n.z != 0.0 ? 0.0 : player->phys.vel.z;
     }
 }
 
@@ -341,9 +349,9 @@ void player_init()
 
     player->camera.angle_v = -DEG(asin(player->camera.lookat.y));
     
-    player->phys.pos.x = 300.0;//0.0;
-    player->phys.pos.y = 0.0;
-    player->phys.pos.z = 77.0;//0.0;
+    player->phys.pos.x = -91.0;
+    player->phys.pos.y = -20.0;
+    player->phys.pos.z = 181.0;
 
     player->phys.com_offset.x = 0.0;
     player->phys.com_offset.y = player->phys.height / 2.0;
@@ -405,6 +413,30 @@ static void update_player_model_transform()
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
     //memcpy(&m_arrow.transform, &player->model.transform, sizeof(Matrix));
+
+    //@TEMP Claymore rendering
+    Vector3f pos_claymore = 
+    {
+        pos.x,
+        pos.y - 1.2,
+        pos.z
+    };
+
+    Vector3f right = {0};
+    cross(player->camera.up, player->camera.lookat, &right);
+    normalize(&right);
+
+    mult(&right,0.20);
+
+    subtract(&pos_claymore,right);
+
+    Vector3f forward = {-player->camera.lookat.x,-player->camera.lookat.y,-player->camera.lookat.z};
+    normalize(&forward);
+    mult(&forward,0.20);
+
+    subtract(&pos_claymore,forward);
+
+    get_model_transform(&pos_claymore,&rot,&sca,&m_claymore.transform);
 }
 
 void player_update()
@@ -480,6 +512,8 @@ void player_draw()
         gfx_draw_model(&player->model);
         //gfx_draw_model(&m_arrow);
     }
+
+    gfx_draw_model(&m_claymore);
 
     if(show_collision)
     {

@@ -31,6 +31,7 @@ extern Model m_tree;
 extern Model m_rat;
 extern Model m_arrow;
 extern Model m_wall;
+extern Model m_claymore;
 
 // @TODO put these in an environment struct later or something
 extern float fog_density;
