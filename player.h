@@ -32,6 +32,14 @@ typedef struct
     double cursor_y;
 } Camera;
 
+typedef enum
+{
+    PLAYER_STATE_NORMAL,
+    PLAYER_STATE_WINDUP,
+    PLAYER_STATE_ATTACK,
+    PLAYER_STATE_RECOVER,
+} PlayerState;
+
 typedef struct
 {
     float height;
@@ -51,6 +59,8 @@ typedef struct
 
     Camera camera;
     Model  model;
+
+    PlayerState state;
 
     bool spectator;
     bool forward;

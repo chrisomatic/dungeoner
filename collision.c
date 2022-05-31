@@ -160,12 +160,41 @@ bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
         Vector3f* b2_min = &b2->vertices[0];
         Vector3f* b2_max = &b2->vertices[6];
 
-        return(b1_max->x > b2_min->x &&
+        bool colliding = (b1_max->x > b2_min->x &&
                b1_min->x < b2_max->x &&
                b1_max->y > b2_min->y &&
                b1_min->y < b2_max->y &&
                b1_max->z > b2_min->z &&
                b1_min->z < b2_max->z);
+
+        if(colliding)
+        {
+            float x_max_space = (b1->l / 2.0) + (b2->l / 2.0);
+            float y_max_space = (b1->h / 2.0) + (b2->h / 2.0);
+            float z_max_space = (b1->w / 2.0) + (b2->w / 2.0);
+
+            
+            float x_dist = ABS(b1->center.x - b2->center.x);
+            float y_dist = ABS(b1->center.y - b2->center.y);
+            float z_dist = ABS(b1->center.z - b2->center.z);
+
+            Vector3f overlap = {
+                x_max_space - x_dist,
+                y_max_space - y_dist,
+                z_max_space - z_dist
+            };
+
+            vol1->overlap.x = overlap.x;
+            vol1->overlap.y = overlap.y;
+            vol1->overlap.z = overlap.z;
+
+            vol2->overlap.x = overlap.x;
+            vol2->overlap.y = overlap.y;
+            vol2->overlap.z = overlap.z;
+        }
+
+
+        return colliding;
     }
 
     return false;

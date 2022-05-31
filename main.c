@@ -272,7 +272,7 @@ void init()
     frame_buffer_depth_texture = gfx_create_depth_texture_attachment(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 
     // @TEST wall
-    Vector3f p = {88.0, -20.0, -179.0};
+    Vector3f p = {88.0, -18.0, -179.0};
     Vector3f r = {0.0,0.0,0.0};
     Vector3f s = {1.0,1.0,1.0};
 

@@ -31,6 +31,7 @@ typedef struct
     CollisionFlags flags;
     BoundingBox box;
     BoundingBox box_transformed;
+    Vector3f overlap;
     struct CollisionVolume* hurt_list[MAX_COLLISION_HURT_LIST];
     int hurt_list_count;
 } CollisionVolume;

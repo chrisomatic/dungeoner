@@ -283,12 +283,13 @@ static void update_player_physics()
 
         float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &p1, &n);
         //dist -= (player->model.collision_vol.box_transformed.l/2.0);
-        dist += 0.05;
+
         Vector3f correction = {
-            dist*n.x,
-            dist*n.y,
-            dist*n.z
+            m_wall.collision_vol.overlap.x*n.x,
+            m_wall.collision_vol.overlap.y*n.y,
+            m_wall.collision_vol.overlap.z*n.z
         };
+
         player->phys.pos.x += correction.x;
         player->phys.pos.y += correction.y;
         player->phys.pos.z += correction.z;
@@ -422,6 +423,13 @@ static void update_player_model_transform()
         pos.z
     };
 
+    Vector3f rot_claymore =
+    {
+        rot.x + 0.4*player->angle_v,
+        rot.y,
+        rot.z
+    };
+
     Vector3f right = {0};
     cross(player->camera.up, player->camera.lookat, &right);
     normalize(&right);
@@ -432,11 +440,11 @@ static void update_player_model_transform()
 
     Vector3f forward = {-player->camera.lookat.x,-player->camera.lookat.y,-player->camera.lookat.z};
     normalize(&forward);
-    mult(&forward,0.20);
+    mult(&forward,0.30);
 
     subtract(&pos_claymore,forward);
 
-    get_model_transform(&pos_claymore,&rot,&sca,&m_claymore.transform);
+    get_model_transform(&pos_claymore,&rot_claymore,&sca,&m_claymore.transform);
 }
 
 void player_update()
@@ -551,10 +559,10 @@ void player_update_camera_angle(int cursor_x, int cursor_y)
 
     player->camera.angle_v += (float)delta_y / 16.0;
 
-    if(player->camera.angle_v > 90)
-        player->camera.angle_v = 90.0;
-    else if(player->camera.angle_v < -90)
-        player->camera.angle_v = -90.0;
+    if(player->camera.angle_v > 80)
+        player->camera.angle_v = 80.0;
+    else if(player->camera.angle_v < -80)
+        player->camera.angle_v = -80.0;
 
     if(!player->spectator)
     {
