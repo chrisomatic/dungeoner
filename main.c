@@ -29,6 +29,7 @@
 #include "coin.h"
 #include "boat.h"
 #include "creature.h"
+#include "weapon.h"
 
 // =========================
 // Global Vars
@@ -67,7 +68,6 @@ GLuint t_particle_explosion;
 GLuint t_particle_star;
 GLuint t_crosshair;
 GLuint t_boat;
-GLuint t_claymore;
 
 // =========================
 // Models
@@ -80,7 +80,6 @@ Model m_rat;
 Model m_arrow;
 Model m_wall;
 Model m_boat;
-Model m_claymore;
 
 // =========================
 // Zones
@@ -182,7 +181,6 @@ void init()
     t_particle_star = load_texture("textures/particles/star.png");
     t_crosshair = load_texture("textures/crosshair.png");
     t_boat = load_texture("textures/boat.png");
-    t_claymore = load_texture("textures/claymore.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.png",
@@ -212,8 +210,6 @@ void init()
     model_import(&m_rat,"models/rat.obj");
     model_import(&m_arrow,"models/arrow.obj");
     model_import(&m_wall,"models/wall.obj");
-    model_import(&m_claymore,"models/claymore.obj");
-    m_claymore.texture = t_claymore;
 
     LOGI(" - Coins.");
     coin_init();
@@ -224,6 +220,9 @@ void init()
 
     LOGI(" - Water.");
     water_init(10.0);
+
+    LOGI(" - Weapon.");
+    weapon_init();
 
     LOGI(" - Player.");
     player_init();

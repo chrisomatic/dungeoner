@@ -13,6 +13,7 @@
 #include "gfx.h"
 #include "boat.h"
 #include "entity.h"
+#include "weapon.h"
 
 Entity  p = {0};
 Player* player = &p.data.player_data;
@@ -148,7 +149,7 @@ static void handle_player_control(PhysicsObj* phys)
     if(player->secondary_action)
     {
         player->secondary_action = false;
-        player_spawn_projectile(PROJECTILE_ICE);
+        player_spawn_projectile(PROJECTILE_FIREBALL);
     }
  
     if(player->spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE || in_water) // tolerance to allow movement slightly above ground
@@ -328,6 +329,8 @@ void player_init()
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;
 
+    memcpy(&player->weapon, &m_claymore, sizeof(Model));
+
     Vector3f h_lookat = {player->camera.lookat.x,0.0,player->camera.lookat.z};
     normalize(&h_lookat);
 
@@ -414,37 +417,6 @@ static void update_player_model_transform()
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
     //memcpy(&m_arrow.transform, &player->model.transform, sizeof(Matrix));
-
-    //@TEMP Claymore rendering
-    Vector3f pos_claymore = 
-    {
-        pos.x,
-        pos.y - 1.2,
-        pos.z
-    };
-
-    Vector3f rot_claymore =
-    {
-        rot.x + 0.4*player->angle_v,
-        rot.y,
-        rot.z
-    };
-
-    Vector3f right = {0};
-    cross(player->camera.up, player->camera.lookat, &right);
-    normalize(&right);
-
-    mult(&right,0.20);
-
-    subtract(&pos_claymore,right);
-
-    Vector3f forward = {-player->camera.lookat.x,-player->camera.lookat.y,-player->camera.lookat.z};
-    normalize(&forward);
-    mult(&forward,0.30);
-
-    subtract(&pos_claymore,forward);
-
-    get_model_transform(&pos_claymore,&rot_claymore,&sca,&m_claymore.transform);
 }
 
 void player_update()
@@ -452,6 +424,8 @@ void player_update()
     update_camera_rotation();
     update_player_physics();
     update_player_model_transform();
+
+    weapon_update(&player->weapon);
 
     if(player->use)
     {
@@ -504,7 +478,7 @@ void player_update()
     if(player->primary_action)
     {
         player->primary_action = false;
-        player_spawn_projectile(PROJECTILE_FIREBALL);
+        player->state = PLAYER_STATE_WINDUP;
     }
 
     if(!player->spectator)
@@ -521,7 +495,7 @@ void player_draw()
         //gfx_draw_model(&m_arrow);
     }
 
-    gfx_draw_model(&m_claymore);
+    weapon_draw(&player->weapon);
 
     if(show_collision)
     {

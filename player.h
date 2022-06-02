@@ -5,6 +5,7 @@
 #include "physics.h"
 #include "model.h"
 #include "boat.h"
+#include "weapon.h"
 
 typedef enum
 {
@@ -59,6 +60,7 @@ typedef struct
 
     Camera camera;
     Model  model;
+    Weapon weapon;
 
     PlayerState state;
 

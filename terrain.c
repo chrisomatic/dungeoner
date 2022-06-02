@@ -202,7 +202,7 @@ void terrain_update_local_block(int block_index_x, int block_index_y)
 
 void terrain_build(Mesh* ret_mesh, const char* height_map_file)
 {
-    terrain.height_map = util_load_image(height_map_file, &terrain.w, &terrain.l, &terrain.n, 1);
+    terrain.height_map = util_load_image(height_map_file, &terrain.w, &terrain.l, &terrain.n, 0);
 
     if(!terrain.height_map)
     {
