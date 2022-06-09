@@ -1,6 +1,7 @@
 #!/bin/sh
 
 gcc entity.c \
+    animation.c \
     3dmath.c \
     gfx.c \
     gui.c \

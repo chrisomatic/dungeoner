@@ -132,17 +132,31 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        int mode = glfwGetInputMode(window,GLFW_CURSOR);
-        if(mode == GLFW_CURSOR_NORMAL)
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        if(action == GLFW_PRESS)
+        {
+            int mode = glfwGetInputMode(window,GLFW_CURSOR);
+            if(mode == GLFW_CURSOR_NORMAL)
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        player->primary_action = true;
+            player->primary_action = true;
+        }
+        else if(action == GLFW_RELEASE)
+        {
+            player->primary_action = false;
+        }
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
-        player->secondary_action = true;
+        if(action == GLFW_PRESS)
+        {
+            player->secondary_action = true;
+        }
+        else if(action == GLFW_RELEASE)
+        {
+            player->secondary_action = false;
+        }
     }
 }
 
@@ -178,6 +192,10 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_F2:
                 show_collision = !show_collision;
+                break;
+            case GLFW_KEY_LEFT_CONTROL:
+                player->crouched = true;
+                player->phys.height /= 2.0;
                 break;
             case GLFW_KEY_P:
                 if(player->camera.mode == CAMERA_MODE_FIRST_PERSON)
@@ -231,6 +249,10 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 break;
             case GLFW_KEY_LEFT_SHIFT:
                 player->run = false;
+                break;
+            case GLFW_KEY_LEFT_CONTROL:
+                player->crouched = false;
+                player->phys.height *= 2.0;
                 break;
             case GLFW_KEY_SPACE:
                 player->jump = false;

@@ -412,7 +412,7 @@ static void update_player_model_transform()
 {
     Vector3f pos = {-player->phys.pos.x, -player->phys.pos.y, -player->phys.pos.z}; // @NEG
     Vector3f rot = {0.0,-player->angle_h,0.0}; // @NEG
-    Vector3f sca = {1.0,1.0,1.0};
+    Vector3f sca = {1.0,player->crouched ? 0.5 : 1.0,1.0};
     PhysicsObj* phys = &player->phys;
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
@@ -425,7 +425,7 @@ void player_update()
     update_player_physics();
     update_player_model_transform();
 
-    weapon_update(&player->weapon);
+    weapon_update(&player->weapon, &player->state);
 
     if(player->use)
     {
@@ -475,9 +475,8 @@ void player_update()
     
     //physics_print(&player->phys, false);
 
-    if(player->primary_action)
+    if(player->primary_action && player->state == PLAYER_STATE_NORMAL)
     {
-        player->primary_action = false;
         player->state = PLAYER_STATE_WINDUP;
     }
 

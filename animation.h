@@ -20,3 +20,5 @@ typedef struct
     int loops_completed;
     int loop_count;
 } Animation;
+
+bool animation_process(Animation* anim, float* x, float* y, float* z);

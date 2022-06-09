@@ -43,7 +43,6 @@ typedef enum
 
 typedef struct
 {
-    float height;
     float walk_speed;
     float run_factor;
 
@@ -73,6 +72,8 @@ typedef struct
     bool jumped;
     bool run;
     bool use;
+
+    bool crouched;
 
     bool primary_action;
     bool secondary_action;
