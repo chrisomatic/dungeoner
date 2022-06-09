@@ -141,6 +141,21 @@ static void handle_player_control(PhysicsObj* phys)
         phys->max_linear_speed /= 3.0;
     }
 
+    Vector3f vel_dir   = {phys->vel.x, phys->vel.y, phys->vel.z};
+    Vector3f accel_dir = {phys->accel.x, phys->accel.y, phys->accel.z};
+
+    normalize(&vel_dir);
+    normalize(&accel_dir);
+
+    float dir_influence = dot(vel_dir,accel_dir);//player->camera.lookat);
+
+    dir_influence -= 1.0;
+    dir_influence /= -1.0;
+    //dir_influence *= 2.0;
+    printf("dir_influence: %f\n",dir_influence);
+
+    accel_force = accel_force + accel_force*dir_influence;
+
     physics_begin(phys);
  
     if(player->jumped && (phys->pos.y <= phys->ground.height))
