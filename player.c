@@ -118,14 +118,16 @@ static void handle_player_control(PhysicsObj* phys)
     Vector3f* accel = &player->phys.accel;
     Vector3f* vel = &player->phys.vel;
 
-    float accel_force = 4.0;
+    float accel_force = 3.0;
     bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
-    phys->max_linear_speed = player->walk_speed;
+    if(!player->jumped)
+        phys->max_linear_speed = player->walk_speed;
 
     if(player->run)
     {
-        accel_force = 6.0;
-        phys->max_linear_speed *= player->run_factor;
+        accel_force = 4.0;
+        if(!player->jumped)
+            phys->max_linear_speed *= player->run_factor;
     }
 
     if(player->spectator)
@@ -151,14 +153,12 @@ static void handle_player_control(PhysicsObj* phys)
 
     dir_influence -= 1.0;
     dir_influence /= -1.0;
-    //dir_influence *= 2.0;
-    printf("dir_influence: %f\n",dir_influence);
 
     accel_force = accel_force + accel_force*dir_influence;
 
     physics_begin(phys);
  
-    if(player->jumped && (phys->pos.y <= phys->ground.height))
+    if(player->jumped && (phys->pos.y <= phys->ground.height || phys->on_object))
         player->jumped = false;
  
     if(player->secondary_action)
@@ -166,8 +166,10 @@ static void handle_player_control(PhysicsObj* phys)
         player->secondary_action = false;
         player_spawn_projectile(PROJECTILE_FIREBALL);
     }
+
+    bool in_air = phys->pos.y > phys->ground.height+GROUND_TOLERANCE;
  
-    if(player->spectator || phys->pos.y <= phys->ground.height+GROUND_TOLERANCE || in_water) // tolerance to allow movement slightly above ground
+    if(player->spectator || player->phys.on_object || !in_air || in_water) // tolerance to allow movement slightly above ground
     {
         // where the player is looking
         Vector3f lookat = {
@@ -182,14 +184,13 @@ static void handle_player_control(PhysicsObj* phys)
         {
             if(in_water)
             {
-                float f = phys->pos.y <= phys->ground.height+GROUND_TOLERANCE ? 100.0 : accel_force;
-                physics_add_force_y(phys,f);
+                physics_add_force_y(phys,accel_force);
             }
             else
             {
                 if(!player->jumped && !player->spectator)
                 {
-                    physics_add_force_y(phys,250.0);
+                    physics_add_force_y(phys,300.0);
                     player->jumped = true;
                 }
             }
@@ -287,6 +288,8 @@ static void update_player_physics()
         handle_player_control(&player->phys);
     }
 
+    player->phys.on_object = false;
+
     if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
     {
         // resolve
@@ -310,9 +313,25 @@ static void update_player_physics()
         player->phys.pos.y += correction.y;
         player->phys.pos.z += correction.z;
 
+        // NewVel = OldVel - facenormal* Dot(facenormal,OldVel)
+
+        Vector3f vel0 = { player->phys.vel.x, player->phys.vel.y, player->phys.vel.z };
+        float f = dot(n, vel0);
+
+        player->phys.vel.x = vel0.x - (n.x * f);
+        player->phys.vel.y = vel0.y - (n.y * f);
+        player->phys.vel.z = vel0.z - (n.z * f);
+
+        if(n.y > 0.0)
+        {
+            player->phys.on_object = true;
+        }
+        
+        /*
         player->phys.vel.x = n.x != 0.0 ? 0.0 : player->phys.vel.x;
         player->phys.vel.y = n.y != 0.0 ? 0.0 : player->phys.vel.y;
         player->phys.vel.z = n.z != 0.0 ? 0.0 : player->phys.vel.z;
+        */
     }
 }
 
@@ -335,7 +354,7 @@ void player_init()
     player->phys.height = 1.50; // meters
     player->phys.mass = 62.0; // kg
     player->phys.max_linear_speed = 8.0; // m/s
-    player->run_factor = 2.0;
+    player->run_factor = 1.5;
     player->walk_speed = 4.5; // m/s
     player->spectator = false;
     player->run = false;

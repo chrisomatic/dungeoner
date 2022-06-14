@@ -21,4 +21,4 @@ typedef struct
     int loop_count;
 } Animation;
 
-bool animation_process(Animation* anim, float* x, float* y, float* z);
+bool animation_interpolate(Animation* anim, Vector3f* pos, Vector3f* rot);

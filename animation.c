@@ -2,7 +2,7 @@
 #include "3dmath.h"
 #include "animation.h"
 
-bool animation_process(Animation* anim, float* x, float* y, float* z)
+bool animation_interpolate(Animation* anim, Vector3f* pos, Vector3f* rot)
 {
     int next_index = (anim->curr_keyframe_index + 1 >= anim->keyframe_count ? 0 : anim->curr_keyframe_index + 1);
 
@@ -12,9 +12,13 @@ bool animation_process(Animation* anim, float* x, float* y, float* z)
     float t = (anim->elapsed_time / curr_keyframe->duration);
     t = MIN(t, 1.0);
 
-    *x = ((1.0 - t)*curr_keyframe->position.x) + ((t)*next_keyframe->position.x);
-    *y = ((1.0 - t)*curr_keyframe->position.y) + ((t)*next_keyframe->position.y);
-    *z = ((1.0 - t)*curr_keyframe->position.z) + ((t)*next_keyframe->position.z);
+    pos->x = ((1.0 - t)*curr_keyframe->position.x) + ((t)*next_keyframe->position.x);
+    pos->y = ((1.0 - t)*curr_keyframe->position.y) + ((t)*next_keyframe->position.y);
+    pos->z = ((1.0 - t)*curr_keyframe->position.z) + ((t)*next_keyframe->position.z);
+
+    rot->x = ((1.0 - t)*curr_keyframe->rotation.x) + ((t)*next_keyframe->rotation.x);
+    rot->y = ((1.0 - t)*curr_keyframe->rotation.y) + ((t)*next_keyframe->rotation.y);
+    rot->z = ((1.0 - t)*curr_keyframe->rotation.z) + ((t)*next_keyframe->rotation.z);
 
     bool anim_done = false;
 

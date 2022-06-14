@@ -155,7 +155,7 @@ void physics_add_air_friction(PhysicsObj* phys, float mu)
 
 void physics_add_kinetic_friction(PhysicsObj* phys, float mu)
 {
-    if(phys->pos.y == phys->ground.height && (phys->vel.x != 0.0f || phys->vel.y || phys->vel.z != 0.0f)) // on ground and moving
+    if(phys->on_object || phys->pos.y == phys->ground.height && (phys->vel.x != 0.0f || phys->vel.y || phys->vel.z != 0.0f)) // on ground and moving
     {
         // apply kinetic friction
         float mu_k = mu;

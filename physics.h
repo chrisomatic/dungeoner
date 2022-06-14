@@ -25,6 +25,7 @@ typedef struct
 
     bool collided;
     bool user_force_applied;
+    bool on_object;
     bool in_water;
 
 } PhysicsObj;

@@ -90,9 +90,17 @@ void weapon_update(Weapon* w, PlayerState* s)
     else
     {
         float x,y,z;
-        bool is_done = animation_process(&melee_anim, &x, &y, &z);
 
-        move(&pos, x,y,z);
+        Vector3f posi;
+        Vector3f roti;
+
+        bool is_done = animation_interpolate(&melee_anim, &posi, &roti);
+
+        move(&pos, posi.x,posi.y,posi.z);
+
+        rot.x += roti.x;
+        rot.y += roti.y;
+        rot.z += roti.z;
 
         if(is_done)
         {
