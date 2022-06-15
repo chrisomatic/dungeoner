@@ -7,9 +7,27 @@
 #include "player.h"
 #include "gui.h"
 
+#define GLT_IMPLEMENTATION
+#include "util/gltext.h"
+
 static float fps_counter = 0.5;
 static char fps_str[12]    = {0};
 static char coords_str[32] = {0};
+
+static GLTtext *title;
+static GLTtext *fps;
+static GLTtext *coords;
+
+void gui_init()
+{
+    gltInit();
+
+    title = gltCreateText();
+    fps = gltCreateText();
+    coords = gltCreateText();
+
+    gltSetText(title, "Dungeoner");
+}
 
 void gui_update()
 {
@@ -19,16 +37,23 @@ void gui_update()
     {
         fps_counter -= 0.5;
         snprintf(fps_str,11,"FPS: %6.2f",1.0/g_delta_t);
-        snprintf(coords_str, 31, "x %d  y %d  z %d",(int)player->phys.pos.x, (int)player->phys.pos.y, (int)player->phys.pos.z);
+        snprintf(coords_str, 31, "x %d, y %d, z %d",(int)player->phys.pos.x, (int)player->phys.pos.y, (int)player->phys.pos.z);
+
+        gltSetText(fps, fps_str);
+        gltSetText(coords, coords_str);
     }
 }
 
 static void draw_debug()
 {
-    // fps
-    Vector3f color = {1.0f,1.0f,1.0f};
-    text_print(0.0f,64.0f,fps_str,color);
-    text_print(0.0f,32.0f,coords_str,color);
+    gfx_enable_blending();
+    gltBeginDraw();
+    gltColor(0.0f, 0.8f, 0.0f, 1.0f);
+    gltDrawText2D(title, 0.0, 0.0, 2.0);
+    gltDrawText2D(fps, 0.0, 30.0, 2.0);
+    gltDrawText2D(coords, 0.0, 60.0, 2.0);
+    gltEndDraw();
+    gfx_disable_blending();
 }
 
 static void draw_hud(float x, float y)

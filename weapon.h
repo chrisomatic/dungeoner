@@ -6,6 +6,7 @@ typedef struct
     Vector3f position;
     Vector3f curr_offset;
     float damage;
+    float knockback_factor;
 } Weapon;
 
 extern Weapon w_claymore;

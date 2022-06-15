@@ -262,6 +262,8 @@ void init()
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 
+    gui_init();
+
     frame_buffer_ms = gfx_create_fbo();
     frame_buffer_ms_color_texture = gfx_create_color_buffer(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, true);
     frame_buffer_ms_depth_texture = gfx_create_depth_buffer(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, true);
@@ -283,6 +285,9 @@ void init()
     // @TEST boat
     boat_spawn(294.0,65.0);
     boat_spawn(290.0,68.0);
+    
+
+    // Creating text
 
     /*
     Vector3f p2 = {-296.0, -10.0, -70.0};
@@ -386,9 +391,11 @@ void render()
     Vector2f pos = {0.0,0.0};
     Vector2f sca = {1.00,1.00};
 
+
     glDisable(GL_DEPTH_TEST);
     //gfx_draw_quad2d(frame_buffer_color_texture,NULL,&pos,&sca);
     gfx_draw_post_process_quad(frame_buffer_color_texture,NULL,&pos,&sca);
     gui_draw();
+
 }
 
