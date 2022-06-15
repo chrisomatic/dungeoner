@@ -45,3 +45,4 @@ void collision_draw(CollisionVolume* col);
 void collision_set_flags(CollisionVolume* vol, CollisionFlags flags);
 float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vector3f* p1, Vector3f* return_normal);
 void collision_print_box(BoundingBox* box);
+void collision_clear_hurt_list(CollisionVolume* vol);

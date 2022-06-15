@@ -5,9 +5,10 @@ typedef struct
     Model model;
     Vector3f position;
     Vector3f curr_offset;
+    float damage;
 } Weapon;
 
-extern Model m_claymore;
+extern Weapon w_claymore;
 
 void weapon_init();
 void weapon_update();

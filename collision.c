@@ -257,6 +257,11 @@ bool collision_add_to_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
     return true;
 }
 
+void collision_clear_hurt_list(CollisionVolume* vol)
+{
+    vol->hurt_list_count = 0;
+}
+
 bool collision_is_in_hurt_list(CollisionVolume* vol, CollisionVolume* hurt)
 {
     for(int i = 0; i < vol->hurt_list_count; ++i)

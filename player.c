@@ -363,7 +363,7 @@ void player_init()
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;
 
-    memcpy(&player->weapon, &m_claymore, sizeof(Model));
+    memcpy(&player->weapon, &w_claymore, sizeof(Weapon));
 
     Vector3f h_lookat = {player->camera.lookat.x,0.0,player->camera.lookat.z};
     normalize(&h_lookat);

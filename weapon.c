@@ -1,14 +1,20 @@
+#include <string.h>
+
 #include "common.h"
 #include "3dmath.h"
 #include "model.h"
 #include "player.h"
 #include "animation.h"
 #include "util.h"
+#include "collision.h"
+#include "creature.h"
 
 #include "weapon.h"
 
-GLuint t_claymore;
-Model m_claymore;
+Weapon w_claymore;
+
+static GLuint t_claymore;
+static Model m_claymore;
 
 static Animation melee_anim;
 
@@ -45,10 +51,17 @@ static void move(Vector3f* v, float x, float y, float z)
 
 void weapon_init()
 {
+    // init weapons
+    //
     // claymore
     t_claymore = load_texture("textures/claymore.png");
     model_import(&m_claymore,"models/claymore.obj");
+    m_claymore.collision_vol.flags = COLLISION_FLAG_HURT;
     m_claymore.texture = t_claymore;
+
+    memcpy(&w_claymore.model, &m_claymore, sizeof(Model));
+    w_claymore.damage = 5.0;
+
 
     // init animation
     // rest
@@ -102,18 +115,56 @@ void weapon_update(Weapon* w, PlayerState* s)
         rot.y += roti.y;
         rot.z += roti.z;
 
+        if(melee_anim.curr_keyframe_index == 1)
+        {
+            *s = PLAYER_STATE_WINDUP;
+        }
+        else if(melee_anim.curr_keyframe_index == 2)
+        {
+            *s = PLAYER_STATE_ATTACK;
+        }
+
         if(is_done)
         {
             *s = PLAYER_STATE_NORMAL;
         }
-
     }
 
-
     get_model_transform(&pos,&rot,&sca,&w->model.transform);
+    collision_transform_bounding_box(&w->model.collision_vol, &w->model.transform);
+
+    CollisionVolume* p = &w->model.collision_vol;
+
+    if(*s == PLAYER_STATE_ATTACK)
+    {
+
+        for(int i = 0; i < creature_count; ++i)
+        {
+            CollisionVolume* c = &creatures[i].model.collision_vol;
+
+            if(collision_check(c, p))
+            {
+                if(!collision_is_in_hurt_list(p,c))
+                {
+                    creatures[i].hp -= w->damage;
+                    collision_add_to_hurt_list(p,c);
+                }
+            }
+        }
+    }
+    else
+    {
+        collision_clear_hurt_list(p);
+    }
+
 }
 
 void weapon_draw(Weapon* w)
 {
     gfx_draw_model(&w->model);
+
+    if(show_collision)
+    {
+        collision_draw(&w->model.collision_vol);
+    }
 }
