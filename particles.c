@@ -41,7 +41,7 @@ static int partition(Particle arr[], int low, int high)
 
     for (int j = low; j <= high- 1; j++)
     {
-        if (arr[j].camera_dist <= pivot.camera_dist)
+        if (arr[j].camera_dist > pivot.camera_dist)
         {
             i++;
             swap(&arr[i], &arr[j]);
@@ -62,10 +62,25 @@ static void quick_sort(Particle arr[], int low, int high)
     }
 }
 
-void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
+static ParticleGenerator* get_particle_generator_by_id(uint32_t id)
+{
+    for(int i = 0; i < particle_generator_count; ++i)
+    {
+        ParticleGenerator* pg = &particle_generators[i];
+        if(pg->id == id)
+        {
+            return pg;
+        }
+    }
+    return NULL;
+}
+
+uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
 {
     ParticleGenerator *pg = &particle_generators[particle_generator_count];
     memset(pg, 0, sizeof(ParticleGenerator));
+
+    pg->id = rand();
 
     copy_vector(&pg->pos, *pos);
 
@@ -78,26 +93,22 @@ void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetim
 
             pg->texture = t_particle_explosion;
 
-            pg->spawn_time_min  = 0.002;
-            pg->spawn_time_max  = 0.005;
-            pg->gravity_factor  = -0.5;
-            pg->initial_vel_min = 4.0;
-            pg->initial_vel_max = 5.0;
+            pg->spawn_time_min  = 0.004;
+            pg->spawn_time_max  = 0.008;
+            pg->influence_force.y = 2.0;
+            pg->initial_vel_min = 2.0;
+            pg->initial_vel_max = 3.0;
             pg->particle_scale  = 0.8;
-            pg->particle_lifetime = 0.5;
-            pg->particle_burst_count = 10;
+            pg->particle_lifetime = 0.7;
+            pg->particle_burst_count = 5;
 
-            pg->particle_size_atten = 0.80;
-            pg->particle_speed_atten = 1.00;
-            pg->particle_opaque_atten = 0.50;
+            pg->particle_size_atten = 0.60;
+            pg->particle_speed_atten = 1.30;
+            pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 0.8;
-            pg->color0.y = 0.0;
-            pg->color0.z = 0.0;
-
-            pg->color1.x = 0.2;
-            pg->color1.y = 0.2;
-            pg->color1.z = 0.2;
+            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 0.3; pg->color1_transition = 0.30;
+            pg->color1.x = 0.8; pg->color1.y = 0.1; pg->color1.z = 0.0; pg->color2_transition = 0.60;
+            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
 
             break;
 
@@ -107,7 +118,7 @@ void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetim
 
             pg->spawn_time_min  = 0.005;
             pg->spawn_time_max  = 0.010;
-            pg->gravity_factor  = -0.2;
+            pg->influence_force.y = 2.0;
             pg->initial_vel_min = 0.4;
             pg->initial_vel_max = 2.0;
             pg->particle_scale  = 0.4;
@@ -118,13 +129,11 @@ void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetim
             pg->particle_speed_atten = 0.20;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 0.0;
-            pg->color0.y = 0.8;
-            pg->color0.z = 0.0;
-
-            pg->color1.x = 0.9;
-            pg->color1.y = 0.9;
-            pg->color1.z = 0.5;
+            pg->color0.x = 0.0; pg->color0.y = 0.8; pg->color0.z = 0.0; pg->color1_transition = 0.50;
+            pg->color1.x = 0.9; pg->color1.y = 0.9; pg->color1.z = 0.5; pg->color2_transition = 0.75;
+            pg->color2.x = 0.9; pg->color2.y = 0.9; pg->color2.z = 0.5;
+            
+            break;
 
         case PARTICLE_EFFECT_SPARKLE:
 
@@ -132,29 +141,74 @@ void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetim
 
             pg->spawn_time_min  = 0.250;
             pg->spawn_time_max  = 0.500;
-            pg->gravity_factor  = 0.0;
             pg->initial_vel_min = 0.2;
             pg->initial_vel_max = 0.5;
-            pg->particle_scale  = 0.2;
+            pg->particle_scale  = 0.4;
             pg->particle_lifetime = 1.5;
-            pg->particle_burst_count = 1;
+            pg->particle_burst_count = 3;
+            pg->angular_vel_min = -360.0;
+            pg->angular_vel_max = 0.360;
 
-            pg->particle_size_atten = 0.20;
+            pg->particle_size_atten = 0.60;
             pg->particle_speed_atten = 0.10;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 1.0;
-            pg->color0.y = 1.0;
-            pg->color0.z = 1.0;
+            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 1.0; pg->color1_transition = 0.90;
+            pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5; pg->color2_transition = 0.95;
+            pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5;
 
-            pg->color1.x = 0.5;
-            pg->color1.y = 0.5;
-            pg->color1.z = 0.5;
+            break;
+
+        case PARTICLE_EFFECT_BLOOD:
+
+            pg->texture = t_particle_blood;
+
+            pg->spawn_time_min  = 0.100;
+            pg->spawn_time_max  = 0.200;
+            pg->influence_force.y = -1.0;
+            pg->initial_vel_min = 2.0;
+            pg->initial_vel_max = 1.0;
+            pg->particle_scale  = 0.3;
+            pg->particle_lifetime = 1.0;
+            pg->particle_burst_count = 20;
+
+            pg->particle_size_atten = 0.80;
+            pg->particle_speed_atten = 1.00;
+            pg->particle_opaque_atten = 0.80;
+
+            pg->color0.x = 1.0; pg->color0.y = 0.0; pg->color0.z = 0.0; pg->color1_transition = 0.30;
+            pg->color1.x = 0.8; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
+            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
+
+            break;
+            
         default:
             break;
     }
 
     particle_generator_count++;
+    
+    return pg->id;
+}
+
+uint32_t particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime)
+{
+    Vector3f pos = {x,y,z};
+    return particles_create_generator(&pos, effect, lifetime);
+}
+
+void particle_generator_move(uint32_t id, float x, float y, float z)
+{
+    ParticleGenerator* pg = get_particle_generator_by_id(id);
+    if(pg == NULL)
+    {
+        LOGE("Couldn't find particle generator with id of %u", id);
+        return;
+    }
+
+    pg->pos.x = x;
+    pg->pos.y = y;
+    pg->pos.z = z;
 }
 
 void particles_update()
@@ -202,7 +256,6 @@ void particles_update()
 
                     float initial_vel_range = pg->initial_vel_max - pg->initial_vel_min; // m/s
                     r = rand() % (int)(initial_vel_range*1000);
-
                     float m = pg->initial_vel_min + ((float)r / 1000.0);
 
                     float angle_x = (rand() % 360 - 180) / 360.0;
@@ -215,6 +268,11 @@ void particles_update()
 
                     normalize(&p->phys.vel);
                     mult(&p->phys.vel,m);
+
+                    float angular_vel_range = pg->angular_vel_max - pg->angular_vel_min;
+                    float angular_vel = angular_vel_range == 0.0 ? 0.0 : pg->angular_vel_min + ((rand() % (int)(angular_vel_range*1000))/1000.0f);
+                    p->angular_pos = 0.0;
+                    p->angular_vel = angular_vel;
 
                     p->life = 0.0;
                     p->life_max = pg->particle_lifetime;
@@ -243,17 +301,22 @@ void particles_update()
 
             float life_factor = (p->life / p->life_max);
             float speed_factor = 1.0 - (pg->particle_speed_atten*life_factor);
-            float gravity = -GRAVITY*pg->gravity_factor;
 
             Vector vel = {
-                speed_factor*p->phys.vel.x,
-                speed_factor*p->phys.vel.y+gravity,
-                speed_factor*p->phys.vel.z,
+                speed_factor*p->phys.vel.x+pg->influence_force.x,
+                speed_factor*p->phys.vel.y+pg->influence_force.y,
+                speed_factor*p->phys.vel.z+pg->influence_force.z
             };
 
             p->phys.pos.x += vel.x*g_delta_t;
             p->phys.pos.y += vel.y*g_delta_t;
             p->phys.pos.z += vel.z*g_delta_t;
+
+            p->angular_pos += p->angular_vel*g_delta_t;
+            if(p->angular_pos > 360.0 || p->angular_pos < -360.0)
+            {
+                p->angular_pos = 0.0;
+            }
 
             p->life += g_delta_t;
             if(p->life >= p->life_max)
@@ -262,11 +325,11 @@ void particles_update()
                 continue;
             }
 
-            //p->camera_dist = dist_squared(&player.camera.phys.pos, &p->phys.pos);
+            p->camera_dist = dist_squared(&player->camera.phys.pos, &p->phys.pos);
         }
 
         // sort particles
-        //quick_sort(pg->particles, 0, pg->particle_count-1);
+        quick_sort(pg->particles, 0, pg->particle_count-1);
     }
 }
 
@@ -274,8 +337,8 @@ void particles_draw()
 {
     gfx_disable_depth_mask();
 
-    //gfx_enable_blending();
-    gfx_enable_blending_additive();
+    gfx_enable_blending();
+    //gfx_enable_blending_additive();
 
     for(int i = 0; i < particle_generator_count; ++i)
     {
@@ -286,9 +349,12 @@ void particles_draw()
             Particle *p = &pg->particles[j];
 
             float life_factor = (p->life / p->life_max);
-            float opaqueness = (1.0 - (life_factor*pg->particle_opaque_atten));
 
+            float opaqueness = (1.0 - (life_factor*pg->particle_opaque_atten));
             float scale = pg->particle_scale * (1.0 - (life_factor*pg->particle_size_atten));
+
+            float color_factor_1 = MIN(1.0,MAX(0.0,life_factor / pg->color1_transition));
+            float color_factor_2 = MIN(1.0,MAX(0.0,(life_factor - pg->color1_transition) / (pg->color2_transition - pg->color1_transition)));
 
             Vector rot = {0.0,0.0,0.0};
             Vector sca = {scale, scale, scale};
@@ -300,9 +366,9 @@ void particles_draw()
 
             rot.x = player->camera.angle_v;
             rot.y = -player->camera.angle_h;
-            rot.z = 0.0; //-player.camera.angle_h;
+            rot.z = 0.0;//p->angular_pos;
             
-            gfx_draw_particle(pg->texture, &pg->color0,&pg->color1,opaqueness, &pos, &rot, &sca);
+            gfx_draw_particle(pg->texture, &pg->color0,&pg->color1,&pg->color2, opaqueness, color_factor_1, color_factor_2, &pos, &rot, &sca);
         }
     }
 

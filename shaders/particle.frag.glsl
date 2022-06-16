@@ -10,8 +10,13 @@ out vec4 frag_color;
 uniform int wireframe;
 uniform vec3 sky_color;
 uniform float opaqueness;
+
 uniform vec3 color0;
 uniform vec3 color1;
+uniform vec3 color2;
+
+uniform float color_factor_1;
+uniform float color_factor_2;
 
 void main() {
 
@@ -21,18 +26,14 @@ void main() {
     }
     else
     {
-        vec4 base_color;
-
-        base_color = texture2D(sampler,tex_coord0.xy);
-        //if(base_color.xyz == vec3(0.0,0.0,0.0))
-        //    discard;
+        vec4 base_color = texture2D(sampler,tex_coord0.xy);
 
         float o = opaqueness * (base_color.r / 1.0);
-        //float o = (base_color.r / 1.0);
-        vec4 mix_color = mix(vec4(color1,1.0),vec4(color0,1.0),opaqueness);
 
-        base_color = mix(mix_color,base_color,0.5);
-        base_color.w = o;
+        vec4 mix_color = mix(vec4(color0,1.0),vec4(color1,1.0), color_factor_1);
+        mix_color = mix(mix_color, vec4(color2,1.0), color_factor_2);
+
+        base_color = vec4(mix_color.r*base_color.r, mix_color.g*base_color.g, mix_color.b*base_color.b,o);
 
         vec4 out_color = base_color;
         frag_color = mix(vec4(sky_color,1.0), out_color, visibility);

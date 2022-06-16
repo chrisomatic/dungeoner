@@ -48,10 +48,11 @@ static void draw_debug()
 {
     gfx_enable_blending();
     gltBeginDraw();
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(title, 0.0, 0.0, 2.5);
     gltColor(0.0f, 0.8f, 0.0f, 1.0f);
-    gltDrawText2D(title, 0.0, 0.0, 2.0);
-    gltDrawText2D(fps, 0.0, 30.0, 2.0);
-    gltDrawText2D(coords, 0.0, 60.0, 2.0);
+    gltDrawText2D(coords, 0.0, 50.0, 2.0);
+    gltDrawText2D(fps, 0.0, 85.0, 2.0);
     gltEndDraw();
     gfx_disable_blending();
 }
@@ -62,12 +63,12 @@ static void draw_hud(float x, float y)
     float ndc_y = (2.0*y)/view_height - 1.0;
 
     // hp
-    Vector2f pos_hp = {ndc_x,ndc_y};
-    Vector2f pos_mp = {ndc_x,ndc_y-0.030};
-    Vector2f sca = {1.0,0.025};
+    Vector2f pos_hp = {ndc_x+0.9,ndc_y};
+    Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
+    Vector2f sca = {0.4,0.025};
 
-    Vector3f color_hp = {1.0,0.0,0.0};
-    Vector3f color_mp = {0.0,0.0,1.0};
+    Vector4f color_hp = {1.0,0.0,0.0,0.5};
+    Vector4f color_mp = {0.0,0.0,1.0,0.5};
 
     gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca);
     gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca);
@@ -81,9 +82,7 @@ static void draw_crosshair()
     Vector2f sca = {0.025,0.025};
 
     // crosshair
-    gfx_enable_blending();
     gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca);
-    gfx_disable_blending();
 }
 
 void gui_draw()

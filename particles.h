@@ -6,6 +6,7 @@ typedef enum
     PARTICLE_EFFECT_EXPLOSION,
     PARTICLE_EFFECT_HEAL,
     PARTICLE_EFFECT_SPARKLE,
+    PARTICLE_EFFECT_BLOOD,
 } ParticleEffect;
 
 typedef struct
@@ -14,17 +15,25 @@ typedef struct
     float life;
     float life_max;
     float camera_dist;
+    float angular_pos;
+    float angular_vel;
 } Particle;
 
 typedef struct
 {
+    uint32_t id;
+
     ParticleEffect effect;
     Particle particles[MAX_PARTICLES];
 
-    Vector pos;
+    Vector3f pos;
 
-    Vector color0;
-    Vector color1;
+    Vector3f color0;
+    Vector3f color1;
+    Vector3f color2;
+
+    float color1_transition;
+    float color2_transition;
 
     int particle_count;
     GLuint texture;
@@ -37,8 +46,10 @@ typedef struct
 
     float initial_vel_min;
     float initial_vel_max;
+    float angular_vel_min;
+    float angular_vel_max;
 
-    float gravity_factor; // 0.0 - 1.0
+    Vector3f influence_force;
 
     float particle_lifetime;
     float particle_scale;
@@ -54,6 +65,8 @@ typedef struct
 
 } ParticleGenerator;
 
-void particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime);
+uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime);
+uint32_t particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime);
 void particles_update();
 void particles_draw();
+void particle_generator_move(uint32_t id, float x, float y, float z);

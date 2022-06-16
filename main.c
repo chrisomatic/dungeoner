@@ -66,6 +66,7 @@ GLuint t_outfit;
 GLuint t_rat;
 GLuint t_particle_explosion;
 GLuint t_particle_star;
+GLuint t_particle_blood;
 GLuint t_crosshair;
 GLuint t_boat;
 
@@ -179,6 +180,7 @@ void init()
     t_outfit = load_texture("textures/outfit2.png");
     t_particle_explosion = load_texture("textures/particles/explosion.png");
     t_particle_star = load_texture("textures/particles/star.png");
+    t_particle_blood = load_texture("textures/particles/blood.png");
     t_crosshair = load_texture("textures/crosshair.png");
     t_boat = load_texture("textures/boat.png");
 
@@ -256,8 +258,10 @@ void init()
         creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
     }
 
-    Vector pos = {-1.0,10.0,-1.0};
-    particles_create_generator(&pos,PARTICLE_EFFECT_HEAL, 0.0);
+    particles_create_generator_xyz(-90.0,21.0,179.0,PARTICLE_EFFECT_HEAL, 0.0);
+    particles_create_generator_xyz(-92.0,21.0,179.0,PARTICLE_EFFECT_EXPLOSION, 0.0);
+    particles_create_generator_xyz(-94.0,21.0,179.0,PARTICLE_EFFECT_SPARKLE, 0.0);
+    particles_create_generator_xyz(-96.0,21.0,179.0,PARTICLE_EFFECT_BLOOD, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
@@ -285,7 +289,6 @@ void init()
     // @TEST boat
     boat_spawn(294.0,65.0);
     boat_spawn(290.0,68.0);
-    
 
     // Creating text
 
@@ -358,15 +361,13 @@ void render_scene()
 
     gfx_draw_sky();
     terrain_draw();
+    gfx_draw_model(&m_wall); // @TEST
     player_draw();
     creature_draw();
     boat_draw();
     coin_draw_piles();
     projectile_draw();
     particles_draw();
-
-    // @TEST
-    gfx_draw_model(&m_wall);
 }
 
 void render()

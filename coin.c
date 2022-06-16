@@ -24,6 +24,7 @@ typedef struct
     Coin coins[COINS_PER_PILE];
     Vector3f pos;
     int value;
+    uint32_t sparkle_id;
 } CoinPile;
 
 CoinPile coin_piles[MAX_COIN_PILES] = {0};
@@ -82,7 +83,7 @@ void coin_spawn_pile(float x, float y, float z, int value)
         mult(&cp->coins[i].phys.vel,vel_magn);
     }
 
-    particles_create_generator(&cp->pos, PARTICLE_EFFECT_SPARKLE, 0.0);
+    cp->sparkle_id = particles_create_generator(&cp->pos, PARTICLE_EFFECT_SPARKLE, 0.0);
 
     coin_pile_count++;
 }
@@ -91,9 +92,13 @@ void coin_update_piles()
 {
     for(int i = 0; i < coin_pile_count; ++i)
     {
+        CoinPile* cp = &coin_piles[i];
+
+        Vector3f avg_pos = {0.0,0.0,0.0};
+
         for(int j = 0; j < COINS_PER_PILE; ++j)
         {
-            Coin* c = &coin_piles[i].coins[j];
+            Coin* c = &cp->coins[j];
 
             if(c->phys.pos.y-0.01 > c->phys.ground.height)
             {
@@ -108,8 +113,15 @@ void coin_update_piles()
                 c->rotation.z += 270 * g_delta_t;
             }
 
+            add(&avg_pos,c->phys.pos);
+
             update_coin_model_transform(c);
         }
+
+        mult(&avg_pos, 1.0 / (float)COINS_PER_PILE);
+
+        copy_vector(&cp->pos,avg_pos);
+        particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y, cp->pos.z);
     }
 }
 

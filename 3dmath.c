@@ -38,6 +38,16 @@ static void multiply_q(Quaternion a,Quaternion b, Quaternion* ret)
     ret->z = (a.z * b.w) + (a.w * b.z) + (a.x * b.y) - (a.y * b.x);
 }
 
+static float Q_rsqrt(float number)
+{
+	union {
+		float    f;
+		uint32_t i;
+	} conv = { .f = number };
+	conv.i  = 0x5f3759df - (conv.i >> 1);
+	conv.f *= 1.5F - (number * 0.5F * conv.f * conv.f);
+	return conv.f;
+}
 float magn(Vector3f v)
 {
     return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
@@ -70,6 +80,16 @@ void copy_vector(Vector3f* dest, Vector3f src)
 }
 
 void normalize(Vector3f* v)
+{
+    float magn_squared = v->x*v->x + v->y*v->y + v->z*v->z;
+    float r = Q_rsqrt(magn_squared);
+
+    v->x *= r;
+    v->y *= r;
+    v->z *= r;
+}
+
+void normalize_slow(Vector3f* v)
 {
     float len = magn(*v);
 

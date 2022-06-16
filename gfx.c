@@ -474,7 +474,6 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
 {
     glUseProgram(program_basic);
 
-
     shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
 
     if(texture)
@@ -520,8 +519,9 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
-void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca)
+void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* sca)
 {
+    gfx_enable_blending();
     glUseProgram(program_gui);
 
     shader_set_int(program_gui,"use_texture",texture);
@@ -542,11 +542,11 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
 
     if(color)
     {
-        shader_set_vec3(program_gui,"color",color->x, color->y, color->z);
+        shader_set_vec4(program_gui,"color",color->x, color->y, color->z, color->w);
     }
     else
     {
-        shader_set_vec3(program_gui,"color",1.0,1.0,1.0);
+        shader_set_vec4(program_gui,"color",1.0,1.0,1.0,1.0);
     }
 
     glBindVertexArray(vao);
@@ -570,6 +570,7 @@ void gfx_draw_quad2d(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca
     glDisableVertexAttribArray(0);
     glBindVertexArray(0);
     glUseProgram(0);
+    gfx_disable_blending();
 }
 
 void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca)
@@ -644,7 +645,7 @@ void gfx_enable_blending_additive()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 }
 
-void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opaqueness, Vector* pos, Vector* rot, Vector* sca)
+void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, Vector* color2, float opaqueness, float color_factor_1, float color_factor_2, Vector* pos, Vector* rot, Vector* sca)
 {
     glUseProgram(program_particle);
 
@@ -662,6 +663,7 @@ void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opa
 
     shader_set_vec3(program_particle,"color0",color0->x, color0->y, color0->z);
     shader_set_vec3(program_particle,"color1",color1->x, color1->y, color1->z);
+    shader_set_vec3(program_particle,"color2",color2->x, color2->y, color2->z);
 
     if(show_fog)
     {
@@ -675,6 +677,8 @@ void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, float opa
     }
 
     shader_set_float(program_particle,"opaqueness",opaqueness);
+    shader_set_float(program_particle,"color_factor_1",color_factor_1);
+    shader_set_float(program_particle,"color_factor_2",color_factor_2);
 
     if(texture)
     {
