@@ -1,6 +1,6 @@
 #pragma once
 
-#define COINS_PER_PILE 100
+#define COINS_PER_PILE 20
 #define MAX_COIN_PILES 100
 #define COIN_PILE_RADIUS 1.0
 
