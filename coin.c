@@ -8,25 +8,6 @@
 #include "log.h"
 #include "coin.h"
 
-#define COINS_PER_PILE 100
-#define MAX_COIN_PILES 100
-#define COIN_PILE_RADIUS 1.0
-
-typedef struct
-{
-    PhysicsObj phys;
-    Matrix transform;
-    Vector3f rotation;
-} Coin;
-
-typedef struct
-{
-    Coin coins[COINS_PER_PILE];
-    Vector3f pos;
-    int value;
-    uint32_t sparkle_id;
-} CoinPile;
-
 CoinPile coin_piles[MAX_COIN_PILES] = {0};
 int coin_pile_count = 0;
 
@@ -39,6 +20,20 @@ static void update_coin_model_transform(Coin* c)
     Vector3f sca = {0.1,0.1,0.1};
 
     get_model_transform(&pos,&rot,&sca,&c->transform);
+}
+
+void coin_destroy_pile(int index)
+{
+    if(index < 0 || index >= coin_pile_count)
+    {
+        LOGE("Coin Pile index out of range (%d)", index);
+        return;
+    }
+
+    memcpy(&coin_piles[index], &coin_piles[coin_pile_count-1], sizeof(CoinPile));
+    particle_generator_destroy(coin_piles[index].sparkle_id);
+
+    coin_pile_count--;
 }
 
 void coin_init()
@@ -129,6 +124,7 @@ void coin_update_piles()
         particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y + 0.25, cp->pos.z);
     }
 }
+
 
 static void coin_render(Coin* c)
 {

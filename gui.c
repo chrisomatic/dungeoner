@@ -13,10 +13,14 @@
 static float fps_counter = 0.5;
 static char fps_str[12]    = {0};
 static char coords_str[32] = {0};
+static char gold_str[12] = {0};
 
 static GLTtext *title;
 static GLTtext *fps;
 static GLTtext *coords;
+
+// stats
+static GLTtext *gold;
 
 void gui_init()
 {
@@ -25,8 +29,10 @@ void gui_init()
     title = gltCreateText();
     fps = gltCreateText();
     coords = gltCreateText();
+    gold = gltCreateText();
 
     gltSetText(title, "Dungeoner");
+    gui_update_stats();
 }
 
 void gui_update()
@@ -42,6 +48,22 @@ void gui_update()
         gltSetText(fps, fps_str);
         gltSetText(coords, coords_str);
     }
+}
+
+void gui_update_stats()
+{
+    snprintf(gold_str, 31, "Gold: %d",player->gold);
+    gltSetText(gold, gold_str);
+}
+
+static void draw_stats()
+{
+    gfx_enable_blending();
+    gltBeginDraw();
+    gltColor(0.54f, 0.43f, 0.03f, 1.0f);
+    gltDrawText2D(gold, 0.0, view_height - 30.0, 2.0);
+    gltEndDraw();
+    gfx_disable_blending();
 }
 
 static void draw_debug()
@@ -67,8 +89,8 @@ static void draw_hud(float x, float y)
     Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
     Vector2f sca = {0.4,0.025};
 
-    Vector4f color_hp = {1.0,0.0,0.0,0.75};
-    Vector4f color_mp = {0.0,0.0,1.0,0.75};
+    Vector4f color_hp = {0.8,0.0,0.0,0.6};
+    Vector4f color_mp = {0.0,0.0,0.8,0.6};
 
     gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca);
     gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca);
@@ -89,5 +111,6 @@ void gui_draw()
 {
     draw_hud(100.0,100.0);
     draw_crosshair();
+    draw_stats();
     draw_debug();
 }

@@ -13,7 +13,9 @@
 #include "gfx.h"
 #include "boat.h"
 #include "entity.h"
+#include "coin.h"
 #include "weapon.h"
+#include "gui.h"
 
 Entity  p = {0};
 Player* player = &p.data.player_data;
@@ -43,6 +45,69 @@ void update_camera_rotation()
 
     //printf("Up: %f %f %f\n", camera.up.x, camera.up.y, camera.up.z);
 }
+
+static void handle_collisions(Vector3f p0)
+{
+    player->phys.on_object = false;
+
+    if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
+    {
+        // resolve
+        Vector3f n;
+        Vector3f p1 = {
+            player->phys.pos.x + player->phys.com_offset.x,
+            player->phys.pos.y + player->phys.com_offset.y,
+            player->phys.pos.z + player->phys.com_offset.z
+        };
+
+        float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &p1, &n);
+        //dist -= (player->model.collision_vol.box_transformed.l/2.0);
+
+        Vector3f correction = {
+            m_wall.collision_vol.overlap.x*n.x,
+            m_wall.collision_vol.overlap.y*n.y,
+            m_wall.collision_vol.overlap.z*n.z
+        };
+
+        player->phys.pos.x += correction.x;
+        player->phys.pos.y += correction.y;
+        player->phys.pos.z += correction.z;
+
+        // NewVel = OldVel - facenormal* Dot(facenormal,OldVel)
+
+        Vector3f vel0 = { player->phys.vel.x, player->phys.vel.y, player->phys.vel.z };
+        float f = dot(n, vel0);
+
+        player->phys.vel.x = vel0.x - (n.x * f);
+        player->phys.vel.y = vel0.y - (n.y * f);
+        player->phys.vel.z = vel0.z - (n.z * f);
+
+        if(n.y > 0.0)
+        {
+            player->phys.on_object = true;
+        }
+        
+        /*
+        player->phys.vel.x = n.x != 0.0 ? 0.0 : player->phys.vel.x;
+        player->phys.vel.y = n.y != 0.0 ? 0.0 : player->phys.vel.y;
+        player->phys.vel.z = n.z != 0.0 ? 0.0 : player->phys.vel.z;
+        */
+    }
+
+    // coin piles
+    for(int i = coin_pile_count - 1; i >= 0; --i)
+    {
+        CoinPile* cp = &coin_piles[i];
+        float dsq = dist_squared(&player->phys.pos, &cp->pos);
+        if(dsq <= 0.25)
+        {
+            player->gold += cp->value;
+            gui_update_stats();
+            coin_destroy_pile(i);
+        }
+    }
+}
+
 
 static void handle_boat_control(PhysicsObj* phys)
 {
@@ -288,51 +353,8 @@ static void update_player_physics()
         handle_player_control(&player->phys);
     }
 
-    player->phys.on_object = false;
+    handle_collisions(p0);
 
-    if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
-    {
-        // resolve
-        Vector3f n;
-        Vector3f p1 = {
-            player->phys.pos.x + player->phys.com_offset.x,
-            player->phys.pos.y + player->phys.com_offset.y,
-            player->phys.pos.z + player->phys.com_offset.z
-        };
-
-        float dist = collision_get_closest_normal_to_point(&m_wall.collision_vol.box_transformed, &p0, &p1, &n);
-        //dist -= (player->model.collision_vol.box_transformed.l/2.0);
-
-        Vector3f correction = {
-            m_wall.collision_vol.overlap.x*n.x,
-            m_wall.collision_vol.overlap.y*n.y,
-            m_wall.collision_vol.overlap.z*n.z
-        };
-
-        player->phys.pos.x += correction.x;
-        player->phys.pos.y += correction.y;
-        player->phys.pos.z += correction.z;
-
-        // NewVel = OldVel - facenormal* Dot(facenormal,OldVel)
-
-        Vector3f vel0 = { player->phys.vel.x, player->phys.vel.y, player->phys.vel.z };
-        float f = dot(n, vel0);
-
-        player->phys.vel.x = vel0.x - (n.x * f);
-        player->phys.vel.y = vel0.y - (n.y * f);
-        player->phys.vel.z = vel0.z - (n.z * f);
-
-        if(n.y > 0.0)
-        {
-            player->phys.on_object = true;
-        }
-        
-        /*
-        player->phys.vel.x = n.x != 0.0 ? 0.0 : player->phys.vel.x;
-        player->phys.vel.y = n.y != 0.0 ? 0.0 : player->phys.vel.y;
-        player->phys.vel.z = n.z != 0.0 ? 0.0 : player->phys.vel.z;
-        */
-    }
 }
 
 static void player_spawn_projectile(ProjectileType type)

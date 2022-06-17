@@ -1,4 +1,4 @@
-#define MAX_PARTICLE_GENERATORS 32
+#define MAX_PARTICLE_GENERATORS 128
 #define MAX_PARTICLES 1024
 
 typedef enum
@@ -22,7 +22,7 @@ typedef struct
 } Particle;
 typedef struct
 {
-    uint32_t id;
+    int id;
 
     ParticleEffect effect;
     Particle particles[MAX_PARTICLES];
@@ -69,10 +69,10 @@ typedef struct
 
 } ParticleGenerator;
 
-uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime);
-uint32_t particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime);
+int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime);
+int particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime);
 void particles_init();
 void particles_update();
 void particles_draw();
-void particle_generator_move(uint32_t id, float x, float y, float z);
-void particle_generator_destroy(uint32_t id);
+void particle_generator_move(int id, float x, float y, float z);
+void particle_generator_destroy(int id);

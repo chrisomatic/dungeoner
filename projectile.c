@@ -167,7 +167,7 @@ void projectile_update()
                         add(&creatures[j].phys.vel,blast_v);
                         creature_hurt(j,damage_dealt);
 
-                        printf("Creature %d was in blast radius! falloff: %f\n", j, falloff);
+                        //printf("Creature %d was in blast radius! falloff: %f\n", j, falloff);
 
                     }
                 }

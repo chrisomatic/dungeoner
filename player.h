@@ -57,6 +57,8 @@ typedef struct
     float hp;
     float hp_max;
 
+    uint32_t gold;
+
     Camera camera;
     Model  model;
     Weapon weapon;

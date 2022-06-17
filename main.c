@@ -238,8 +238,8 @@ void init()
 
     LOGI(" - Zones.");
 
-    rat_zone.x0 = -100.0; rat_zone.x1 = -90.0;
-    rat_zone.z0 = 170.0; rat_zone.z1 = 180.0;
+    rat_zone.x0 = -120.0; rat_zone.x1 = -90.0;
+    rat_zone.z0 = 150.0; rat_zone.z1 = 180.0;
 
     LOGI(" - Creatures.");
 
@@ -247,7 +247,7 @@ void init()
     int terrain_length = 32;
     float terrain_length_half = terrain_length / 2.0;
 
-    for(int i = 0; i < 10; ++i)
+    for(int i = 0; i < 100; ++i)
     {
         float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
         float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;

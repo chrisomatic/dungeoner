@@ -110,10 +110,11 @@ static void quick_sort_pg(ParticleGenerator arr[], int low, int high)
 // ===
 
 
-
-
-static int get_particle_generator_by_id(uint32_t id)
+static int get_particle_generator_by_id(int id)
 {
+    if(id < 0)
+        return -1;
+
     for(int i = 0; i < particle_generator_count; ++i)
     {
         ParticleGenerator* pg = &particle_generators[i];
@@ -132,8 +133,14 @@ void particles_init()
     t_particle_radial1 = load_texture("textures/particles/radial1.png");
 }
 
-uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
+int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
 {
+    if(particle_generator_count >= MAX_PARTICLE_GENERATORS)
+    {
+        LOGE("Hit maximum particle generators");
+        return -1;
+    }
+
     ParticleGenerator *pg = &particle_generators[particle_generator_count];
     memset(pg, 0, sizeof(ParticleGenerator));
 
@@ -301,18 +308,21 @@ uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lif
     return pg->id;
 }
 
-uint32_t particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime)
+int particles_create_generator_xyz(float x, float y, float z,ParticleEffect effect, float lifetime)
 {
     Vector3f pos = {x,y,z};
     return particles_create_generator(&pos, effect, lifetime);
 }
 
-void particle_generator_move(uint32_t id, float x, float y, float z)
+void particle_generator_move(int id, float x, float y, float z)
 {
+    if(id < 0)
+        return;
+
     int pg_index = get_particle_generator_by_id(id);
     if(pg_index == -1)
     {
-        LOGE("Couldn't find particle generator with id of %u", id);
+        LOGE("Couldn't find particle generator with id of %d", id);
         return;
     }
 
@@ -323,9 +333,11 @@ void particle_generator_move(uint32_t id, float x, float y, float z)
     pg->pos.z = z;
 }
 
-void particle_generator_destroy(uint32_t id)
+void particle_generator_destroy(int id)
 {
     int pg_index = get_particle_generator_by_id(id);
+    if(pg_index < 0)
+        return;
     delete_particle_generator(pg_index);
 }
 
@@ -352,7 +364,6 @@ void particles_update()
         }
         else
         {
-
             pg->time_since_last_spawn += g_delta_t;
 
             if(pg->time_since_last_spawn >= pg->spawn_time)
@@ -360,6 +371,9 @@ void particles_update()
                 int r;
                 for(int k = 0; k < pg->particle_burst_count; ++k)
                 {
+                    if(pg->particle_count >= MAX_PARTICLES)
+                        break;
+
                     // set time for next particle spawn
                     float spawn_time_range = pg->spawn_time_max - pg->spawn_time_min; // seconds
                     r = rand() % (int)(spawn_time_range*1000);

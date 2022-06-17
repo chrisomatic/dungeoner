@@ -59,6 +59,8 @@ void creature_spawn(Zone* zone, CreatureType type)
     float x = ((rand() % ((int)zone_len_x*100)) - (zone_len_x*50)) / 100.0;
     float z = ((rand() % ((int)zone_len_z*100)) - (zone_len_z*50)) / 100.0;
 
+    bool is_gold = ((rand() % 50) == 0);
+
     GroundInfo ground;
     terrain_get_info(-x, -z, &ground); // @NEG
 
@@ -79,11 +81,11 @@ void creature_spawn(Zone* zone, CreatureType type)
 
             c->zone = zone;
             memcpy(&c->model,&m_rat,sizeof(Model));
-            c->model.texture = 0;//t_rat;
+            c->model.texture = is_gold ? 0 : t_rat;
             c->model.base_color.x = 0.54;
             c->model.base_color.y = 0.43;
             c->model.base_color.z = 0.03;
-            c->model.reflectivity = 1.0;
+            c->model.reflectivity = is_gold ? 1.0 : 0.1;
 
             c->hp = 10.0;
             c->hp_max = 10.0;
