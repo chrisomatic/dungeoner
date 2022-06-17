@@ -45,6 +45,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.z = 0.0;
             proj->damage = 5.0;
             proj->blast_radius = 5.0;
+            proj->gravity_factor = 0.0;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;
@@ -55,6 +56,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.z = 1.0;
             proj->damage = 5.0;
             proj->blast_radius = 0.0;
+            proj->gravity_factor = 1.0;
             break;
         case PROJECTILE_ARROW:
             speed = 30.0;
@@ -62,6 +64,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->life_max = 60.0;
             proj->damage = 3.0;
             proj->blast_radius = 0.0;
+            proj->gravity_factor = 1.0;
             break;
     }
     
@@ -80,6 +83,11 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
     proj->phys.vel.x = vel.x + player->phys.vel.x;
     proj->phys.vel.y = vel.y + player->phys.vel.y;
     proj->phys.vel.z = vel.z + player->phys.vel.z;
+
+    if(type == PROJECTILE_FIREBALL)
+    {
+        proj->particles_id = particles_create_generator(&proj->phys.pos, PARTICLE_EFFECT_FIRE, 0.0);
+    }
 
     collision_set_flags(&proj->model.collision_vol, COLLISION_FLAG_HURT);
     proj->model.collision_vol.hurt_list_count = 0;
@@ -102,16 +110,20 @@ void projectile_update()
 {
     for(int i = 0; i < projectile_count; ++i)
     {
-        physics_begin(&projectiles[i].phys);
-        if(projectiles[i].type != PROJECTILE_FIREBALL)
-            physics_add_gravity(&projectiles[i].phys, 1.0);
-        physics_add_kinetic_friction(&projectiles[i].phys, 0.80);
-        physics_simulate(&projectiles[i].phys);
+        Projectile* p = &projectiles[i];
+        physics_begin(&p->phys);
+        physics_add_gravity(&p->phys, p->gravity_factor);
+        physics_add_kinetic_friction(&p->phys, 0.80);
+        physics_simulate(&p->phys);
         
-        update_projectile_model_transform(&projectiles[i]);
-        collision_transform_bounding_box(&projectiles[i].model.collision_vol, &projectiles[i].model.transform);
-        projectiles[i].life += g_delta_t;
+        update_projectile_model_transform(p);
+        collision_transform_bounding_box(&p->model.collision_vol, &p->model.transform);
+        p->life += g_delta_t;
 
+        if(projectiles[i].type == PROJECTILE_FIREBALL)
+        {
+            particle_generator_move(p->particles_id, p->phys.pos.x,p->phys.pos.y,p->phys.pos.z);
+        }
     }
 
     for(int i = projectile_count-1; i >= 0; --i)
@@ -121,7 +133,8 @@ void projectile_update()
             if(projectiles[i].type == PROJECTILE_FIREBALL)
             {
                 Vector pos = {projectiles[i].phys.pos.x,projectiles[i].phys.pos.y,projectiles[i].phys.pos.z};
-                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.25);
+                particle_generator_destroy(projectiles[i].particles_id); // remove fire
+                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.25); // add explosion
             }
 
             if(projectiles[i].blast_radius > 0.0)
@@ -152,7 +165,7 @@ void projectile_update()
                         //mult(&blast_v, 20.0*falloff);
 
                         add(&creatures[j].phys.vel,blast_v);
-                        creatures[j].hp -= damage_dealt;
+                        creature_hurt(j,damage_dealt);
 
                         printf("Creature %d was in blast radius! falloff: %f\n", j, falloff);
 

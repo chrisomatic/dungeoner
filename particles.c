@@ -7,11 +7,18 @@
 #include "player.h"
 #include "physics.h"
 #include "log.h"
+#include "util.h"
 
 #include "particles.h"
 
 static ParticleGenerator particle_generators[MAX_PARTICLE_GENERATORS];
 static int particle_generator_count = 0;
+
+static GLuint t_particle_explosion;
+static GLuint t_particle_star;
+static GLuint t_particle_blood;
+static GLuint t_particle_flame;
+static GLuint t_particle_radial1;
 
 static void delete_particle_generator(int pg_index)
 {
@@ -26,7 +33,8 @@ static void delete_particle(int pg_index, int p_index)
     pg->particle_count--;
 }
 
-static void swap(Particle* a, Particle* b)
+// === Quick Sort Particles ===
+static void swap_particles(Particle* a, Particle* b)
 {
     Particle t = {0};
     memcpy(&t, a, sizeof(Particle));
@@ -34,7 +42,7 @@ static void swap(Particle* a, Particle* b)
     memcpy(b, &t, sizeof(Particle));
 }
 
-static int partition(Particle arr[], int low, int high)
+static int partition_particles(Particle arr[], int low, int high)
 {
     Particle pivot = arr[high];
     int i = (low - 1);
@@ -44,35 +52,84 @@ static int partition(Particle arr[], int low, int high)
         if (arr[j].camera_dist > pivot.camera_dist)
         {
             i++;
-            swap(&arr[i], &arr[j]);
+            swap_particles(&arr[i], &arr[j]);
         }
     }
-    swap(&arr[i + 1], &arr[high]);
+    swap_particles(&arr[i + 1], &arr[high]);
     return (i + 1);
 }
 
-static void quick_sort(Particle arr[], int low, int high)
+static void quick_sort_particles(Particle arr[], int low, int high)
 {
     if (low < high)
     {
-        int pi = partition(arr, low, high);
+        int pi = partition_particles(arr, low, high);
 
-        quick_sort(arr, low, pi - 1);
-        quick_sort(arr, pi + 1, high);
+        quick_sort_particles(arr, low, pi - 1);
+        quick_sort_particles(arr, pi + 1, high);
     }
 }
+// ===
 
-static ParticleGenerator* get_particle_generator_by_id(uint32_t id)
+
+
+// === Quick Sort Particle Generators ===
+static void swap_pg(ParticleGenerator* a, ParticleGenerator* b)
+{
+    ParticleGenerator t = {0};
+    memcpy(&t, a, sizeof(ParticleGenerator));
+    memcpy(a, b, sizeof(ParticleGenerator));
+    memcpy(b, &t, sizeof(ParticleGenerator));
+}
+static int partition_pg(ParticleGenerator arr[], int low, int high)
+{
+    ParticleGenerator pivot = arr[high];
+    int i = (low - 1);
+
+    for (int j = low; j <= high- 1; j++)
+    {
+        if (arr[j].camera_dist > pivot.camera_dist)
+        {
+            i++;
+            swap_pg(&arr[i], &arr[j]);
+        }
+    }
+    swap_pg(&arr[i + 1], &arr[high]);
+    return (i + 1);
+}
+static void quick_sort_pg(ParticleGenerator arr[], int low, int high)
+{
+    if (low < high)
+    {
+        int pi = partition_pg(arr, low, high);
+
+        quick_sort_pg(arr, low, pi - 1);
+        quick_sort_pg(arr, pi + 1, high);
+    }
+}
+// ===
+
+
+
+
+static int get_particle_generator_by_id(uint32_t id)
 {
     for(int i = 0; i < particle_generator_count; ++i)
     {
         ParticleGenerator* pg = &particle_generators[i];
         if(pg->id == id)
-        {
-            return pg;
-        }
+            return i;
     }
-    return NULL;
+    return -1;
+}
+
+void particles_init()
+{
+    t_particle_explosion = load_texture("textures/particles/explosion.png");
+    t_particle_star = load_texture("textures/particles/star.png");
+    t_particle_blood = load_texture("textures/particles/blood.png");
+    t_particle_flame = load_texture("textures/particles/flame.png");
+    t_particle_radial1 = load_texture("textures/particles/radial1.png");
 }
 
 uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
@@ -89,6 +146,32 @@ uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lif
 
     switch(effect)
     {
+
+        case PARTICLE_EFFECT_FIRE:
+
+            pg->texture = t_particle_flame;
+
+            pg->spawn_time_min  = 0.008;
+            pg->spawn_time_max  = 0.016;
+            pg->influence_force.y = 1.2;
+            pg->initial_vel_min = 0.5;
+            pg->initial_vel_max = 1.5;
+            pg->particle_scale  = 0.5;
+            pg->particle_lifetime = 0.7;
+            pg->particle_burst_count = 4;
+
+            pg->particle_size_atten = 0.70;
+            pg->particle_speed_atten = 1.30;
+            pg->particle_opaque_atten = 0.80;
+
+            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 0.7; pg->color1_transition = 0.30;
+            pg->color1.x = 0.8; pg->color1.y = 0.1; pg->color1.z = 0.0; pg->color2_transition = 0.60;
+            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
+
+            pg->blend_additive = true;
+
+            break;
+
         case PARTICLE_EFFECT_EXPLOSION:
 
             pg->texture = t_particle_explosion;
@@ -118,20 +201,22 @@ uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lif
 
             pg->spawn_time_min  = 0.005;
             pg->spawn_time_max  = 0.010;
-            pg->influence_force.y = 2.0;
+            pg->influence_force.y = 1.5;
             pg->initial_vel_min = 0.4;
             pg->initial_vel_max = 2.0;
             pg->particle_scale  = 0.4;
-            pg->particle_lifetime = 1.5;
+            pg->particle_lifetime = 1.0;
             pg->particle_burst_count = 1;
 
             pg->particle_size_atten = 0.80;
             pg->particle_speed_atten = 0.20;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 0.0; pg->color0.y = 0.8; pg->color0.z = 0.0; pg->color1_transition = 0.50;
-            pg->color1.x = 0.9; pg->color1.y = 0.9; pg->color1.z = 0.5; pg->color2_transition = 0.75;
+            pg->color0.x = 0.5; pg->color0.y = 0.8; pg->color0.z = 0.5; pg->color1_transition = 0.20;
+            pg->color1.x = 0.0; pg->color1.y = 0.9; pg->color1.z = 0.0; pg->color2_transition = 0.75;
             pg->color2.x = 0.9; pg->color2.y = 0.9; pg->color2.z = 0.5;
+
+            pg->blend_additive = true;
             
             break;
 
@@ -157,6 +242,8 @@ uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lif
             pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5; pg->color2_transition = 0.95;
             pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5;
 
+            pg->blend_additive = true;
+
             break;
 
         case PARTICLE_EFFECT_BLOOD:
@@ -165,20 +252,43 @@ uint32_t particles_create_generator(Vector* pos,ParticleEffect effect, float lif
 
             pg->spawn_time_min  = 0.100;
             pg->spawn_time_max  = 0.200;
-            pg->influence_force.y = -1.0;
-            pg->initial_vel_min = 2.0;
-            pg->initial_vel_max = 1.0;
-            pg->particle_scale  = 0.3;
-            pg->particle_lifetime = 1.0;
+            pg->influence_force.y = -2.0;
+            pg->initial_vel_min = 3.0;
+            pg->initial_vel_max = 6.0;
+            pg->particle_scale  = 0.5;
+            pg->particle_lifetime = 0.25;
+            pg->particle_burst_count = 10;
+
+            pg->particle_size_atten = 0.90;
+            pg->particle_speed_atten = 1.40;
+            pg->particle_opaque_atten = 0.50;
+
+            pg->color0.x = 1.0; pg->color0.y = 0.3; pg->color0.z = 0.3; pg->color1_transition = 0.30;
+            pg->color1.x = 0.9; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
+            pg->color2.x = 0.5; pg->color2.y = 0.0; pg->color2.z = 0.0;
+
+            break;
+
+        case PARTICLE_EFFECT_BLOOD_SPLATTER:
+
+            pg->texture = t_particle_radial1;
+
+            pg->spawn_time_min  = 0.100;
+            pg->spawn_time_max  = 0.200;
+            pg->influence_force.y = -2.0;
+            pg->initial_vel_min = 4.0;
+            pg->initial_vel_max = 8.0;
+            pg->particle_scale  = 0.8;
+            pg->particle_lifetime = 0.25;
             pg->particle_burst_count = 20;
 
-            pg->particle_size_atten = 0.80;
-            pg->particle_speed_atten = 1.00;
-            pg->particle_opaque_atten = 0.80;
+            pg->particle_size_atten = 0.50;
+            pg->particle_speed_atten = 1.40;
+            pg->particle_opaque_atten = 0.30;
 
-            pg->color0.x = 1.0; pg->color0.y = 0.0; pg->color0.z = 0.0; pg->color1_transition = 0.30;
-            pg->color1.x = 0.8; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
-            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
+            pg->color0.x = 1.0; pg->color0.y = 0.3; pg->color0.z = 0.3; pg->color1_transition = 0.30;
+            pg->color1.x = 0.9; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
+            pg->color2.x = 0.5; pg->color2.y = 0.0; pg->color2.z = 0.0;
 
             break;
             
@@ -199,16 +309,24 @@ uint32_t particles_create_generator_xyz(float x, float y, float z,ParticleEffect
 
 void particle_generator_move(uint32_t id, float x, float y, float z)
 {
-    ParticleGenerator* pg = get_particle_generator_by_id(id);
-    if(pg == NULL)
+    int pg_index = get_particle_generator_by_id(id);
+    if(pg_index == -1)
     {
         LOGE("Couldn't find particle generator with id of %u", id);
         return;
     }
 
+    ParticleGenerator* pg = &particle_generators[pg_index];
+
     pg->pos.x = x;
     pg->pos.y = y;
     pg->pos.z = z;
+}
+
+void particle_generator_destroy(uint32_t id)
+{
+    int pg_index = get_particle_generator_by_id(id);
+    delete_particle_generator(pg_index);
 }
 
 void particles_update()
@@ -328,21 +446,29 @@ void particles_update()
             p->camera_dist = dist_squared(&player->camera.phys.pos, &p->phys.pos);
         }
 
+        pg->camera_dist = dist_squared(&player->camera.phys.pos, &pg->pos);
+
         // sort particles
-        quick_sort(pg->particles, 0, pg->particle_count-1);
+        quick_sort_particles(pg->particles, 0, pg->particle_count-1);
     }
+
+    // sort generators
+    quick_sort_pg(particle_generators, 0, particle_generator_count-1);
 }
 
 void particles_draw()
 {
     gfx_disable_depth_mask();
 
-    gfx_enable_blending();
-    //gfx_enable_blending_additive();
 
     for(int i = 0; i < particle_generator_count; ++i)
     {
         ParticleGenerator *pg = &particle_generators[i];
+
+        if(pg->blend_additive)
+            gfx_enable_blending_additive();
+        else
+            gfx_enable_blending();
 
         for(int j = 0; j < pg->particle_count; ++j)
         {

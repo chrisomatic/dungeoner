@@ -46,3 +46,4 @@ extern int creature_count;
 void creature_spawn(Zone* zone, CreatureType type);
 void creature_update();
 void creature_draw();
+void creature_hurt(int index, float damage);

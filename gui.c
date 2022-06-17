@@ -67,8 +67,8 @@ static void draw_hud(float x, float y)
     Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
     Vector2f sca = {0.4,0.025};
 
-    Vector4f color_hp = {1.0,0.0,0.0,0.5};
-    Vector4f color_mp = {0.0,0.0,1.0,0.5};
+    Vector4f color_hp = {1.0,0.0,0.0,0.75};
+    Vector4f color_mp = {0.0,0.0,1.0,0.75};
 
     gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca);
     gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca);

@@ -50,6 +50,11 @@ void coin_init()
     m_coin.base_color.x = 0.54;
     m_coin.base_color.y = 0.43;
     m_coin.base_color.z = 0.03;
+    
+    // silver color
+    //m_coin.base_color.x = 0.50;
+    //m_coin.base_color.y = 0.50;
+    //m_coin.base_color.z = 0.50;
 }
 
 void coin_spawn_pile(float x, float y, float z, int value)
@@ -121,7 +126,7 @@ void coin_update_piles()
         mult(&avg_pos, 1.0 / (float)COINS_PER_PILE);
 
         copy_vector(&cp->pos,avg_pos);
-        particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y, cp->pos.z);
+        particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y + 0.25, cp->pos.z);
     }
 }
 

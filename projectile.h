@@ -24,6 +24,8 @@ typedef struct
     Vector color;
     float damage;
     float blast_radius;
+    float gravity_factor;
+    uint32_t particles_id;
 } Projectile;
 
 

@@ -133,8 +133,7 @@ static void generate_trees()
                 t->sca.y = 1.0 + ((rand() % 10) / 10.0);
                 t->sca.z = 1.0;
 
-
-                printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
+                //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
 
 
                 memcpy(&t->model, &m_tree, sizeof(Model));

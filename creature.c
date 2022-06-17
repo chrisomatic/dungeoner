@@ -8,6 +8,7 @@
 #include "log.h"
 #include "coin.h"
 #include "player.h"
+#include "particles.h"
 
 #include "creature.h"
 
@@ -116,7 +117,9 @@ void creature_update()
         {
             // die
             int coin_value = (rand() % 90) + 10;
+            
             coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
+            particles_create_generator_xyz(c->phys.pos.x, c->phys.pos.y+0.5, c->phys.pos.z, PARTICLE_EFFECT_BLOOD_SPLATTER, 0.25);
             remove_creature(i);
             continue;
         }
@@ -264,4 +267,17 @@ void creature_draw()
             gfx_draw_quad(0,&color,&pos,&rot,&sca);
         }
     }
+}
+
+void creature_hurt(int index, float damage)
+{
+    creatures[index].hp -= damage;
+
+    Vector3f blood_pos = {
+        creatures[index].phys.pos.x,
+        creatures[index].phys.pos.y + creatures[index].phys.height + 0.5,
+        creatures[index].phys.pos.z
+    };
+    particles_create_generator(&blood_pos, PARTICLE_EFFECT_BLOOD, 0.25);
+    
 }

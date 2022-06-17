@@ -3,8 +3,9 @@
 #include "terrain.h"
 
 #define GRAVITY_EARTH 9.81
+#define GRAVITY_TEST  12.50
 
-#define GRAVITY GRAVITY_EARTH
+#define GRAVITY GRAVITY_TEST
 #define TERMINAL_VEL 60.0
 #define WATER_DENSITY 1000.0
 

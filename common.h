@@ -20,9 +20,6 @@ extern GLuint t_blend_map;
 extern GLuint t_sky_day;
 extern GLuint t_sky_night;
 extern GLuint t_outfit;
-extern GLuint t_particle_explosion;
-extern GLuint t_particle_star;
-extern GLuint t_particle_blood;
 extern GLuint t_crosshair;
 extern GLuint t_boat;
 

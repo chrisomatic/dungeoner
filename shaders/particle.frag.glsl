@@ -26,7 +26,7 @@ void main() {
     }
     else
     {
-        vec4 base_color = texture2D(sampler,tex_coord0.xy);
+        vec4 base_color = texture2D(sampler,vec2(tex_coord0.x, -tex_coord0.y));
 
         float o = opaqueness * (base_color.r / 1.0);
 

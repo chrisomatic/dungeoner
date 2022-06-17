@@ -64,9 +64,6 @@ GLuint t_sky_day;
 GLuint t_sky_night;
 GLuint t_outfit;
 GLuint t_rat;
-GLuint t_particle_explosion;
-GLuint t_particle_star;
-GLuint t_particle_blood;
 GLuint t_crosshair;
 GLuint t_boat;
 
@@ -178,9 +175,6 @@ void init()
     t_rat    = load_texture("textures/rat.png");
     t_blend_map = load_texture("textures/terrain_splat2.png");
     t_outfit = load_texture("textures/outfit2.png");
-    t_particle_explosion = load_texture("textures/particles/explosion.png");
-    t_particle_star = load_texture("textures/particles/star.png");
-    t_particle_blood = load_texture("textures/particles/blood.png");
     t_crosshair = load_texture("textures/crosshair.png");
     t_boat = load_texture("textures/boat.png");
 
@@ -236,6 +230,9 @@ void init()
     LOGI(" - Light.");
     light_init();
 
+    LOGI(" - Particles.");
+    particles_init();
+
     LOGI(" - Boats.");
     boat_init();
 
@@ -259,9 +256,11 @@ void init()
     }
 
     particles_create_generator_xyz(-90.0,21.0,179.0,PARTICLE_EFFECT_HEAL, 0.0);
+    particles_create_generator_xyz(-91.0,21.0,179.0,PARTICLE_EFFECT_FIRE, 0.0);
     particles_create_generator_xyz(-92.0,21.0,179.0,PARTICLE_EFFECT_EXPLOSION, 0.0);
-    particles_create_generator_xyz(-94.0,21.0,179.0,PARTICLE_EFFECT_SPARKLE, 0.0);
-    particles_create_generator_xyz(-96.0,21.0,179.0,PARTICLE_EFFECT_BLOOD, 0.0);
+    particles_create_generator_xyz(-93.0,21.0,179.0,PARTICLE_EFFECT_SPARKLE, 0.0);
+    particles_create_generator_xyz(-94.0,21.0,179.0,PARTICLE_EFFECT_BLOOD, 0.0);
+    particles_create_generator_xyz(-95.0,21.0,179.0,PARTICLE_EFFECT_BLOOD_SPLATTER, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);

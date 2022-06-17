@@ -147,8 +147,10 @@ void weapon_update(Weapon* w, PlayerState* s)
             {
                 if(!collision_is_in_hurt_list(p,c))
                 {
-                    creatures[i].hp -= w->damage;
+                    creature_hurt(i,w->damage);
+                    collision_add_to_hurt_list(p,c);
 
+                    // @TODO: Fix knockback
                     // knockback
                     Vector3f d = {
                         pos.x - creatures[i].phys.pos.x,
@@ -159,8 +161,6 @@ void weapon_update(Weapon* w, PlayerState* s)
 
                     creatures[i].phys.vel.x += w->knockback_factor * d.x;
                     creatures[i].phys.vel.z += w->knockback_factor * d.z;
-
-                    collision_add_to_hurt_list(p,c);
                 }
             }
         }

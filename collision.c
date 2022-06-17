@@ -233,6 +233,7 @@ float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vect
     return_normal->y = bb_normals[min_norm_index].y;
     return_normal->z = bb_normals[min_norm_index].z;
 
+    /*
     printf("face index %d with n %f %f %f and dist %f\n",
             min_norm_index,
             return_normal->x,
@@ -240,6 +241,7 @@ float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vect
             return_normal->z,
             min_dist2
             );
+    */
 
     return min_dist2;
 }
