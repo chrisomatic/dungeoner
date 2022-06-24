@@ -14,6 +14,7 @@ extern int show_wireframe;
 extern int show_fog;
 
 extern GLuint vao;
+extern Mesh quad;
 
 void gfx_init(int width, int height);
 
@@ -30,7 +31,6 @@ void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* 
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();
 void gfx_draw_debug_lines(Vector* position, Vector* vel);
-void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, Vector* color2, float opaqueness, float color_factor_1, float color_factor_2, Vector* pos, Vector* rot, Vector* sca);
 
 void gfx_sub_buffer_elements(GLuint ibo, uint32_t* indices, uint32_t index_count);
 
@@ -43,6 +43,8 @@ void gfx_enable_blending_additive();
 
 void gfx_disable_depth_mask();
 void gfx_enable_depth_mask();
+
+void gfx_add_instanced_attribute(int vao, int vbo, int attribute, int data_size, int instance_size, int offset);
 
 GLuint gfx_create_fbo();
 GLuint gfx_resolve_fbo(GLuint in_fbo, int in_width, int in_height, GLuint out_fbo, int out_width, int out_height);

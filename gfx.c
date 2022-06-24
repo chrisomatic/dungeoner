@@ -16,13 +16,14 @@
 GLuint vao;
 GLuint sky_vao;
 
+Mesh quad = {};
+
 int show_collision = 0;
 int show_wireframe = 0;
 int show_fog = 0;
 
 static Vector4f clip_plane;
 
-static Mesh quad = {};
 static Mesh quad_fullscreen = {};
 static Mesh cube = {};
 static Mesh sky  = {};
@@ -645,76 +646,14 @@ void gfx_enable_blending_additive()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 }
 
-void gfx_draw_particle(GLuint texture, Vector* color0, Vector* color1, Vector* color2, float opaqueness, float color_factor_1, float color_factor_2, Vector* pos, Vector* rot, Vector* sca)
+void gfx_add_instanced_attribute(int vao, int vbo, int attribute, int data_size, int instance_size, int offset)
 {
-    glUseProgram(program_particle);
-
-    Matrix world, view, proj, wvp, wv;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
-    get_wv(&world, &view, &wv);
-
-    shader_set_int(program_particle,"sampler",0);
-    shader_set_int(program_particle,"wireframe",show_wireframe);
-    shader_set_mat4(program_particle,"wv",&wv);
-    shader_set_mat4(program_particle,"wvp",&wvp);
-    shader_set_mat4(program_particle,"world",&world);
-    shader_set_vec3(program_particle,"sky_color",0.7, 0.8, 0.9);
-
-    shader_set_vec3(program_particle,"color0",color0->x, color0->y, color0->z);
-    shader_set_vec3(program_particle,"color1",color1->x, color1->y, color1->z);
-    shader_set_vec3(program_particle,"color2",color2->x, color2->y, color2->z);
-
-    if(show_fog)
-    {
-        shader_set_float(program_particle,"fog_density",fog_density);
-        shader_set_float(program_particle,"fog_gradient",fog_gradient);
-    }
-    else
-    {
-        shader_set_float(program_particle,"fog_density",0.0);
-        shader_set_float(program_particle,"fog_gradient",1.0);
-    }
-
-    shader_set_float(program_particle,"opaqueness",opaqueness);
-    shader_set_float(program_particle,"color_factor_1",color_factor_1);
-    shader_set_float(program_particle,"color_factor_2",color_factor_2);
-
-    if(texture)
-    {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-    }
-    else
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
+    glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
-
-    if(show_wireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
-
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-
+    glVertexAttribPointer(attribute, data_size, GL_FLOAT, false, instance_size*sizeof(float), offset*sizeof(float));
+    glVertexAttribDivisor(attribute,1);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
     glBindVertexArray(0);
-    glUseProgram(0);
 }
 
 void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca)

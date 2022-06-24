@@ -1,5 +1,6 @@
 #define MAX_PARTICLE_GENERATORS 128
-#define MAX_PARTICLES 1024
+#define MAX_PARTICLES 1000
+#define MAX_TOTAL_PARTICLES 20000
 
 typedef enum
 {
@@ -9,6 +10,7 @@ typedef enum
     PARTICLE_EFFECT_SPARKLE,
     PARTICLE_EFFECT_BLOOD,
     PARTICLE_EFFECT_BLOOD_SPLATTER,
+    PARTICLE_EFFECT_COUNT,
 } ParticleEffect;
 
 typedef struct
@@ -20,12 +22,15 @@ typedef struct
     float angular_pos;
     float angular_vel;
 } Particle;
+
 typedef struct
 {
     int id;
 
     ParticleEffect effect;
     Particle particles[MAX_PARTICLES];
+
+    Vector2f tex_offset;
 
     Vector3f pos;
 
