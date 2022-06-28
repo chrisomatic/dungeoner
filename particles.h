@@ -79,5 +79,5 @@ int particles_create_generator_xyz(float x, float y, float z,ParticleEffect effe
 void particles_init();
 void particles_update();
 void particles_draw();
-void particle_generator_move(int id, float x, float y, float z);
+bool particle_generator_move(int id, float x, float y, float z);
 void particle_generator_destroy(int id);

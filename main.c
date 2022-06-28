@@ -396,6 +396,5 @@ void render()
     //gfx_draw_quad2d(frame_buffer_color_texture,NULL,&pos,&sca);
     gfx_draw_post_process_quad(frame_buffer_color_texture,NULL,&pos,&sca);
     gui_draw();
-
 }
 

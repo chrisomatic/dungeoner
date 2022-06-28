@@ -30,8 +30,8 @@ void coin_destroy_pile(int index)
         return;
     }
 
-    memcpy(&coin_piles[index], &coin_piles[coin_pile_count-1], sizeof(CoinPile));
     particle_generator_destroy(coin_piles[index].sparkle_id);
+    memcpy(&coin_piles[index], &coin_piles[coin_pile_count-1], sizeof(CoinPile));
 
     coin_pile_count--;
 }

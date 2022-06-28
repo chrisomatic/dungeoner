@@ -61,7 +61,7 @@ bool window_init()
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     LOGI("Initializing GLEW.");
 

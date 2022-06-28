@@ -40,8 +40,8 @@ static const ParticleEffectInfo particle_effect_info[PARTICLE_EFFECT_COUNT] =
     {{ 1.0, 1.0, 0.3 }, { 0.8, 0.1, 0.0 }, { 0.2, 0.2, 0.2 }, false}, // EXPLOSION
     {{ 0.5, 0.8, 0.5 }, { 0.0, 0.9, 0.0 }, { 0.9, 0.9, 0.5 }, true}, // HEAL
     {{ 1.0, 1.0, 1.0 }, { 0.5, 0.5, 0.5 }, { 0.5, 0.5, 0.5 }, true},  // SPARKLE
-    {{ 1.0, 0.3, 0.3 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}, // BLOOD
-    {{ 1.0, 0.3, 0.3 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}  // BLOOD_SPLATTER
+    {{ 1.0, 0.0, 0.0 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}, // BLOOD
+    {{ 1.0, 0.0, 0.0 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}  // BLOOD_SPLATTER
 };
 
 
@@ -416,16 +416,16 @@ int particles_create_generator_xyz(float x, float y, float z,ParticleEffect effe
     return particles_create_generator(&pos, effect, lifetime);
 }
 
-void particle_generator_move(int id, float x, float y, float z)
+bool particle_generator_move(int id, float x, float y, float z)
 {
     if(id < 0)
-        return;
+        return false;
 
     int pg_index = get_particle_generator_by_id(id);
     if(pg_index == -1)
     {
         LOGE("Couldn't find particle generator with id of %d", id);
-        return;
+        return false;
     }
 
     ParticleGenerator* pg = &particle_generators[pg_index];
@@ -433,13 +433,18 @@ void particle_generator_move(int id, float x, float y, float z)
     pg->pos.x = x;
     pg->pos.y = y;
     pg->pos.z = z;
+
+    return true;
 }
 
 void particle_generator_destroy(int id)
 {
     int pg_index = get_particle_generator_by_id(id);
     if(pg_index < 0)
+    {
+        LOGE("Failed to delete particle generator with ID %d",id);
         return;
+    }
     delete_particle_generator(pg_index);
 }
 
