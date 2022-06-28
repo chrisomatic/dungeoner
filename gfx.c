@@ -646,16 +646,6 @@ void gfx_enable_blending_additive()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 }
 
-void gfx_add_instanced_attribute(int vao, int vbo, int attribute, int data_size, int instance_size, int offset)
-{
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBindVertexArray(vao);
-    glVertexAttribPointer(attribute, data_size, GL_FLOAT, false, instance_size*sizeof(float), offset*sizeof(float));
-    glVertexAttribDivisor(attribute,1);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-    glBindVertexArray(0);
-}
-
 void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* sca)
 {
     glUseProgram(program_debug);

@@ -46,6 +46,12 @@ typedef struct
 
 typedef struct
 {
+    Vector2f position;
+    Vector2f tex_coord;
+} Vertex2D;
+
+typedef struct
+{
     int point_count;
     Vector3f* points;
 } PointList;

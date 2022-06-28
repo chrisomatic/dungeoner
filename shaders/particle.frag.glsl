@@ -1,21 +1,19 @@
 #version 330 core
 
 uniform sampler2D sampler;
-in vec2 tex_coord0;
-in float visibility;
-
-out vec4 frag_color;
-
 uniform int wireframe;
 uniform vec3 sky_color;
-
 uniform vec3 color0;
 uniform vec3 color1;
 uniform vec3 color2;
 
-in float opaqueness0;
-in vec2 color_factor0;
+in vec2 tex_coord0;
 in vec4 tex_offsets0;
+in float visibility;
+in vec2 color_factor0;
+in float opaqueness0;
+
+out vec4 frag_color;
 
 const int NUM_ROWS = 2;
 const int NUM_COLS = 2;
@@ -34,7 +32,7 @@ void main() {
         vec2 texlookup = vec2(texlookup_x, -texlookup_y);
         vec4 base_color = texture2D(sampler,texlookup);
 
-        float o = opaqueness * (base_color.r / 1.0);
+        float o = opaqueness0 * (base_color.r / 1.0);
 
         vec4 mix_color = mix(vec4(color0,1.0),vec4(color1,1.0), color_factor0.x);
         mix_color = mix(mix_color, vec4(color2,1.0), color_factor0.y);

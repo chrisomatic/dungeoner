@@ -16,17 +16,15 @@
 #define PARTICLE_INSTANCE_SIZE 23
 
 static GLuint particles_vao;
+static GLuint quad_vbo;
 static GLuint particles_vbo;
 
 static ParticleGenerator particle_generators[MAX_PARTICLE_GENERATORS];
 static int particle_generator_count = 0;
 
 static GLuint t_particles;
-static GLuint t_particle_explosion;
-static GLuint t_particle_star;
-static GLuint t_particle_blood;
-static GLuint t_particle_flame;
-static GLuint t_particle_radial1;
+
+static int id_counter = 0;
 
 typedef struct
 {
@@ -40,7 +38,7 @@ static const ParticleEffectInfo particle_effect_info[PARTICLE_EFFECT_COUNT] =
 {
     {{ 1.0, 1.0, 0.7 }, { 0.8, 0.1, 0.0 }, { 0.2, 0.2, 0.2 }, true},  // FIRE
     {{ 1.0, 1.0, 0.3 }, { 0.8, 0.1, 0.0 }, { 0.2, 0.2, 0.2 }, false}, // EXPLOSION
-    {{ 0.5, 0.8, 0.5 }, { 0.0, 0.9, 0.0 }, { 0.9, 0.9, 0.5 }, false}, // HEAL
+    {{ 0.5, 0.8, 0.5 }, { 0.0, 0.9, 0.0 }, { 0.9, 0.9, 0.5 }, true}, // HEAL
     {{ 1.0, 1.0, 1.0 }, { 0.5, 0.5, 0.5 }, { 0.5, 0.5, 0.5 }, true},  // SPARKLE
     {{ 1.0, 0.3, 0.3 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}, // BLOOD
     {{ 1.0, 0.3, 0.3 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}  // BLOOD_SPLATTER
@@ -154,6 +152,26 @@ static void quick_sort_pg(ParticleGenerator arr[], int low, int high)
 // ===
 
 
+static void print_particle_instance(int effect)
+{
+    ParticleInstance* pi = &particle_instances[effect];
+    ParticleInstanceData* p = &pi->data[0];
+
+    LOGI("Particle Instance %d (Particle Count: %d)",effect, pi->total_particle_count);
+    LOGI("  Example Particle 0:");
+    LOGI("  WVP:");
+    LOGI("   [ %f %f %f %f ]", p->wvp_c1[0], p->wvp_c1[1], p->wvp_c1[2], p->wvp_c1[3]);
+    LOGI("   [ %f %f %f %f ]", p->wvp_c2[0], p->wvp_c2[1], p->wvp_c2[2], p->wvp_c2[3]);
+    LOGI("   [ %f %f %f %f ]", p->wvp_c3[0], p->wvp_c3[1], p->wvp_c3[2], p->wvp_c3[3]);
+    LOGI("   [ %f %f %f %f ]", p->wvp_c4[0], p->wvp_c4[1], p->wvp_c4[2], p->wvp_c4[3]);
+    LOGI("  Texture Offsets:"); 
+    LOGI("   [ %f %f %f %f ]", p->tex_offsets[0], p->tex_offsets[1], p->tex_offsets[2], p->tex_offsets[3]);
+    LOGI("  Color Factors:"); 
+    LOGI("   [ %f %f ]", p->color_factor[0], p->color_factor[1]);
+    LOGI("  Opaqueness:"); 
+    LOGI("   [ %f ]", p->opaqueness);
+}
+
 static int get_particle_generator_by_id(int id)
 {
     if(id < 0)
@@ -168,14 +186,48 @@ static int get_particle_generator_by_id(int id)
     return -1;
 }
 
+static const Vertex2D vertices[] = {
+    {{-0.5, +0.5}, {0.0, 1.0}},
+    {{-0.5, -0.5}, {0.0, 0.0}},
+    {{+0.5, +0.5}, {1.0, 1.0}},
+    {{+0.5, -0.5}, {1.0, 0.0}}
+};
+
 static void gl_init_particles()
 {
+    // VAO
     glGenVertexArrays(1, &particles_vao);
     glBindVertexArray(particles_vao);
 
+    // Quad VBO
+ 	glGenBuffers(1, &quad_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+	glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Vertex2D), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2D), (void*)0);
+    glVertexAttribDivisor(0, 0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2D), (const GLvoid*)8);
+    glVertexAttribDivisor(1, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Instance VBO
  	glGenBuffers(1, &particles_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, particles_vbo);
 	glBufferData(GL_ARRAY_BUFFER, MAX_TOTAL_PARTICLES*PARTICLE_INSTANCE_SIZE, NULL, GL_STREAM_DRAW);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(0*sizeof(float)));
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(4*sizeof(float)));
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(8*sizeof(float)));
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(12*sizeof(float)));
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(16*sizeof(float))); // tex_offsets
+    glVertexAttribDivisor(6, 1);
+    glVertexAttribPointer(7, 2, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(20*sizeof(float))); // color_factor
+    glVertexAttribDivisor(7, 1);
+    glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, sizeof(ParticleInstanceData),(const GLvoid*)(22*sizeof(float))); // opaqueness
+    glVertexAttribDivisor(8, 1);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
@@ -187,12 +239,6 @@ void particles_init()
 
     // load textures
     t_particles = load_texture("textures/particles/particles.png");
-    //t_particle_explosion = load_texture("textures/particles/explosion.png");
-    //t_particle_star = load_texture("textures/particles/star.png");
-    //t_particle_blood = load_texture("textures/particles/blood.png");
-    //t_particle_flame = load_texture("textures/particles/flame.png");
-    //t_particle_radial1 = load_texture("textures/particles/radial1.png");
-    
 }
 
 int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime)
@@ -206,7 +252,7 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
     ParticleGenerator *pg = &particle_generators[particle_generator_count];
     memset(pg, 0, sizeof(ParticleGenerator));
 
-    pg->id = rand();
+    pg->id = id_counter++;
 
     copy_vector(&pg->pos, *pos);
 
@@ -217,8 +263,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
     {
 
         case PARTICLE_EFFECT_FIRE:
-
-            pg->texture = t_particle_flame;
 
             pg->spawn_time_min  = 0.008;
             pg->spawn_time_max  = 0.016;
@@ -233,11 +277,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 1.30;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 0.7; pg->color1_transition = 0.30;
-            pg->color1.x = 0.8; pg->color1.y = 0.1; pg->color1.z = 0.0; pg->color2_transition = 0.60;
-            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
-
-            pg->blend_additive = true;
+            pg->color1_transition = 0.30;
+            pg->color2_transition = 0.60;
 
             pg->tex_offset.x = 0.5;
             pg->tex_offset.y = 0.0;
@@ -245,8 +286,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
 
         case PARTICLE_EFFECT_EXPLOSION:
-
-            pg->texture = t_particle_explosion;
 
             pg->spawn_time_min  = 0.004;
             pg->spawn_time_max  = 0.008;
@@ -261,9 +300,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 1.30;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 0.3; pg->color1_transition = 0.30;
-            pg->color1.x = 0.8; pg->color1.y = 0.1; pg->color1.z = 0.0; pg->color2_transition = 0.60;
-            pg->color2.x = 0.2; pg->color2.y = 0.2; pg->color2.z = 0.2;
+            pg->color1_transition = 0.30;
+            pg->color2_transition = 0.60;
 
             pg->tex_offset.x = 0.0;
             pg->tex_offset.y = 0.0;
@@ -271,8 +309,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
 
         case PARTICLE_EFFECT_HEAL:
-
-            pg->texture = t_particle_star;
 
             pg->spawn_time_min  = 0.005;
             pg->spawn_time_max  = 0.010;
@@ -287,11 +323,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 0.20;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 0.5; pg->color0.y = 0.8; pg->color0.z = 0.5; pg->color1_transition = 0.20;
-            pg->color1.x = 0.0; pg->color1.y = 0.9; pg->color1.z = 0.0; pg->color2_transition = 0.75;
-            pg->color2.x = 0.9; pg->color2.y = 0.9; pg->color2.z = 0.5;
-
-            pg->blend_additive = true;
+            pg->color1_transition = 0.20;
+            pg->color2_transition = 0.75;
 
             pg->tex_offset.x = 0.0;
             pg->tex_offset.y = 0.5;
@@ -299,8 +332,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
 
         case PARTICLE_EFFECT_SPARKLE:
-
-            pg->texture = t_particle_star;
 
             pg->spawn_time_min  = 0.250;
             pg->spawn_time_max  = 0.500;
@@ -316,11 +347,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 0.10;
             pg->particle_opaque_atten = 0.80;
 
-            pg->color0.x = 1.0; pg->color0.y = 1.0; pg->color0.z = 1.0; pg->color1_transition = 0.90;
-            pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5; pg->color2_transition = 0.95;
-            pg->color1.x = 0.5; pg->color1.y = 0.5; pg->color1.z = 0.5;
-
-            pg->blend_additive = true;
+            pg->color1_transition = 0.90;
+            pg->color2_transition = 0.95;
 
             pg->tex_offset.x = 0.0;
             pg->tex_offset.y = 0.5;
@@ -328,8 +356,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
 
         case PARTICLE_EFFECT_BLOOD:
-
-            pg->texture = t_particle_blood;
 
             pg->spawn_time_min  = 0.100;
             pg->spawn_time_max  = 0.200;
@@ -344,9 +370,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 1.40;
             pg->particle_opaque_atten = 0.50;
 
-            pg->color0.x = 1.0; pg->color0.y = 0.3; pg->color0.z = 0.3; pg->color1_transition = 0.30;
-            pg->color1.x = 0.9; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
-            pg->color2.x = 0.5; pg->color2.y = 0.0; pg->color2.z = 0.0;
+            pg->color1_transition = 0.30;
+            pg->color2_transition = 0.60;
 
             pg->tex_offset.x = 0.5;
             pg->tex_offset.y = 0.5;
@@ -354,8 +379,6 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
 
         case PARTICLE_EFFECT_BLOOD_SPLATTER:
-
-            pg->texture = t_particle_radial1;
 
             pg->spawn_time_min  = 0.100;
             pg->spawn_time_max  = 0.200;
@@ -370,9 +393,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->particle_speed_atten = 1.40;
             pg->particle_opaque_atten = 0.30;
 
-            pg->color0.x = 1.0; pg->color0.y = 0.3; pg->color0.z = 0.3; pg->color1_transition = 0.30;
-            pg->color1.x = 0.9; pg->color1.y = 0.0; pg->color1.z = 0.0; pg->color2_transition = 0.60;
-            pg->color2.x = 0.5; pg->color2.y = 0.0; pg->color2.z = 0.0;
+            pg->color1_transition = 0.30;
+            pg->color2_transition = 0.60;
 
             pg->tex_offset.x = 0.5;
             pg->tex_offset.y = 0.5;
@@ -423,9 +445,13 @@ void particle_generator_destroy(int id)
 
 static void gl_update_vbo(ParticleEffect effect)
 {
+    glBindVertexArray(particles_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, particles_vbo);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, particle_instances[effect].total_particle_count*PARTICLE_INSTANCE_SIZE, particle_instances[effect].data);
+    int num_bytes = particle_instances[effect].total_particle_count*PARTICLE_INSTANCE_SIZE*sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, num_bytes, particle_instances[effect].data, GL_STREAM_DRAW);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, num_bytes, particle_instances[effect].data);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void particles_update()
@@ -568,7 +594,6 @@ void particles_update()
 
         for(int j = 0; j < pg->particle_count; ++j)
         {
-
             Particle* p = &pg->particles[j];
 
             float life_factor = (p->life / p->life_max);
@@ -579,12 +604,11 @@ void particles_update()
             float color_factor_1 = MIN(1.0,MAX(0.0,life_factor / pg->color1_transition));
             float color_factor_2 = MIN(1.0,MAX(0.0,(life_factor - pg->color1_transition) / (pg->color2_transition - pg->color1_transition)));
 
+            Vector pos = {-p->phys.pos.x, -p->phys.pos.y, -p->phys.pos.z};
             Vector rot = {0.0,0.0,0.0};
             Vector sca = {scale, scale, scale};
-            Vector pos = {-p->phys.pos.x, -p->phys.pos.y, -p->phys.pos.z};
 
-            Vector norm = {0.0,0.0,1.0};
-
+            //Vector norm = {0.0,0.0,1.0};
             //rotate_toward_point(norm, &p->phys.pos, &player->camera.phys.pos, &rot);
 
             rot.x = player->camera.angle_v;
@@ -597,21 +621,40 @@ void particles_update()
 
             ParticleInstance* pi = &particle_instances[pg->effect];
 
-            memcpy(&pi->data[j].wvp_c1,&wvp.m[0][0],4*sizeof(float));
-            memcpy(&pi->data[j].wvp_c2,&wvp.m[1][0],4*sizeof(float));
-            memcpy(&pi->data[j].wvp_c3,&wvp.m[2][0],4*sizeof(float));
-            memcpy(&pi->data[j].wvp_c4,&wvp.m[3][0],4*sizeof(float));
+            int k = pi->total_particle_count;
+
+            pi->data[k].wvp_c1[0] = wvp.m[0][0];
+            pi->data[k].wvp_c1[1] = wvp.m[1][0];
+            pi->data[k].wvp_c1[2] = wvp.m[2][0];
+            pi->data[k].wvp_c1[3] = wvp.m[3][0];
+
+            pi->data[k].wvp_c2[0] = wvp.m[0][1];
+            pi->data[k].wvp_c2[1] = wvp.m[1][1];
+            pi->data[k].wvp_c2[2] = wvp.m[2][1];
+            pi->data[k].wvp_c2[3] = wvp.m[3][1];
+
+            pi->data[k].wvp_c2[0] = wvp.m[0][2];
+            pi->data[k].wvp_c3[1] = wvp.m[1][2];
+            pi->data[k].wvp_c3[2] = wvp.m[2][2];
+            pi->data[k].wvp_c3[3] = wvp.m[3][2];
+
+            pi->data[k].wvp_c4[0] = wvp.m[0][3];
+            pi->data[k].wvp_c4[1] = wvp.m[1][3];
+            pi->data[k].wvp_c4[2] = wvp.m[2][3];
+            pi->data[k].wvp_c4[3] = wvp.m[3][3];
 
             float offsets[4] = {pg->tex_offset.x,pg->tex_offset.y,0.0,0.0};
-            memcpy(&pi->data[j].tex_offsets,offsets,4*sizeof(float));
-            pi->data[j].color_factor[0] = color_factor_1;
-            pi->data[j].color_factor[1] = color_factor_2;
-            pi->data[j].opaqueness = opaqueness;
+            memcpy(&pi->data[k].tex_offsets,offsets,4*sizeof(float));
+            pi->data[k].color_factor[0] = color_factor_1;
+            pi->data[k].color_factor[1] = color_factor_2;
+            pi->data[k].opaqueness = opaqueness;
 
             pi->total_particle_count++;
         }
     }
 
+    //for(int i = 0; i < PARTICLE_EFFECT_COUNT; ++i)
+    //    print_particle_instance(i);
 }
 
 static void gl_draw_particles(ParticleEffect effect)
@@ -639,10 +682,20 @@ static void gl_draw_particles(ParticleEffect effect)
         shader_set_float(program_particle,"fog_gradient",1.0);
     }
 
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, t_particles);
 
     glBindVertexArray(particles_vao);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
@@ -652,37 +705,6 @@ static void gl_draw_particles(ParticleEffect effect)
     glEnableVertexAttribArray(6);
     glEnableVertexAttribArray(7);
     glEnableVertexAttribArray(8);
-
-    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
-
-    glBindBuffer(GL_ARRAY_BUFFER, particles_vbo);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(0*sizeof(float)));
-    glVertexAttribDivisor(2, 1);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(4*sizeof(float)));
-    glVertexAttribDivisor(3, 1);
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(8*sizeof(float)));
-    glVertexAttribDivisor(4, 1);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(12*sizeof(float)));
-    glVertexAttribDivisor(5, 1);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(16*sizeof(float))); // tex_offsets
-    glVertexAttribDivisor(6, 1);
-    glVertexAttribPointer(7, 2, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(20*sizeof(float))); // color_factor
-    glVertexAttribDivisor(7, 1);
-    glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, PARTICLE_INSTANCE_SIZE,(const GLvoid*)(22*sizeof(float))); // opaqueness
-    glVertexAttribDivisor(8, 1);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
-
-    if(show_wireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
 
     glDrawArraysInstanced(GL_TRIANGLE_STRIP,0,4,particle_instances[effect].total_particle_count);
 

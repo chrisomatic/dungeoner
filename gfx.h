@@ -44,8 +44,6 @@ void gfx_enable_blending_additive();
 void gfx_disable_depth_mask();
 void gfx_enable_depth_mask();
 
-void gfx_add_instanced_attribute(int vao, int vbo, int attribute, int data_size, int instance_size, int offset);
-
 GLuint gfx_create_fbo();
 GLuint gfx_resolve_fbo(GLuint in_fbo, int in_width, int in_height, GLuint out_fbo, int out_width, int out_height);
 GLuint gfx_create_texture_attachment(int width, int height);

@@ -1,8 +1,11 @@
 #version 330 core
 
-layout (location = 0) in vec3 position;
+layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 tex_coord;
 layout (location = 2) in mat4 wvp;
+//layout (location = 3) in vec4 wvp2;
+//layout (location = 4) in vec4 wvp3;
+//layout (location = 5) in vec4 wvp4;
 layout (location = 6) in vec4 tex_offsets;
 layout (location = 7) in vec2 color_factor;
 layout (location = 8) in float opaqueness;
@@ -19,16 +22,19 @@ uniform float fog_gradient;
 
 void main()
 {
-    tex_coord0 = tex_coord;
-    tex_offsets0 = tex_offsets;
+    tex_coord0    = tex_coord;
+    tex_offsets0  = tex_offsets;
     color_factor0 = color_factor;
+    opaqueness0   = opaqueness;
 
-    gl_Position = wvp * vec4(position,1.0);
+    //mat4 wvp = mat4(wvp1, wvp2, wvp3, wvp4);
+
+    gl_Position = wvp * vec4(position,0.0,1.0);
 
     // calculate visibility
     //vec4 position_rel_to_camera = wv*vec4(position,1.0);
 
     //float dist = length(position_rel_to_camera.xyz);
-    visibility = exp(-pow((distance_from_camera*fog_density),fog_gradient));
-    visibility = clamp(visibility, 0.0,1.0);
+    //visibility = exp(-pow((distance_from_camera*fog_density),fog_gradient));
+    visibility = 1.0; //clamp(visibility, 0.0,1.0);
 }
