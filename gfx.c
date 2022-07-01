@@ -22,7 +22,7 @@ int show_collision = 0;
 int show_wireframe = 0;
 int show_fog = 0;
 
-static Vector4f clip_plane;
+Vector4f clip_plane;
 
 static Mesh quad_fullscreen = {};
 static Mesh cube = {};

@@ -12,6 +12,7 @@
 extern int show_collision;
 extern int show_wireframe;
 extern int show_fog;
+extern Vector4f clip_plane;
 
 extern GLuint vao;
 extern Mesh quad;

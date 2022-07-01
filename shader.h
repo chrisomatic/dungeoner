@@ -12,6 +12,7 @@ extern GLuint program_particle;
 extern GLuint program_water;
 extern GLuint program_gui;
 extern GLuint program_postprocess;
+extern GLuint program_coin;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);
