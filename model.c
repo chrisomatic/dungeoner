@@ -171,6 +171,8 @@ bool model_import(Model* ret_model, const char* obj_filepath)
         //printf(" %d %d %d %d %d %d\n",indices[i+0], indices[i+1], indices[i+2], indices[i+3], indices[i+4], indices[i+5]);
         printf(" %d %d %d\n",indices[i+0], indices[i+1], indices[i+2]);
     }
+
+    }
     */
 
     fclose(fp);

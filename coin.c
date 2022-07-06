@@ -19,8 +19,6 @@
 CoinPile coin_piles[MAX_COIN_PILES] = {0};
 int coin_pile_count = 0;
 
-static Model m_coin;
-
 typedef struct
 {
     Matrix world;
@@ -37,7 +35,7 @@ typedef struct
     Vector3f normal;
 } VertexSimple;
 
-static VertexSimple coin_mesh[] =  {
+static VertexSimple coin_vertices[] =  {
     {{ +0.000000, -0.100000, -0.500000}, { +0.3090, +0.0000, -0.9511 }},
     {{ +0.000000, +0.100000, -0.500000}, { +0.8090, +0.0000, -0.5878 }},
     {{ +0.293893, -0.100000, -0.404509}, { +1.0000, +0.0000, +0.0000 }},
@@ -60,8 +58,18 @@ static VertexSimple coin_mesh[] =  {
     {{ -0.293893, +0.100000, -0.404508}, { +0.0000, +0.0000, +0.0000 }}
 };
 
+static uint32_t coin_indices[] = {
+    1,2,0,3,4,2,5,6,4,7,8,6,9,10,8,11,12,10,
+    13,14,12,15,16,14,1,17,9,17,18,16,19,0,18,
+    6,14,18,1,3,2,3,5,4,5,7,6,7,9,8,9,11,10,11,13,
+    12,13,15,14,15,17,16,5,3,1,1,19,17,17,15,13,13,
+    11,17,11,9,17,9,7,5,5,1,9,17,19,18,19,1,0,18,0,
+    2,2,4,18,4,6,18,6,8,10,10,12,14,14,16,18,6,10,14
+};
+
 static GLuint coin_vao;
 static GLuint coin_vbo;
+static GLuint coin_ibo;
 static GLuint instance_vbo;
 
 void coin_destroy_pile(int index)
@@ -87,15 +95,19 @@ static void gl_init_coin()
     // Coin Positions / Normals
  	glGenBuffers(1, &coin_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, coin_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(coin_mesh), coin_mesh, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(coin_vertices)*sizeof(VertexSimple), coin_vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSimple), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSimple), (const GLvoid*)(4*sizeof(float)));
+
+    glGenBuffers(1,&coin_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, coin_ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(coin_indices)*sizeof(uint32_t), coin_indices, GL_STATIC_DRAW);
     
     // Instance VBO
  	glGenBuffers(1, &instance_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
 	glBufferData(GL_ARRAY_BUFFER, MAX_COINS*sizeof(CoinInstance), NULL, GL_STREAM_DRAW);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(0*sizeof(float)));
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(0));
     glVertexAttribDivisor(2, 1);
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(4*sizeof(float)));
     glVertexAttribDivisor(3, 1);
@@ -120,24 +132,14 @@ static void gl_init_coin()
     glVertexAttribPointer(13, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(44*sizeof(float)));
     glVertexAttribDivisor(13, 1);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void coin_init()
 {
-    model_import(&m_coin,"models/coin.obj");
-    m_coin.reflectivity = 0.8;
-
-    // gold color
-    m_coin.base_color.x = 0.54;
-    m_coin.base_color.y = 0.43;
-    m_coin.base_color.z = 0.03;
-    
-    // silver color
-    //m_coin.base_color.x = 0.50;
-    //m_coin.base_color.y = 0.50;
-    //m_coin.base_color.z = 0.50;
+    gl_init_coin();
 }
 
 void coin_spawn_pile(float x, float y, float z, int value)
@@ -226,13 +228,22 @@ void coin_update_piles()
         copy_vector(&cp->pos,avg_pos);
         particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y + 0.25, cp->pos.z);
     }
+
+    if(total_coin_count > 0)
+    {
+        CoinInstance* ci = &coin_instances[0];
+        print_matrix(&ci->world);
+        print_matrix(&ci->view);
+        print_matrix(&ci->proj);
+    }
+
 }
 
 static void gl_update_instance_vbo()
 {
     glBindVertexArray(coin_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-    int num_bytes = MAX_COINS*sizeof(CoinInstance)*sizeof(float);
+    int num_bytes = MAX_COINS*sizeof(CoinInstance);
 	glBufferData(GL_ARRAY_BUFFER, num_bytes, coin_instances, GL_STREAM_DRAW);
 	//glBufferSubData(GL_ARRAY_BUFFER, 0, num_bytes, particle_instances[effect].data);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -253,7 +264,7 @@ static void gl_draw_coins()
     shader_set_float(program_coin,"dl.ambient_intensity",sunlight.base.ambient_intensity);
     shader_set_float(program_coin,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
     shader_set_float(program_coin,"shine_damper",4.0);
-    shader_set_float(program_coin,"reflectivity",m_coin.reflectivity);
+    shader_set_float(program_coin,"reflectivity",1.0);
     shader_set_vec3(program_coin,"model_color",COIN_COLOR_R, COIN_COLOR_G, COIN_COLOR_B);
 
     if(show_fog)
@@ -292,9 +303,8 @@ static void gl_draw_coins()
     glEnableVertexAttribArray(11);
     glEnableVertexAttribArray(12);
     glEnableVertexAttribArray(13);
-    glEnableVertexAttribArray(14);
 
-    glDrawArraysInstanced(GL_TRIANGLE_STRIP,0,m_coin.mesh.vertex_count,total_coin_count);
+    glDrawElementsInstanced(GL_TRIANGLES,sizeof(coin_indices),GL_UNSIGNED_INT,0, total_coin_count);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -310,7 +320,6 @@ static void gl_draw_coins()
     glDisableVertexAttribArray(11);
     glDisableVertexAttribArray(12);
     glDisableVertexAttribArray(13);
-    glDisableVertexAttribArray(14);
 
     glBindVertexArray(0);
     glUseProgram(0);

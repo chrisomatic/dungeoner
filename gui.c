@@ -60,8 +60,8 @@ static void draw_stats()
 {
     gfx_enable_blending();
     gltBeginDraw();
-    gltColor(0.54f, 0.43f, 0.03f, 1.0f);
-    gltDrawText2D(gold, 0.0, view_height - 30.0, 2.0);
+    gltColor(0.84f, 0.73f, 0.10f, 1.0f);
+    gltDrawText2D(gold, 2.0, view_height - 32.0, 2.0);
     gltEndDraw();
     gfx_disable_blending();
 }
