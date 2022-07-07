@@ -150,6 +150,39 @@ bool model_import(Model* ret_model, const char* obj_filepath)
     }
 
     LOGI("Imported model: %s (verts: %d, indices: %d)", obj_filepath, vertex_count, index_count);
+    
+#if 1
+    if(strcmp(obj_filepath, "models/coin.obj") == 0)
+    {
+        printf("Vertices (%d):\n", vertex_count);
+        for(int i = 0; i < vertex_count; ++i)
+        {
+            printf("  %f %f %f\n",vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+        }
+
+        printf("Normals (%d):\n", vertex_count);
+        for(int i = 0; i < vertex_count; ++i)
+        {
+            printf("  %f %f %f\n",vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+        }
+
+        printf("Tex Coords (%d):\n", tex_coord_count);
+        for(int i = 0; i < tex_coord_count; ++i)
+        {
+            printf("  %f %f\n",vertices[i].tex_coord.x, vertices[i].tex_coord.y);
+        }
+
+        printf("\n");
+        printf("Indices (%d):\n", index_count);
+        for(int i = 0; i < index_count; i +=3)
+        {
+            //printf(" %d %d %d %d %d %d\n",indices[i+0], indices[i+1], indices[i+2], indices[i+3], indices[i+4], indices[i+5]);
+            printf(" %d %d %d\n",indices[i+0], indices[i+1], indices[i+2]);
+        }
+
+    }
+
+#endif
 
     /*
     printf("Vertices (%d):\n", vertex_count);

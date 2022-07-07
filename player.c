@@ -99,7 +99,7 @@ static void handle_collisions(Vector3f p0)
     {
         CoinPile* cp = &coin_piles[i];
         float dsq = dist_squared(&player->phys.pos, &cp->pos);
-        if(dsq <= 0.25)
+        if(dsq <= 0.40)
         {
             player->gold += cp->value;
             gui_update_stats();
