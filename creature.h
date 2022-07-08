@@ -1,5 +1,6 @@
 #pragma once
 
+#define MAX_CREATURE_GROUPS 100
 #define MAX_CREATURES 1000
 
 typedef enum
@@ -23,6 +24,11 @@ typedef enum
 
 typedef struct
 {
+    int size;
+} CreatureGroup;
+
+typedef struct
+{
     PhysicsObj phys;
     Model model;
     float rot_y_target;
@@ -31,19 +37,24 @@ typedef struct
     float hp;
     float hp_max;
 
+    int min_gold;
+    int max_gold;
+
     Action action;
     // ai?
     float action_time;
     float action_time_max;
 
     Zone* zone;
+    CreatureGroup* group;
 
 } Creature;
 
 extern Creature creatures[MAX_CREATURES];
 extern int creature_count;
 
-void creature_spawn(Zone* zone, CreatureType type);
+void creature_spawn(Zone* zone, CreatureType type, CreatureGroup* group);
+void creature_spawn_group(Zone* zone, CreatureType type, int size);
 void creature_update();
 void creature_draw();
 void creature_hurt(int index, float damage);

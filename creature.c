@@ -15,6 +15,9 @@
 Creature creatures[MAX_CREATURES] = {0};
 int creature_count = 0;
 
+CreatureGroup creature_groups[MAX_CREATURE_GROUPS] = {0};
+int creature_group_count = 0;
+
 static void remove_creature(int index)
 {
     if(index < 0 || index >= creature_count)
@@ -39,11 +42,10 @@ static void update_lookat(Creature* c)
 static void choose_random_direction(Creature* c)
 {
     c->rot_y_target = (rand() % 360) - 180.0;
-
     update_lookat(c);
 }
 
-void creature_spawn(Zone* zone, CreatureType type)
+void creature_spawn(Zone* zone, CreatureType type, CreatureGroup* group)
 {
     if(creature_count >= MAX_CREATURES)
     {
@@ -53,11 +55,14 @@ void creature_spawn(Zone* zone, CreatureType type)
 
     Creature* c = &creatures[creature_count];
 
-    float zone_len_x = zone->x1 - zone->x0;
-    float zone_len_z = zone->z1 - zone->z0;
+    int zone_len_x = zone->x1 - zone->x0;
+    int zone_len_z = zone->z1 - zone->z0;
 
-    float x = ((rand() % ((int)zone_len_x*100)) - (zone_len_x*50)) / 100.0;
-    float z = ((rand() % ((int)zone_len_z*100)) - (zone_len_z*50)) / 100.0;
+    float x = (rand() % zone_len_x) + zone->x0;
+    float z = (rand() % zone_len_z) + zone->z0;
+    
+    //float x = ((rand() % ((int)zone_len_x*100)) - (zone_len_x*50)) / 100.0;
+    //float z = ((rand() % ((int)zone_len_z*100)) - (zone_len_z*50)) / 100.0;
 
     bool is_gold = ((rand() % 50) == 0);
 
@@ -90,6 +95,19 @@ void creature_spawn(Zone* zone, CreatureType type)
             c->hp = 10.0;
             c->hp_max = 10.0;
 
+            c->group = group;
+
+            if(is_gold)
+            {
+                c->min_gold = 1000;
+                c->max_gold = 5000;
+            }
+            else
+            {
+                c->min_gold = 10;
+                c->max_gold = 100;
+            }
+
             choose_random_direction(c);
 
             break;
@@ -98,6 +116,21 @@ void creature_spawn(Zone* zone, CreatureType type)
     }
 
     creature_count++;
+}
+
+void creature_spawn_group(Zone* zone, CreatureType type, int size)
+{
+    // create new group
+
+    CreatureGroup* group = &creature_groups[creature_group_count++];
+    group->size = size;
+
+    // add creatures to group
+    for(int i = 0; i < size; ++i)
+    {
+        creature_spawn(zone, type, group);
+    }
+
 }
 
 static void creature_update_model_transform(Creature* c)
@@ -109,6 +142,38 @@ static void creature_update_model_transform(Creature* c)
     get_model_transform(&pos,&rot,&sca,&c->model.transform);
 }
 
+static float get_group_distance(Creature* c, Vector3f* avg_pos)
+{
+    int group_count = 0;
+    for(int i = 0; i < creature_count; ++i)
+    {
+        Creature* a = &creatures[i];
+
+        if(a == c)
+            continue;
+
+        if(a->group == c->group)
+        {
+            avg_pos->x += a->phys.pos.x;
+            avg_pos->y += a->phys.pos.y;
+            avg_pos->z += a->phys.pos.z;
+
+            group_count++;
+        }
+    }
+
+    if(group_count == 0)
+        return 0.0;
+
+    avg_pos->x /= group_count;
+    avg_pos->y /= group_count;
+    avg_pos->z /= group_count;
+
+    return dist_squared(avg_pos, &c->phys.pos);
+
+}
+
+
 void creature_update()
 {
     for(int i = creature_count-1; i >= 0; --i)
@@ -118,12 +183,40 @@ void creature_update()
         if(c->hp <= 0.0)
         {
             // die
-            int coin_value = (rand() % 90) + 10;
+            int coin_value = (rand() % (c->max_gold - c->min_gold)) + c->min_gold;
             
             coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
             particles_create_generator_xyz(c->phys.pos.x, c->phys.pos.y+0.5, c->phys.pos.z, PARTICLE_EFFECT_BLOOD_SPLATTER, 0.25);
             remove_creature(i);
             continue;
+        }
+
+        if(c->group != NULL)
+        {
+            Vector3f avg_pos = {0};
+            float dist = get_group_distance(c, &avg_pos);
+
+            if(dist >= 10.0)
+            {
+                // go toward group
+                Vector3f dir = {
+                    avg_pos.x - c->phys.pos.x,
+                    0.0,
+                    avg_pos.z - c->phys.pos.z
+                };
+                normalize(&dir);
+
+                Vector3f axis = {-1.0,0.0,0.0};
+                float angle = get_angle_between_vectors_rad(&dir, &axis);
+                angle = DEG(angle);
+
+                //printf("pos %f %f %f (dist: %f, angle: %f)!\n", c->phys.pos.x, c->phys.pos.y, c->phys.pos.z, dist, angle);
+
+                c->rot_y_target = angle;
+                update_lookat(c);
+                //c->action = ACTION_MOVE_FORWARD;
+                //c->action_time = 0.0;
+            }
         }
 
         c->action_time += g_delta_t;
@@ -146,7 +239,11 @@ void creature_update()
                 case ACTION_MOVE_FORWARD:
                     break;
                 case ACTION_CHOOSE_DIRECTION:
-                    choose_random_direction(c);
+                    {
+                        choose_random_direction(c);
+
+                    }
+                    
                     break;
                 default:
                     break;

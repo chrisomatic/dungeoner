@@ -244,15 +244,9 @@ void init()
     LOGI(" - Creatures.");
 
     // <TEMP>
-    int terrain_length = 32;
-    float terrain_length_half = terrain_length / 2.0;
-
-    for(int i = 0; i < 100; ++i)
+    for(int i = 0; i < 1; ++i)
     {
-        float x = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
-        float z = ((rand() % (terrain_length*100)) - (terrain_length_half*100)) / 100.0;
-
-        creature_spawn(&rat_zone,CREATURE_TYPE_RAT);
+        creature_spawn_group(&rat_zone,CREATURE_TYPE_RAT, 100);
     }
 
     particles_create_generator_xyz(-90.0,21.0,179.0,PARTICLE_EFFECT_HEAL, 0.0);
