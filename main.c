@@ -30,6 +30,7 @@
 #include "boat.h"
 #include "creature.h"
 #include "weapon.h"
+#include "portal.h"
 
 // =========================
 // Global Vars
@@ -241,12 +242,15 @@ void init()
     rat_zone.x0 = -120.0; rat_zone.x1 = -90.0;
     rat_zone.z0 = 150.0; rat_zone.z1 = 180.0;
 
+    LOGI(" - Portals.");
+    portal_init();
+
     LOGI(" - Creatures.");
 
     // <TEMP>
-    for(int i = 0; i < 1; ++i)
+    for(int i = 0; i < 100; ++i)
     {
-        creature_spawn_group(&rat_zone,CREATURE_TYPE_RAT, 100);
+        creature_spawn_group(&rat_zone,CREATURE_TYPE_RAT, 1);
     }
 
     particles_create_generator_xyz(-90.0,21.0,179.0,PARTICLE_EFFECT_HEAL, 0.0);
@@ -361,6 +365,7 @@ void render_scene()
     coin_draw_piles();
     projectile_draw();
     particles_draw();
+    portal_draw();
 }
 
 void render()

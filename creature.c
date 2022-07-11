@@ -74,6 +74,7 @@ void creature_spawn(Zone* zone, CreatureType type, CreatureGroup* group)
         case CREATURE_TYPE_RAT:
 
             c->model.texture = t_rat;
+            c->state = CREATURE_STATE_PASSIVE;
 
             c->phys.pos.x = x;
             c->phys.pos.y = ground.height; // @NEG
@@ -173,6 +174,59 @@ static float get_group_distance(Creature* c, Vector3f* avg_pos)
 
 }
 
+static void ai_pursue(Creature* c)
+{
+    Vector3f diff = 
+    {
+        c->target->phys.pos.x - c->phys.pos.x,
+        0.0,
+        c->target->phys.pos.z - c->phys.pos.z
+    };
+
+    normalize(&diff);
+
+    Vector3f axis = {-1.0,0.0,0.0};
+    float angle = get_angle_between_vectors_rad(&diff, &axis);
+    angle = DEG(angle);
+
+    Vector3f a2 = {0.0,0.0,-1.0};
+    float d = dot(a2,diff);
+
+    if(d < 0.0)
+        angle = (180.0 - angle) - 180.0;
+
+    //printf("pursue angle: %f degrees, dot: %f\n", angle, d);
+
+    c->rot_y_target = angle;
+    update_lookat(c);
+
+    c->action = ACTION_MOVE_FORWARD;
+}
+
+static void ai_wander(Creature* c)
+{
+    //make a new decision
+    int d = rand() % 10;
+    if(d <= 4)
+        c->action = ACTION_MOVE_FORWARD;
+    else if(d <= 8)
+        c->action = ACTION_CHOOSE_DIRECTION;
+    else if(d <= 9)
+        c->action = ACTION_NONE;
+
+    switch(c->action)
+    {
+        case ACTION_NONE:
+            break;
+        case ACTION_MOVE_FORWARD:
+            break;
+        case ACTION_CHOOSE_DIRECTION:
+            choose_random_direction(c);
+            break;
+        default:
+            break;
+    }
+}
 
 void creature_update()
 {
@@ -180,6 +234,7 @@ void creature_update()
     {
         Creature* c = &creatures[i];
 
+        // handle death
         if(c->hp <= 0.0)
         {
             // die
@@ -191,6 +246,8 @@ void creature_update()
             continue;
         }
 
+        // handle group logic
+#if 0
         if(c->group != NULL)
         {
             Vector3f avg_pos = {0};
@@ -218,39 +275,26 @@ void creature_update()
                 //c->action_time = 0.0;
             }
         }
+#endif
 
         c->action_time += g_delta_t;
 
         if(c->action_time >= c->action_time_max)
         {
-            //make a new decision
-            int d = rand() % 10;
-            if(d <= 4)
-                c->action = ACTION_MOVE_FORWARD;
-            else if(d <= 8)
-                c->action = ACTION_CHOOSE_DIRECTION;
-            else if(d <= 9)
-                c->action = ACTION_NONE;
-
-            switch(c->action)
+            // do action
+            switch(c->state)
             {
-                case ACTION_NONE:
+                case CREATURE_STATE_PASSIVE:
+                    ai_wander(c);
+                    c->action_time_max = (rand() % 3) + 1.0;
                     break;
-                case ACTION_MOVE_FORWARD:
+                case CREATURE_STATE_AGGRESSIVE:
+                    ai_pursue(c);
+                    c->action_time_max = 0.0;
                     break;
-                case ACTION_CHOOSE_DIRECTION:
-                    {
-                        choose_random_direction(c);
 
-                    }
-                    
-                    break;
-                default:
-                    break;
             }
-
             c->action_time = 0.0;
-            c->action_time_max = (rand() % 3) + 1.0;
         }
 
         if(c->rot_y != c->rot_y_target)
@@ -285,34 +329,40 @@ void creature_update()
         physics_simulate(&c->phys);
 
         // keep in zone
-        bool bounce = false;
+        bool hit_edge = false;
 
         if(c->phys.pos.x < c->zone->x0){
             c->phys.pos.x = c->zone->x0;
-            bounce = true;
+            hit_edge = true;
         }
         else if(c->phys.pos.x > c->zone->x1){
             c->phys.pos.x = c->zone->x1;
-            bounce = true;
+            hit_edge = true;
         }
 
         if(c->phys.pos.z < c->zone->z0){
             c->phys.pos.z = c->zone->z0;
-            bounce = true;
+            hit_edge = true;
         }
         else if(c->phys.pos.z > c->zone->z1){
             c->phys.pos.z = c->zone->z1;
-            bounce = true;
+            hit_edge = true;
         }
 
-        if(bounce)
+        if(hit_edge)
         {
+            c->action_time = c->action_time_max;
+#if 0
+
             c->rot_y_target += 180.0;
 
             c->phys.vel.x *= -1.0;
             c->phys.vel.z *= -1.0;
 
             update_lookat(c);
+
+#endif
+
         }
 
         creature_update_model_transform(c);
@@ -368,7 +418,7 @@ void creature_draw()
     }
 }
 
-void creature_hurt(int index, float damage)
+void creature_hurt(Player* player, int index, float damage)
 {
     creatures[index].hp -= damage;
 
@@ -377,6 +427,14 @@ void creature_hurt(int index, float damage)
         creatures[index].phys.pos.y + creatures[index].phys.height + 0.5,
         creatures[index].phys.pos.z
     };
+
     particles_create_generator(&blood_pos, PARTICLE_EFFECT_BLOOD, 0.25);
+
+    if(creatures[index].state == CREATURE_STATE_PASSIVE)
+    {
+        creatures[index].state = CREATURE_STATE_AGGRESSIVE;
+        creatures[index].target = player;
+        creatures[index].action_time = creatures[index].action_time_max;
+    }
     
 }

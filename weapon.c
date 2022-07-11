@@ -138,7 +138,6 @@ void weapon_update(Weapon* w, PlayerState* s)
 
     if(*s == PLAYER_STATE_ATTACK)
     {
-
         for(int i = 0; i < creature_count; ++i)
         {
             CollisionVolume* c = &creatures[i].model.collision_vol;
@@ -147,7 +146,7 @@ void weapon_update(Weapon* w, PlayerState* s)
             {
                 if(!collision_is_in_hurt_list(p,c))
                 {
-                    creature_hurt(i,w->damage);
+                    creature_hurt(player, i,w->damage);
                     collision_add_to_hurt_list(p,c);
 
                     // @TODO: Fix knockback

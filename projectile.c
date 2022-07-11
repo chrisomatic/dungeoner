@@ -165,7 +165,7 @@ void projectile_update()
                         //mult(&blast_v, 20.0*falloff);
 
                         add(&creatures[j].phys.vel,blast_v);
-                        creature_hurt(j,damage_dealt);
+                        creature_hurt(projectiles[i].player, j, damage_dealt);
 
                         //printf("Creature %d was in blast radius! falloff: %f\n", j, falloff);
 

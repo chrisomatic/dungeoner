@@ -15,6 +15,7 @@ gcc entity.c \
     player.c \
     particles.c \
     projectile.c \
+    portal.c \
     shader.c \
     terrain.c \
     text.c \
