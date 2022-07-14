@@ -3,9 +3,6 @@
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 tex_coord;
 layout (location = 2) in mat4 wvp;
-//layout (location = 3) in vec4 wvp2;
-//layout (location = 4) in vec4 wvp3;
-//layout (location = 5) in vec4 wvp4;
 layout (location = 6) in vec4 tex_offsets;
 layout (location = 7) in vec2 color_factor;
 layout (location = 8) in float opaqueness;
@@ -26,8 +23,6 @@ void main()
     tex_offsets0  = tex_offsets;
     color_factor0 = color_factor;
     opaqueness0   = opaqueness;
-
-    //mat4 wvp = mat4(wvp1, wvp2, wvp3, wvp4);
 
     gl_Position = wvp * vec4(position,0.0,1.0);
 

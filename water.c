@@ -74,7 +74,7 @@ void water_draw_textures()
     {
         gfx_enable_clipping(0,1,0,water_height);
     }
-    render_scene();
+    render_scene(true);
 
     player->camera.phys.pos.y += distance;
     player->camera.angle_v = temp_angle;
@@ -90,7 +90,7 @@ void water_draw_textures()
     {
         gfx_enable_clipping(0,-1,0,-water_height);
     }
-    render_scene();
+    render_scene(false);
 
     gfx_disable_clipping();
 

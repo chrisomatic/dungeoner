@@ -13,6 +13,7 @@ extern GLuint program_water;
 extern GLuint program_gui;
 extern GLuint program_postprocess;
 extern GLuint program_coin;
+extern GLuint program_portal;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);
@@ -25,5 +26,5 @@ void shader_set_vec3(GLuint program, const char* name, float x, float y, float z
 void shader_set_vec4(GLuint program, const char* name, float x, float y, float z, float w);
 void shader_set_mat4(GLuint program, const char* name, Matrix* mat);
 
-void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane);
+void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane, bool flip_texture_vertically);
 void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f* clip_plane);

@@ -542,9 +542,9 @@ void player_update()
     }
 }
 
-void player_draw()
+void player_draw(bool reflection)
 {
-    if(player->camera.mode == CAMERA_MODE_THIRD_PERSON || player->spectator)
+    if(player->camera.mode == CAMERA_MODE_THIRD_PERSON || player->spectator || reflection)
     {
         gfx_draw_model(&player->model);
         //gfx_draw_model(&m_arrow);

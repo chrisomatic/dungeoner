@@ -34,4 +34,4 @@ extern Model m_wall;
 extern float fog_density;
 extern float fog_gradient;
 
-void render_scene();
+void render_scene(bool reflection);

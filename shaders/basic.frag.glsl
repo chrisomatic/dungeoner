@@ -21,6 +21,7 @@ uniform DirectionalLight dl;
 uniform int wireframe;
 uniform vec3 sky_color;
 uniform vec3 model_color;
+uniform int flip_texture_vertically;
 
 uniform float shine_damper;
 uniform float reflectivity;
@@ -67,7 +68,14 @@ void main()
         }
         else
         {
-            base_color = texture2D(sampler,tex_coord0.xy);
+            if(flip_texture_vertically == 1)
+            {
+                base_color = texture2D(sampler,vec2(tex_coord0.x, -tex_coord0.y));
+            }
+            else
+            {
+                base_color = texture2D(sampler,tex_coord0.xy);
+            }
         }
 
         vec4 out_color = base_color*(ambient_color + diffuse_color + vec4(final_specular,1.0));

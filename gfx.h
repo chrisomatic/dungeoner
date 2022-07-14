@@ -24,7 +24,7 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, V
 void gfx_draw_model(Model* model);
 void gfx_draw_model_custom_transform(Model* model, Matrix* transform);
 
-void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca);
+void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca, bool flip_texture_vertically);
 void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* sca);
 void gfx_draw_post_process_quad(GLuint texture, Vector* color, Vector2f* pos, Vector2f* sca);
 void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, bool wireframe);

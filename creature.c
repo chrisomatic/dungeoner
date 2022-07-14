@@ -407,13 +407,13 @@ void creature_draw()
             };
 
             Vector3f pos_bg = {pos.x + bg_offset.x, pos.y + bg_offset.y, pos.z + bg_offset.z};
-            gfx_draw_quad(0,&color_bg,&pos_bg,&rot,&sca);
+            gfx_draw_quad(0,&color_bg,&pos_bg,&rot,&sca, false);
 
             float pct = c->hp / c->hp_max;
             sca.x *= pct; 
             sca.z *= pct;
 
-            gfx_draw_quad(0,&color,&pos,&rot,&sca);
+            gfx_draw_quad(0,&color,&pos,&rot,&sca, false);
         }
     }
 }

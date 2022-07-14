@@ -351,7 +351,7 @@ void simulate()
 
 }
 
-void render_scene()
+void render_scene(bool reflection)
 {
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -359,13 +359,12 @@ void render_scene()
     gfx_draw_sky();
     terrain_draw();
     gfx_draw_model(&m_wall); // @TEST
-    player_draw();
+    player_draw(reflection);
     creature_draw();
     boat_draw();
-    coin_draw_piles();
     projectile_draw();
+    coin_draw_piles();
     particles_draw();
-    portal_draw();
 }
 
 void render()
@@ -377,10 +376,12 @@ void render()
 
     fog_density = in_water ? 0.04 : 0.01;
     water_draw_textures();
+    portal_update();
 
     gfx_bind_frame_buffer(frame_buffer_ms,STARTING_VIEW_WIDTH,STARTING_VIEW_HEIGHT);
-    render_scene();
+    render_scene(false);
     water_draw();
+    portal_draw();
     gfx_unbind_frame_current_buffer();
     gfx_resolve_fbo(frame_buffer_ms, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 

@@ -422,7 +422,7 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, V
 {
     glUseProgram(program_basic);
 
-    shader_set_variables(program_basic,pos,rot,sca,&clip_plane);
+    shader_set_variables(program_basic,pos,rot,sca,&clip_plane, false);
 
     if(texture)
     {
@@ -471,11 +471,11 @@ void gfx_draw_mesh(Mesh* mesh, GLuint texture, Vector3f *color, Vector3f *pos, V
     glUseProgram(0);
 }
 
-void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca)
+void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vector* sca, bool flip_texture_vertically)
 {
     glUseProgram(program_basic);
 
-    shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
+    shader_set_variables(program_basic,pos,rot,sca, &clip_plane, flip_texture_vertically);
 
     if(texture)
     {
@@ -679,7 +679,7 @@ void gfx_draw_cube(GLuint texture, Vector3f* pos, Vector3f* rot, Vector3f* sca, 
 {
     glUseProgram(program_basic);
 
-    shader_set_variables(program_basic,pos,rot,sca, &clip_plane);
+    shader_set_variables(program_basic,pos,rot,sca, &clip_plane, false);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);

@@ -24,6 +24,7 @@ GLuint program_water;
 GLuint program_gui;
 GLuint program_postprocess;
 GLuint program_coin;
+GLuint program_portal;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
@@ -39,6 +40,7 @@ void shader_load_all()
     shader_build_program(&program_gui,"shaders/gui.vert.glsl","shaders/gui.frag.glsl");
     shader_build_program(&program_postprocess,"shaders/postprocess.vert.glsl","shaders/postprocess.frag.glsl");
     shader_build_program(&program_coin,"shaders/coin.vert.glsl","shaders/coin.frag.glsl");
+    shader_build_program(&program_portal,"shaders/portal.vert.glsl","shaders/portal.frag.glsl");
 }
 
 void shader_deinit()
@@ -53,6 +55,7 @@ void shader_deinit()
     glDeleteProgram(program_gui);
     glDeleteProgram(program_postprocess);
     glDeleteProgram(program_coin);
+    glDeleteProgram(program_portal);
 }
 
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path)
@@ -110,6 +113,7 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
 
         shader_set_float(program,"dl.ambient_intensity",sunlight.base.ambient_intensity);
         shader_set_float(program,"dl.diffuse_intensity",sunlight.base.diffuse_intensity);
+        shader_set_int(program,"flip_texture_vertically",0);
 
         shader_set_vec3(program_basic,"model_color",0.0, 0.0, 0.0);
 
@@ -128,7 +132,7 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
 
 }
 
-void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane)
+void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane, bool flip_texture_vertically)
 {
     Matrix world, view, proj, wv, wvp;
     get_transforms(pos, rot, sca, &world, &view, &proj);
@@ -148,6 +152,7 @@ void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca,
         shader_set_vec3(program,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
         shader_set_vec3(program,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);
         shader_set_vec3(program,"player_position",player->phys.pos.x, player->phys.pos.y, player->phys.pos.z);
+        shader_set_int(program,"flip_texture_vertically",flip_texture_vertically ? 1 : 0);
 
         if(clip_plane)
             shader_set_vec4(program,"clip_plane",clip_plane->x, clip_plane->y, clip_plane->z, clip_plane->w);
