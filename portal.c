@@ -11,24 +11,11 @@
 #include "light.h"
 #include "portal.h"
 
-#define PORTAL_WIDTH  320
-#define PORTAL_HEIGHT 1024
-
 typedef enum
 {
     PORTAL_DOOR_A,
     PORTAL_DOOR_B,
 } PortalDoorType;
-
-typedef struct
-{
-    GLuint frame_buffer;
-    GLuint texture;
-    GLuint depth_buffer;
-} PortalData;
-
-PortalData portal_data_a;
-PortalData portal_data_b;
 
 typedef struct
 {
@@ -78,14 +65,6 @@ void portal_init()
 {
     gl_portal_init();
 
-    portal_data_a.frame_buffer = gfx_create_fbo();
-    portal_data_a.texture = gfx_create_texture_attachment(PORTAL_WIDTH, PORTAL_HEIGHT);
-    portal_data_a.depth_buffer = gfx_create_depth_buffer(PORTAL_WIDTH, PORTAL_HEIGHT, false);
-
-    portal_data_b.frame_buffer = gfx_create_fbo();
-    portal_data_b.texture      = gfx_create_texture_attachment(PORTAL_WIDTH, PORTAL_HEIGHT);
-    portal_data_b.depth_buffer = gfx_create_depth_buffer(PORTAL_WIDTH, PORTAL_HEIGHT, false);
-
     GroundInfo ground;
 
     main_portal.a.pos.x = -91.0;
@@ -100,15 +79,10 @@ void portal_init()
     main_portal.b.pos.y = ground.height;
     main_portal.b.angle = 45.0;
 
-    //print_matrix(&main_portal.b.wvp);
-    //print_matrix(&main_portal.a.wvp);
 }
 
-static void update_portal(PortalDoor* portal)
+static void update_virtual_camera(PortalDoor* portal)
 {
-    GLuint frame_buffer = (portal == &main_portal.a ? portal_data_a.frame_buffer : portal_data_b.frame_buffer);
-    gfx_bind_frame_buffer(frame_buffer,PORTAL_WIDTH, PORTAL_HEIGHT);
-
     PortalDoor* dest_portal = (portal == &main_portal.a ? &main_portal.b : &main_portal.a);
 
     Vector3f ray = {
@@ -118,46 +92,20 @@ static void update_portal(PortalDoor* portal)
     };
 
     Vector3f new_pos = {
-        dest_portal->pos.x + ray.x,
-        dest_portal->pos.y + ray.y + 1.5,
-        dest_portal->pos.z + ray.z
+        dest_portal->pos.x - ray.x,
+        dest_portal->pos.y - ray.y + 1.5,
+        dest_portal->pos.z - ray.z
     };
 
     player->camera.phys.pos.x = new_pos.x;
     player->camera.phys.pos.y = new_pos.y;
     player->camera.phys.pos.z = new_pos.z;
 
-    normalize(&ray);
-    mult(&ray,-1.0);
+    player->camera.angle_h += (180.0-portal->angle);
 
-    player->camera.lookat.x = ray.x;
-    player->camera.lookat.y = ray.y;
-    player->camera.lookat.z = ray.z;
+    update_camera_rotation();
 
-#if 0
-
-    // line camera up to look out of portal
-    Vector3f ray = {
-        player->phys.pos.x - portal->pos.x,
-        player->phys.pos.y - portal->pos.y,
-        player->phys.pos.z - portal->pos.z
-    };
-    normalize(&ray);
-
-    //printf("p: %f %f %f, portal: %f %f %f, ray: %f %f %f\n", player->phys.pos.x, player->phys.pos.y, player->phys.pos.z, main_portal.a.pos.x, main_portal.a.pos.y, main_portal.a.pos.z, ray.x,ray.y,ray.z);
-
-    player->camera.phys.pos.x = dest_portal->pos.x;
-    player->camera.phys.pos.y = dest_portal->pos.y + 1.5;
-    player->camera.phys.pos.z = dest_portal->pos.z;
-
-    player->camera.lookat.x = ray.x;
-    player->camera.lookat.y = ray.y;
-    player->camera.lookat.z = ray.z;
-
-    // rotate lookat by PortalDoor angle
-    rotate(&player->camera.lookat, v_axis, -dest_portal->angle);
-#endif
-
+    /*
     const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     Vector3f h_axis = {0};
@@ -165,20 +113,22 @@ static void update_portal(PortalDoor* portal)
     normalize(&h_axis);
     cross(player->camera.lookat,h_axis, &player->camera.up);
     normalize(&player->camera.up);
-    
-    // render scene
-    render_scene(true);
+    */
+}
+
+static void update_transform(PortalDoor* d)
+{
+    Vector3f pos = {-d->pos.x, -d->pos.y - 1.5, -d->pos.z};
+    Vector3f rot = {0.0,d->angle,0.0};
+    Vector3f sca  = {1.0,3.0,1.0};
+
+    get_transforms(&pos, &rot, &sca, &d->world, &d->view, &d->proj);
+    get_wvp(&d->world, &d->view, &d->proj, &d->wvp);
+    get_wv(&d->world, &d->view, &d->wv);
 }
 
 void portal_update()
 {
-    Camera prior_cam = {0};
-    memcpy(&prior_cam, &player->camera, sizeof(Camera));
-    
-    update_portal(&main_portal.a);
-    update_portal(&main_portal.b);
-
-    memcpy(&player->camera, &prior_cam, sizeof(Camera));
 }
 
 static void gl_draw_portal(PortalDoor* portal_door)
@@ -201,11 +151,6 @@ static void gl_draw_portal(PortalDoor* portal_door)
         shader_set_float(program_portal,"fog_density",0.0);
         shader_set_float(program_portal,"fog_gradient",1.0);
     }
-
-    GLuint texture = (portal_door == &main_portal.a ? portal_data_a.texture : portal_data_b.texture);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
 
     glBindVertexArray(portal_vao);
     glEnableVertexAttribArray(0);
@@ -230,29 +175,66 @@ static void gl_draw_portal(PortalDoor* portal_door)
 
 }
 
+static void _draw_portal(PortalDoor* portal_door)
+{
+    Camera prior_cam = {0};
+    memcpy(&prior_cam, &player->camera, sizeof(Camera));
+
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_STENCIL_TEST);
+
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+
+    glStencilFunc(GL_NEVER, 1, 0xFF);
+    glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
+    glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    gl_draw_portal(portal_door); // draw to stencil buffer
+
+    update_virtual_camera(portal_door); // move camera
+
+    //printf("camera pos: %f %f %f\n",
+    //        player->camera.phys.pos.x,
+    //        player->camera.phys.pos.y,
+    //        player->camera.phys.pos.z);
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glStencilMask(0x00);
+    glStencilFunc(GL_LEQUAL, 1, 0xFF);
+
+    render_scene(true);
+
+    memcpy(&player->camera, &prior_cam, sizeof(Camera));
+}
+
 void portal_draw()
 {
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
 
-    Vector3f pos_a = {-main_portal.a.pos.x, -main_portal.a.pos.y - 1.5, -main_portal.a.pos.z};
-    Vector3f rot_a = {0.0,main_portal.a.angle,0.0};
-    Vector3f sca_a  = {1.0,3.0,1.0};
+    update_transform(&main_portal.a);
+    update_transform(&main_portal.b);
 
-    get_transforms(&pos_a, &rot_a, &sca_a, &main_portal.a.world, &main_portal.a.view, &main_portal.a.proj);
-    get_wvp(&main_portal.a.world, &main_portal.a.view, &main_portal.a.proj, &main_portal.a.wvp);
-    get_wv(&main_portal.a.world, &main_portal.a.view, &main_portal.a.wv);
+    _draw_portal(&main_portal.a);
+    _draw_portal(&main_portal.b);
+
+    // draw to depth buffers
+    glDisable(GL_STENCIL_TEST);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     gl_draw_portal(&main_portal.a);
-
-    Vector3f pos_b = {-main_portal.b.pos.x, -main_portal.b.pos.y - 1.5, -main_portal.b.pos.z};
-    Vector3f rot_b = {0.0,main_portal.b.angle,0.0};
-    Vector3f sca_b  = {1.0,3.0,1.0};
-
-    get_transforms(&pos_b, &rot_b, &sca_b, &main_portal.b.world, &main_portal.b.view, &main_portal.b.proj);
-    get_wvp(&main_portal.b.world, &main_portal.b.view, &main_portal.b.proj, &main_portal.b.wvp);
-    get_wv(&main_portal.b.world, &main_portal.b.view, &main_portal.b.wv);
-
     gl_draw_portal(&main_portal.b);
 
-    glEnable(GL_CULL_FACE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+
+    //glEnable(GL_CULL_FACE);
 }
