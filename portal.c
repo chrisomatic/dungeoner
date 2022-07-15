@@ -180,6 +180,7 @@ static void _draw_portal(PortalDoor* portal_door)
     Camera prior_cam = {0};
     memcpy(&prior_cam, &player->camera, sizeof(Camera));
 
+    glClearStencil(0x00);
     glClear(GL_STENCIL_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_STENCIL_TEST);
@@ -189,7 +190,7 @@ static void _draw_portal(PortalDoor* portal_door)
     glDisable(GL_DEPTH_TEST);
 
     glStencilFunc(GL_NEVER, 1, 0xFF);
-    glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
+    glStencilOp(GL_INCR, GL_KEEP, GL_KEEP);
     glStencilMask(0xFF);
     glClear(GL_STENCIL_BUFFER_BIT);
 
@@ -208,16 +209,16 @@ static void _draw_portal(PortalDoor* portal_door)
     glClear(GL_DEPTH_BUFFER_BIT);
 
     glStencilMask(0x00);
-    glStencilFunc(GL_LEQUAL, 1, 0xFF);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
 
     render_scene(true);
-
+    
     memcpy(&player->camera, &prior_cam, sizeof(Camera));
 }
 
 void portal_draw()
 {
-    //glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
     update_transform(&main_portal.a);
     update_transform(&main_portal.b);
@@ -235,6 +236,5 @@ void portal_draw()
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 }
