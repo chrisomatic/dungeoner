@@ -18,7 +18,7 @@ void main()
     }
     else
     {
-        vec4 base_color = vec4(1.0,1.0,1.0,1.0);//texture2D(sampler,vec2(tex_coord0.x, -tex_coord0.y));
+        vec4 base_color = vec4(0.0,0.0,0.0,1.0);//texture2D(sampler,vec2(tex_coord0.x, -tex_coord0.y));
         frag_color = mix(vec4(sky_color,1.0), base_color, visibility);
     }
 }

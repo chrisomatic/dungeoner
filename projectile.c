@@ -7,10 +7,28 @@
 #include "log.h"
 #include "particles.h"
 #include "creature.h"
+#include "portal.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];
 int projectile_count = 0;
+
+static void impact_function_fireball(void* data)
+{
+    Projectile* p = (Projectile*)data;
+
+    particle_generator_destroy(p->particles_id); // remove fire
+    particles_create_generator(&p->phys.pos,PARTICLE_EFFECT_EXPLOSION, 0.25); // add explosion
+}
+
+static void impact_function_portal(void* data)
+{
+    Projectile* p = (Projectile*)data;
+
+    particle_generator_destroy(p->particles_id); // remove sparklies
+    particles_create_generator(&p->phys.pos,PARTICLE_EFFECT_EXPLOSION, 0.25); // add explosion
+    portal_update_location(&p->phys.pos, -p->angle_h);
+}
 
 static void remove_projectile(int index)
 {
@@ -46,6 +64,22 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->damage = 5.0;
             proj->blast_radius = 5.0;
             proj->gravity_factor = 0.0;
+            proj->particle_effect = PARTICLE_EFFECT_FIRE;
+            proj->impact_function = impact_function_fireball;
+            break;
+        case PROJECTILE_PORTAL:
+            speed = 10.0;
+            proj->size = 3.0;
+            proj->life_max = 5.0;
+            proj->color.x = 0.5;
+            proj->color.y = 0.0;
+            proj->color.z = 0.5;
+            proj->damage = 0.0;
+            proj->blast_radius = 0.0;
+            proj->gravity_factor = 0.8;
+            proj->particle_effect = PARTICLE_EFFECT_SPARKLE;
+            proj->impact_function = impact_function_portal;
+            proj->angle_h = player->angle_h;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;
@@ -84,9 +118,9 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
     proj->phys.vel.y = vel.y + player->phys.vel.y;
     proj->phys.vel.z = vel.z + player->phys.vel.z;
 
-    if(type == PROJECTILE_FIREBALL)
+    if(proj->particle_effect)
     {
-        proj->particles_id = particles_create_generator(&proj->phys.pos, PARTICLE_EFFECT_FIRE, 0.0);
+        proj->particles_id = particles_create_generator(&proj->phys.pos, proj->particle_effect, 0.0);
     }
 
     collision_set_flags(&proj->model.collision_vol, COLLISION_FLAG_HURT);
@@ -120,7 +154,7 @@ void projectile_update()
         collision_transform_bounding_box(&p->model.collision_vol, &p->model.transform);
         p->life += g_delta_t;
 
-        if(projectiles[i].type == PROJECTILE_FIREBALL)
+        if(p->particle_effect)
         {
             particle_generator_move(p->particles_id, p->phys.pos.x,p->phys.pos.y,p->phys.pos.z);
         }
@@ -128,14 +162,9 @@ void projectile_update()
 
     for(int i = projectile_count-1; i >= 0; --i)
     {
-        if(projectiles[i].life >= projectiles[i].life_max || (projectiles[i].type == PROJECTILE_FIREBALL && projectiles[i].phys.collided))
+        if(projectiles[i].life >= projectiles[i].life_max || (projectiles[i].phys.collided && projectiles[i].impact_function))
         {
-            if(projectiles[i].type == PROJECTILE_FIREBALL)
-            {
-                Vector pos = {projectiles[i].phys.pos.x,projectiles[i].phys.pos.y,projectiles[i].phys.pos.z};
-                particle_generator_destroy(projectiles[i].particles_id); // remove fire
-                particles_create_generator(&pos,PARTICLE_EFFECT_EXPLOSION, 0.25); // add explosion
-            }
+            projectiles[i].impact_function(&projectiles[i]);
 
             if(projectiles[i].blast_radius > 0.0)
             {

@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "settings.h"
-#include "player.h"
 #include "3dmath.h"
 #include "physics.h"
 #include "projectile.h"
@@ -16,6 +15,8 @@
 #include "coin.h"
 #include "weapon.h"
 #include "gui.h"
+#include "portal.h"
+#include "player.h"
 
 Entity  p = {0};
 Player* player = &p.data.player_data;
@@ -50,6 +51,7 @@ static void handle_collisions(Vector3f p0)
 {
     player->phys.on_object = false;
 
+    // wall
     if(collision_check(&m_wall.collision_vol, &player->model.collision_vol))
     {
         // resolve
@@ -106,6 +108,9 @@ static void handle_collisions(Vector3f p0)
             coin_destroy_pile(i);
         }
     }
+
+    // portals
+    portal_handle_collision(player, p0);
 }
 
 
@@ -229,7 +234,8 @@ static void handle_player_control(PhysicsObj* phys)
     if(player->secondary_action)
     {
         player->secondary_action = false;
-        player_spawn_projectile(PROJECTILE_FIREBALL);
+        //player_spawn_projectile(PROJECTILE_FIREBALL);
+        player_spawn_projectile(PROJECTILE_PORTAL);
     }
 
     bool in_air = phys->pos.y > phys->ground.height+GROUND_TOLERANCE;

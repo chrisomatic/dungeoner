@@ -36,6 +36,7 @@ typedef struct
 
 static const ParticleEffectInfo particle_effect_info[PARTICLE_EFFECT_COUNT] = 
 {
+    {{ 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, false},  // NONE
     {{ 1.0, 1.0, 0.7 }, { 0.8, 0.1, 0.0 }, { 0.2, 0.2, 0.2 }, true},  // FIRE
     {{ 1.0, 1.0, 0.3 }, { 0.8, 0.1, 0.0 }, { 0.2, 0.2, 0.2 }, false}, // EXPLOSION
     {{ 0.5, 0.8, 0.5 }, { 0.0, 0.9, 0.0 }, { 0.9, 0.9, 0.5 }, true}, // HEAL
