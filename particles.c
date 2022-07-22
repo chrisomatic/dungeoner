@@ -42,9 +42,9 @@ static const ParticleEffectInfo particle_effect_info[PARTICLE_EFFECT_COUNT] =
     {{ 0.5, 0.8, 0.5 }, { 0.0, 0.9, 0.0 }, { 0.9, 0.9, 0.5 }, true}, // HEAL
     {{ 1.0, 1.0, 1.0 }, { 0.5, 0.5, 0.5 }, { 0.5, 0.5, 0.5 }, true},  // SPARKLE
     {{ 1.0, 0.0, 0.0 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}, // BLOOD
-    {{ 1.0, 0.0, 0.0 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}  // BLOOD_SPLATTER
+    {{ 1.0, 0.0, 0.0 }, { 0.9, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, false}, // BLOOD_SPLATTER
+    {{ 0.8, 0.0, 0.8 }, { 0.7, 0.0, 0.7 }, { 0.2, 0.0, 0.2 }, false}  // MYSTICAL
 };
-
 
 typedef struct
 {
@@ -281,7 +281,7 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->color1_transition = 0.30;
             pg->color2_transition = 0.60;
 
-            pg->tex_offset.x = 0.5;
+            pg->tex_offset.x = 0.25;
             pg->tex_offset.y = 0.0;
 
             break;
@@ -327,8 +327,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->color1_transition = 0.20;
             pg->color2_transition = 0.75;
 
-            pg->tex_offset.x = 0.0;
-            pg->tex_offset.y = 0.5;
+            pg->tex_offset.x = 0.5;
+            pg->tex_offset.y = 0.0;
             
             break;
 
@@ -351,8 +351,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->color1_transition = 0.90;
             pg->color2_transition = 0.95;
 
-            pg->tex_offset.x = 0.0;
-            pg->tex_offset.y = 0.5;
+            pg->tex_offset.x = 0.5;
+            pg->tex_offset.y = 0.0;
 
             break;
 
@@ -374,8 +374,8 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->color1_transition = 0.30;
             pg->color2_transition = 0.60;
 
-            pg->tex_offset.x = 0.5;
-            pg->tex_offset.y = 0.5;
+            pg->tex_offset.x = 0.75;
+            pg->tex_offset.y = 0.0;
 
             break;
 
@@ -397,10 +397,32 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             pg->color1_transition = 0.30;
             pg->color2_transition = 0.60;
 
-            pg->tex_offset.x = 0.5;
-            pg->tex_offset.y = 0.5;
+            pg->tex_offset.x = 0.75;
+            pg->tex_offset.y = 0.0;
 
             break;
+
+        case PARTICLE_EFFECT_MYSTICAL:
+
+            pg->spawn_time_min  = 0.150;
+            pg->spawn_time_max  = 0.300;
+            pg->initial_vel_min = 0.2;
+            pg->initial_vel_max = 0.5;
+            pg->particle_scale  = 0.2;
+            pg->particle_lifetime = 1.5;
+            pg->particle_burst_count = 3;
+            pg->angular_vel_min = -360.0;
+            pg->angular_vel_max = 0.360;
+
+            pg->particle_size_atten = 0.60;
+            pg->particle_speed_atten = 0.10;
+            pg->particle_opaque_atten = 0.80;
+
+            pg->color1_transition = 0.30;
+            pg->color2_transition = 0.75;
+
+            pg->tex_offset.x = 0.0;
+            pg->tex_offset.y = 0.25;
             
         default:
             break;

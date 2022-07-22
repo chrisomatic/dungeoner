@@ -4,6 +4,12 @@
 #include "util.h"
 #include "player.h"
 #include "physics.h"
+#include "terrain.h"
+#include "boat.h"
+#include "creature.h"
+#include "projectile.h"
+#include "coin.h"
+//#include "particles.h"
 #include "water.h"
 
 #define WATER_REFLECTION_WIDTH  1392
@@ -14,6 +20,22 @@
 #define WATER_WAVE_SPEED 0.02
 
 static WaterBody water_body;
+
+static void water_render_scene(bool reflection)
+{
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    gfx_draw_sky();
+    terrain_draw();
+    gfx_draw_model(&m_wall); // @TEST
+    player_draw(reflection);
+    creature_draw();
+    boat_draw();
+    projectile_draw();
+    coin_draw_piles();
+    //particles_draw();
+}
 
 void water_init(float height)
 {
@@ -74,7 +96,8 @@ void water_draw_textures()
     {
         gfx_enable_clipping(0,1,0,water_height);
     }
-    render_scene(true);
+
+    water_render_scene(true);
 
     player->camera.phys.pos.y += distance;
     player->camera.angle_v = temp_angle;
@@ -90,7 +113,7 @@ void water_draw_textures()
     {
         gfx_enable_clipping(0,-1,0,-water_height);
     }
-    render_scene(false);
+    water_render_scene(false);
 
     gfx_disable_clipping();
 

@@ -15,8 +15,8 @@ in float opaqueness0;
 
 out vec4 frag_color;
 
-const int NUM_ROWS = 2;
-const int NUM_COLS = 2;
+const int NUM_ROWS = 4;
+const int NUM_COLS = 4;
 
 void main() {
 

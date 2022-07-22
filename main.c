@@ -259,6 +259,7 @@ void init()
     particles_create_generator_xyz(-93.0,21.0,179.0,PARTICLE_EFFECT_SPARKLE, 0.0);
     particles_create_generator_xyz(-94.0,21.0,179.0,PARTICLE_EFFECT_BLOOD, 0.0);
     particles_create_generator_xyz(-95.0,21.0,179.0,PARTICLE_EFFECT_BLOOD_SPLATTER, 0.0);
+    particles_create_generator_xyz(-96.0,21.0,179.0,PARTICLE_EFFECT_MYSTICAL, 0.0);
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
@@ -352,19 +353,6 @@ void simulate()
 
 }
 
-void render_scene(bool reflection)
-{
-    gfx_draw_sky();
-    terrain_draw();
-    gfx_draw_model(&m_wall); // @TEST
-    player_draw(reflection);
-    creature_draw();
-    boat_draw();
-    projectile_draw();
-    coin_draw_piles();
-    particles_draw();
-}
-
 void render()
 {
     glClearColor(FOG_COLOR_R,FOG_COLOR_G,FOG_COLOR_B,1.0);
@@ -378,9 +366,21 @@ void render()
 
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
     portal_draw();
-    render_scene(false);
+
+    gfx_draw_sky();
+    terrain_draw();
+    gfx_draw_model(&m_wall); // @TEST
+    player_draw(false);
+    creature_draw();
+    boat_draw();
+    projectile_draw();
+    coin_draw_piles();
+
     water_draw();
+    particles_draw();
+
     gfx_unbind_frame_current_buffer();
     gfx_resolve_fbo(frame_buffer_ms, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT, frame_buffer, STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);
 

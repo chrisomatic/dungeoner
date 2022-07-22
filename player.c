@@ -234,8 +234,7 @@ static void handle_player_control(PhysicsObj* phys)
     if(player->secondary_action)
     {
         player->secondary_action = false;
-        //player_spawn_projectile(PROJECTILE_FIREBALL);
-        player_spawn_projectile(PROJECTILE_PORTAL);
+        player_spawn_projectile(player->equipped_projectile);
     }
 
     bool in_air = phys->pos.y > phys->ground.height+GROUND_TOLERANCE;
@@ -390,6 +389,7 @@ void player_init()
 
     player->terrain_block_x = 0;
     player->terrain_block_y = 0;
+    player->equipped_projectile = PROJECTILE_FIREBALL;
 
     memcpy(&player->weapon, &w_claymore, sizeof(Weapon));
 

@@ -47,6 +47,8 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
 {
     Projectile* proj = &projectiles[projectile_count];
 
+    memset(proj,0, sizeof(Projectile));
+
     proj->type = type;
     memcpy(&proj->model, &m_sphere, sizeof(Model));
 
@@ -91,6 +93,8 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->damage = 5.0;
             proj->blast_radius = 0.0;
             proj->gravity_factor = 1.0;
+            proj->particle_effect = PARTICLE_EFFECT_NONE;
+            proj->impact_function = NULL;
             break;
         case PROJECTILE_ARROW:
             speed = 30.0;
@@ -99,6 +103,8 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->damage = 3.0;
             proj->blast_radius = 0.0;
             proj->gravity_factor = 1.0;
+            proj->particle_effect = PARTICLE_EFFECT_NONE;
+            proj->impact_function = NULL;
             break;
     }
     
@@ -164,7 +170,10 @@ void projectile_update()
     {
         if(projectiles[i].life >= projectiles[i].life_max || (projectiles[i].phys.collided && projectiles[i].impact_function))
         {
-            projectiles[i].impact_function(&projectiles[i]);
+            if(projectiles[i].impact_function)
+            {
+                projectiles[i].impact_function(&projectiles[i]);
+            }
 
             if(projectiles[i].blast_radius > 0.0)
             {

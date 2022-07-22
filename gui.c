@@ -5,6 +5,8 @@
 #include "gfx.h"
 #include "text.h"
 #include "player.h"
+#include "util.h"
+#include "projectile.h"
 #include "gui.h"
 
 #define GLT_IMPLEMENTATION
@@ -19,12 +21,16 @@ static GLTtext *title;
 static GLTtext *fps;
 static GLTtext *coords;
 
+GLuint t_spells;
+
 // stats
 static GLTtext *gold;
 
 void gui_init()
 {
     gltInit();
+
+    t_spells  = load_texture("textures/spell_icons.png");
 
     title = gltCreateText();
     fps = gltCreateText();
@@ -87,13 +93,48 @@ static void draw_hud(float x, float y)
     // hp
     Vector2f pos_hp = {ndc_x+0.9,ndc_y};
     Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
-    Vector2f sca = {0.4,0.025};
+    Vector2f sca = {0.25,0.0125};
 
     Vector4f color_hp = {0.8,0.0,0.0,0.6};
     Vector4f color_mp = {0.0,0.0,0.8,0.6};
 
-    gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca);
-    gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca);
+    gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca,1,0);
+    gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca,1,0);
+}
+
+static void draw_current_spell()
+{
+    Vector2f pos = {0.88,0.88};
+    Vector2f sca = {0.08,0.08};
+
+    int index = 0;
+    Vector4f color = {0.0,0.0,0.0,0.8};
+
+    switch(player->equipped_projectile)
+    {
+        case PROJECTILE_PORTAL:
+            index = 0;
+            color.x = 1.0;
+            color.z = 1.0;
+            break;
+        case PROJECTILE_FIREBALL:
+            index = 1;
+            color.x = 1.0;
+            break;
+        case PROJECTILE_ICE:
+            index = 2;
+            color.z = 1.0;
+            break;
+        case PROJECTILE_ARROW:
+            index = 3;
+            color.y = 1.0;
+            break;
+        case PROJECTILE_NONE:
+        default:
+            break;
+    }
+
+    gfx_draw_quad2d(t_spells, &color, &pos, &sca, 2,index);
 }
 
 static void draw_crosshair()
@@ -104,12 +145,13 @@ static void draw_crosshair()
     Vector2f sca = {0.025,0.025};
 
     // crosshair
-    gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca);
+    gfx_draw_quad2d(t_crosshair, NULL, &pos, &sca,1,0);
 }
 
 void gui_draw()
 {
     draw_hud(100.0,100.0);
+    draw_current_spell();
     draw_crosshair();
     draw_stats();
     draw_debug();

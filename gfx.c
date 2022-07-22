@@ -520,7 +520,7 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
-void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* sca)
+void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* sca, int texture_width, int texture_index)
 {
     gfx_enable_blending();
     glUseProgram(program_gui);
@@ -530,11 +530,13 @@ void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* s
     shader_set_vec2(program_gui,"scale",sca->x, sca->y);
     shader_set_vec2(program_gui,"translate",pos->x, pos->y);
 
+    shader_set_int(program_gui,"texture_width",texture_width);
+    shader_set_int(program_gui,"texture_index",texture_index);
+
     if(texture)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-
     }
     else
     {
@@ -552,23 +554,19 @@ void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* s
 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_fullscreen.vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)12);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
 
-    if(show_wireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
     glBindVertexArray(0);
     glUseProgram(0);
     gfx_disable_blending();

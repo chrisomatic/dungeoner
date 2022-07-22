@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "gfx.h"
@@ -11,6 +12,7 @@
 #include "shader.h"
 #include "light.h"
 #include "creature.h"
+#include "particles.h"
 #include "portal.h"
 
 typedef enum
@@ -88,7 +90,6 @@ static void set_portal_location(PortalDoor* d, Vector3f* pos, float angle)
     mult_v3f_mat4(&vertices[2].position,&d->world,&d->rect[2]);
     mult_v3f_mat4(&vertices[3].position,&d->world,&d->rect[3]);
     normal(d->rect[0],d->rect[1],d->rect[2], &d->normal);
-
 }
 
 void portal_update_location(Vector3f* pos, float angle)
@@ -100,7 +101,7 @@ void portal_init()
 {
     gl_portal_init();
 
-    Vector3f pos_a = {-91.0, 0.0, 183.0};
+    Vector3f pos_a = {292.0, 0.0, 78.0};
     Vector3f pos_b = {-90.0, 0.0, 175.0};
 
     set_portal_location(&main_portal.a, &pos_a, 0.0);
@@ -114,6 +115,22 @@ static void render_scene_in_portal()
     gfx_draw_model(&m_wall); // @TEST
     player_draw(true);
     creature_draw();
+}
+
+static void update_terrain_block()
+{
+    int curr_terrain_x = round(player->camera.phys.pos.x/TERRAIN_BLOCK_SIZE);
+    int curr_terrain_y = round(player->camera.phys.pos.z/TERRAIN_BLOCK_SIZE);
+
+    //printf("pos: %f %f, terrain block: %d,%d\n",player->camera.phys.pos.x, player->camera.phys.pos.z, curr_terrain_x, curr_terrain_y);
+
+    if(curr_terrain_x != player->terrain_block_x || curr_terrain_y != player->terrain_block_y)
+    {
+        player->terrain_block_x = curr_terrain_x;
+        player->terrain_block_y = curr_terrain_y;
+
+        terrain_update_local_block(-curr_terrain_x, -curr_terrain_y);
+    }
 }
 
 static void update_virtual_camera(PortalDoor* portal)
@@ -139,6 +156,7 @@ static void update_virtual_camera(PortalDoor* portal)
     player->camera.angle_h += (180.0+portal->angle+dest_portal->angle);
 
     update_camera_rotation();
+    update_terrain_block();
 }
 
 static void update_transform(PortalDoor* d)
@@ -176,10 +194,34 @@ static bool passed_through_portal(Player* player, PortalDoor* door, Vector3f pri
 
     if(dot1 < 0 && dot2 >= 0)
     {
-        //bool within_portal = (
-        //);
-        return true;
+        Vector3f player_point = {
+            -0.5*(p->x + prior_pos.x),
+            -0.5*(p->y + prior_pos.y) - 0.5*player->phys.height,
+            -0.5*(p->z + prior_pos.z)
+        };
 
+        //printf("player point: %f %f %f\n",player_point.x, player_point.y, player_point.z);
+
+        bool pt_checks[4];
+        for(int i = 0; i < 4; ++i)
+        {
+            Vector3f test_point = {
+                door->rect[i].x,
+                door->rect[i].y,
+                door->rect[i].z
+            };
+
+            float dist = dist_squared(&player_point, &test_point);
+
+            //printf("door_rect[%d]: %f %f %f\n",i,door->rect[i].x, door->rect[i].y, door->rect[i].z);
+            //printf("dist %d: %f\n",i, dist);
+            pt_checks[i] = dist <= 6.1;
+        }
+        //printf("\n");
+
+        bool within_portal = (pt_checks[0] && pt_checks[1] && pt_checks[2] && pt_checks[3]);
+
+        return within_portal;
     }
 
     return false;
@@ -193,7 +235,11 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
     PortalDoor* b = &main_portal.b;
 
     bool passed_through_portal_a = passed_through_portal(player,a,prior_pos);
-    if(passed_through_portal_a)
+
+    if(!passed_through_portal_a)
+        player->portalled = false;
+
+    if(passed_through_portal_a && !player->portalled)
     {
         Vector3f dist_b = {
             b->pos.x - player->phys.pos.x,
@@ -206,15 +252,21 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         player->phys.pos.z += dist_b.z;
 
         const Vector3f y_axis = {0.0,1.0,0.0};
-        rotate(&player->phys.vel, y_axis, 180.0+b->angle);
+        rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
-        player->camera.angle_h += (180.0+b->angle);
+        player->camera.angle_h += (180.0+b->angle+a->angle);
+        player->portalled = true;
+        printf("portalled\n");
 
         return true;
     }
 
     bool passed_through_portal_b = passed_through_portal(player, b,prior_pos);
-    if(passed_through_portal_b)
+
+    if(!passed_through_portal_b)
+        player->portalled = false;
+
+    if(passed_through_portal_b && !player->portalled)
     {
         Vector3f dist_a = {
             a->pos.x - player->phys.pos.x,
@@ -227,9 +279,11 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         player->phys.pos.z += dist_a.z;
 
         const Vector3f y_axis = {0.0,1.0,0.0};
-        rotate(&player->phys.vel, y_axis, 180.0+a->angle);
+        rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
-        player->camera.angle_h += (180.0+a->angle);
+        player->camera.angle_h += (180.0+b->angle+a->angle);
+        player->portalled = true;
+        printf("portalled\n");
 
         return true;
     }
@@ -283,12 +337,16 @@ static void gl_draw_portal(PortalDoor* portal_door)
 
 static bool is_player_looking_at_front_face(PortalDoor* door)
 {
-    Vector3f* p = &player->phys.pos;
+    Vector3f p = {
+        player->camera.phys.pos.x + player->camera.offset.x,
+        player->camera.phys.pos.y + player->camera.offset.y,
+        player->camera.phys.pos.z + player->camera.offset.z
+    };
 
     Vector3f da = {
-        p->x - door->pos.x,
-        p->y - door->pos.y,
-        p->z - door->pos.z
+        p.x - door->pos.x,
+        p.y - door->pos.y,
+        p.z - door->pos.z
     };
 
     float v = dot(da,door->normal);
@@ -336,6 +394,7 @@ static void _draw_portal(PortalDoor* portal_door)
         render_scene_in_portal();
 
         memcpy(&player->camera, &prior_cam, sizeof(Camera));
+
         glDisable(GL_STENCIL_TEST);
     }
     else
@@ -364,4 +423,7 @@ void portal_draw()
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     glEnable(GL_CULL_FACE);
+
+    update_camera_rotation();
+    update_terrain_block();
 }

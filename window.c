@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "player.h"
+#include "projectile.h"
 #include "gfx.h"
 #include "settings.h"
 #include "window.h"
@@ -166,6 +167,15 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
     {
         switch(key)
         {
+            case GLFW_KEY_1:
+                player->equipped_projectile = PROJECTILE_FIREBALL;
+                break;
+            case GLFW_KEY_2:
+                player->equipped_projectile = PROJECTILE_PORTAL;
+                break;
+            case GLFW_KEY_3:
+                player->equipped_projectile = PROJECTILE_ICE;
+                break;
             case GLFW_KEY_W:
                 player->forward = true;
                 break;

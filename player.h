@@ -82,6 +82,9 @@ typedef struct
 
     bool in_boat;
     Boat* boat;
+
+    bool portalled;
+    int equipped_projectile;
 } Player;
 
 extern Player* player;
