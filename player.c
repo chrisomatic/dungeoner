@@ -183,6 +183,148 @@ static void handle_boat_control(PhysicsObj* phys)
     physics_simulate(phys);
 }
 
+static void handle_player_control2(PhysicsObj* phys)
+{
+    Vector3f* accel = &player->phys.accel;
+    Vector3f* vel = &player->phys.vel;
+
+    float accel_force = 4.0;
+    bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
+    if(!player->jumped)
+        phys->max_linear_speed = player->walk_speed;
+
+    if(player->run)
+    {
+        accel_force = 8.0;
+        if(!player->jumped)
+            phys->max_linear_speed *= player->run_factor;
+    }
+
+    if(player->spectator)
+    {
+        phys = &player->camera.phys;
+        accel_force = 10.0;
+        phys->max_linear_speed = 20.0;
+    }
+
+    if(in_water)
+    {
+        accel_force /= 3.0;
+        phys->max_linear_speed /= 3.0;
+    }
+
+    physics_begin(phys);
+ 
+    if(player->jumped && (phys->pos.y <= phys->ground.height || phys->on_object))
+        player->jumped = false;
+ 
+    if(player->secondary_action)
+    {
+        player->secondary_action = false;
+        player_spawn_projectile(player->equipped_projectile);
+    }
+
+    bool in_air = phys->pos.y > phys->ground.height+GROUND_TOLERANCE; // tolerance to allow movement slightly above ground
+ 
+    if(player->spectator || player->phys.on_object || !in_air || in_water)
+    {
+        // where the player is looking
+        Vector3f lookat = {
+            player->camera.lookat.x,
+            player->camera.lookat.y,
+            player->camera.lookat.z
+        };
+ 
+        Vector3f user_force = {0.0,0.0,0.0};
+
+        if(player->jump)
+        {
+            if(in_water)
+            {
+                physics_add_force_y(phys,accel_force);
+            }
+            else
+            {
+                if(!player->jumped && !player->spectator)
+                {
+                    physics_add_force_y(phys,300.0);
+                    player->jumped = true;
+                }
+            }
+        }
+
+        if(player->forward)
+        {
+            Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
+            normalize(&forward);
+            mult(&forward,accel_force);
+
+            add(&user_force,forward);
+        }
+
+        if(player->back)
+        {
+            Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
+            normalize(&back);
+            mult(&back,accel_force);
+
+            add(&user_force,back);
+        }
+
+        if(player->left)
+        {
+            Vector3f left = {0};
+            cross(player->camera.up, lookat, &left);
+            normalize(&left);
+
+            mult(&left,-accel_force);
+
+            add(&user_force,left);
+        }
+
+        if(player->right)
+        {
+            Vector3f right = {0};
+            cross(player->camera.up, lookat, &right);
+            normalize(&right);
+
+            mult(&right,accel_force);
+
+            add(&user_force,right);
+        }
+
+        bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
+
+        if(!user_force_applied)
+        {
+            // only apply friction when user isn't causing a force
+            if(player->spectator)
+            {
+                physics_add_air_friction(phys, 1.00);
+            }
+            else
+            {
+                physics_add_kinetic_friction(phys, 1.00);
+            }
+        }
+        else
+        {
+            phys->vel.x = user_force.x;
+            //phys->vel.y = user_force.y;
+            phys->vel.z = user_force.z;
+        }
+        player->user_force_applied = user_force_applied;
+
+        //physics_add_force(phys,user_force.x, user_force.y, user_force.z);
+    }
+
+    if(!player->spectator)
+        physics_add_gravity(phys, 1.0);
+
+    physics_simulate(phys);
+
+}
+
 static void handle_player_control(PhysicsObj* phys)
 {
     Vector3f* accel = &player->phys.accel;
@@ -355,7 +497,8 @@ static void update_player_physics()
     }
     else
     {
-        handle_player_control(&player->phys);
+        //handle_player_control(&player->phys);
+        handle_player_control2(&player->phys);
     }
 
     handle_collisions(p0);
@@ -445,6 +588,12 @@ void player_snap_camera()
     player->camera.phys.pos.x = player->phys.pos.x;
     player->camera.phys.pos.y = player->phys.pos.y + player->phys.height;
     player->camera.phys.pos.z = player->phys.pos.z;
+
+    if(player->user_force_applied)
+    {
+        float period = player->run ? 10 : 5;
+        player->camera.phys.pos.y += 0.1*sin(period*g_total_t);
+    }
 
     //if(!player->in_boat)
     int dir = player->angle_h > player->camera.angle_h ? 1.0 : -1.0;

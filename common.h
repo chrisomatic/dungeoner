@@ -8,6 +8,7 @@
 #define BIT_SET(v,b)    (((v) & (b)) == (b))
 
 extern double g_delta_t;
+extern double g_total_t;
 
 extern GLuint t_stone;
 extern GLuint t_grass;

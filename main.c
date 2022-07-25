@@ -38,6 +38,7 @@
 
 Timer game_timer = {0};
 double g_delta_t = 0.0f;
+double g_total_t = 0.0f;
 
 float fog_density = 0.010;
 float fog_gradient = 5.0;
@@ -127,6 +128,7 @@ void start_game()
     for(;;)
     {
         g_delta_t = t1-t0;
+        g_total_t += g_delta_t;
 
         window_poll_events();
         if(window_should_close())

@@ -74,6 +74,7 @@ typedef struct
     bool jumped;
     bool run;
     bool use;
+    bool user_force_applied;
 
     bool crouched;
 

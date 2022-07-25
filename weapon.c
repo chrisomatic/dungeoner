@@ -96,6 +96,12 @@ void weapon_update(Weapon* w, PlayerState* s)
     Vector3f rot = {0.4*player->angle_v,-player->angle_h,0.0};
     Vector3f pos = {-player->phys.pos.x,-player->phys.pos.y-(player->phys.height/2.0),-player->phys.pos.z};
 
+    if(player->user_force_applied)
+    {
+        float period = player->run ? 10 : 5;
+        pos.y -= 0.1*sin(period*g_total_t+0.2);
+    }
+
     if(*s == PLAYER_STATE_NORMAL)
     {
         Keyframe* rest = &melee_anim.keyframes[0];
