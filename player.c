@@ -183,19 +183,21 @@ static void handle_boat_control(PhysicsObj* phys)
     physics_simulate(phys);
 }
 
-static void handle_player_control2(PhysicsObj* phys)
+static void handle_player_control(PhysicsObj* phys)
 {
     Vector3f* accel = &player->phys.accel;
     Vector3f* vel = &player->phys.vel;
 
-    float accel_force = 4.0;
+    float accel_factor = MIN(1.0,0.5+player->step_time);
+    
+    float velocity = 4.0;
     bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
     if(!player->jumped)
         phys->max_linear_speed = player->walk_speed;
 
     if(player->run)
     {
-        accel_force = 8.0;
+        velocity = 8.0;
         if(!player->jumped)
             phys->max_linear_speed *= player->run_factor;
     }
@@ -203,15 +205,18 @@ static void handle_player_control2(PhysicsObj* phys)
     if(player->spectator)
     {
         phys = &player->camera.phys;
-        accel_force = 10.0;
+        velocity = 10.0;
         phys->max_linear_speed = 20.0;
     }
 
     if(in_water)
     {
-        accel_force /= 3.0;
+        velocity /= 3.0;
         phys->max_linear_speed /= 3.0;
     }
+
+    velocity *= accel_factor;
+    //printf("accel_factor: %f\n", accel_factor);
 
     physics_begin(phys);
  
@@ -241,13 +246,14 @@ static void handle_player_control2(PhysicsObj* phys)
         {
             if(in_water)
             {
-                physics_add_force_y(phys,accel_force);
+                physics_add_force_y(phys,velocity);
             }
             else
             {
                 if(!player->jumped && !player->spectator)
                 {
-                    physics_add_force_y(phys,300.0);
+                    player->phys.vel.y = 6.0;
+                    //physics_add_force_y(phys,300.0);
                     player->jumped = true;
                 }
             }
@@ -257,7 +263,7 @@ static void handle_player_control2(PhysicsObj* phys)
         {
             Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
             normalize(&forward);
-            mult(&forward,accel_force);
+            mult(&forward,velocity);
 
             add(&user_force,forward);
         }
@@ -266,7 +272,7 @@ static void handle_player_control2(PhysicsObj* phys)
         {
             Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
             normalize(&back);
-            mult(&back,accel_force);
+            mult(&back,velocity);
 
             add(&user_force,back);
         }
@@ -277,7 +283,7 @@ static void handle_player_control2(PhysicsObj* phys)
             cross(player->camera.up, lookat, &left);
             normalize(&left);
 
-            mult(&left,-accel_force);
+            mult(&left,-velocity);
 
             add(&user_force,left);
         }
@@ -288,15 +294,24 @@ static void handle_player_control2(PhysicsObj* phys)
             cross(player->camera.up, lookat, &right);
             normalize(&right);
 
-            mult(&right,accel_force);
+            mult(&right,velocity);
 
             add(&user_force,right);
+        }
+
+        if((player->forward ^ player->back) && (player->left ^ player->right))
+        {
+            // diagonal movement
+            user_force.x *= 0.70710678118;
+            user_force.z *= 0.70710678118;
         }
 
         bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
 
         if(!user_force_applied)
         {
+            player->step_time = 0.0;
+
             // only apply friction when user isn't causing a force
             if(player->spectator)
             {
@@ -312,158 +327,28 @@ static void handle_player_control2(PhysicsObj* phys)
             phys->vel.x = user_force.x;
             //phys->vel.y = user_force.y;
             phys->vel.z = user_force.z;
+            
+            // slope
+            /*
+            float vel_factor = 1.0;
+            float d = dot(phys->ground.normal,player->phys.vel);
+            if(ABS(d) > 2.5)
+            {
+                vel_factor = d/3.0 + 1.0;
+                vel_factor = MIN(MAX(0.0,vel_factor),2.0);
+            }
+
+            printf("vel_factor: %f\n", vel_factor);
+
+            phys->vel.x *= vel_factor;
+            phys->vel.z *= vel_factor;
+            */
+
+            player->step_time += g_delta_t;
         }
         player->user_force_applied = user_force_applied;
 
         //physics_add_force(phys,user_force.x, user_force.y, user_force.z);
-    }
-
-    if(!player->spectator)
-        physics_add_gravity(phys, 1.0);
-
-    physics_simulate(phys);
-
-}
-
-static void handle_player_control(PhysicsObj* phys)
-{
-    Vector3f* accel = &player->phys.accel;
-    Vector3f* vel = &player->phys.vel;
-
-    float accel_force = 3.0;
-    bool in_water = (player->phys.pos.y + player->phys.com_offset.y <= water_get_height());
-    if(!player->jumped)
-        phys->max_linear_speed = player->walk_speed;
-
-    if(player->run)
-    {
-        accel_force = 4.0;
-        if(!player->jumped)
-            phys->max_linear_speed *= player->run_factor;
-    }
-
-    if(player->spectator)
-    {
-        phys = &player->camera.phys;
-        accel_force = 10.0;
-        phys->max_linear_speed = 20.0;
-    }
-
-    if(in_water)
-    {
-        accel_force /= 3.0;
-        phys->max_linear_speed /= 3.0;
-    }
-
-    Vector3f vel_dir   = {phys->vel.x, phys->vel.y, phys->vel.z};
-    Vector3f accel_dir = {phys->accel.x, phys->accel.y, phys->accel.z};
-
-    normalize(&vel_dir);
-    normalize(&accel_dir);
-
-    float dir_influence = dot(vel_dir,accel_dir);//player->camera.lookat);
-
-    dir_influence -= 1.0;
-    dir_influence /= -1.0;
-
-    accel_force = accel_force + accel_force*dir_influence;
-
-    physics_begin(phys);
- 
-    if(player->jumped && (phys->pos.y <= phys->ground.height || phys->on_object))
-        player->jumped = false;
- 
-    if(player->secondary_action)
-    {
-        player->secondary_action = false;
-        player_spawn_projectile(player->equipped_projectile);
-    }
-
-    bool in_air = phys->pos.y > phys->ground.height+GROUND_TOLERANCE;
- 
-    if(player->spectator || player->phys.on_object || !in_air || in_water) // tolerance to allow movement slightly above ground
-    {
-        // where the player is looking
-        Vector3f lookat = {
-            player->camera.lookat.x,
-            player->camera.lookat.y,
-            player->camera.lookat.z
-        };
- 
-        Vector3f user_force = {0.0,0.0,0.0};
-
-        if(player->jump)
-        {
-            if(in_water)
-            {
-                physics_add_force_y(phys,accel_force);
-            }
-            else
-            {
-                if(!player->jumped && !player->spectator)
-                {
-                    physics_add_force_y(phys,300.0);
-                    player->jumped = true;
-                }
-            }
-        }
-
-        if(player->forward)
-        {
-            Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
-            normalize(&forward);
-            mult(&forward,accel_force);
-
-            add(&user_force,forward);
-        }
-
-        if(player->back)
-        {
-            Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
-            normalize(&back);
-            mult(&back,accel_force);
-
-            add(&user_force,back);
-        }
-
-        if(player->left)
-        {
-            Vector3f left = {0};
-            cross(player->camera.up, lookat, &left);
-            normalize(&left);
-
-            mult(&left,-accel_force);
-
-            add(&user_force,left);
-        }
-
-        if(player->right)
-        {
-            Vector3f right = {0};
-            cross(player->camera.up, lookat, &right);
-            normalize(&right);
-
-            mult(&right,accel_force);
-
-            add(&user_force,right);
-        }
-
-        bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
-
-        if(!user_force_applied)
-        {
-            // only apply friction when user isn't causing a force
-            if(player->spectator)
-            {
-                physics_add_air_friction(phys, 0.80);
-            }
-            else
-            {
-                physics_add_kinetic_friction(phys, 0.80);
-            }
-        }
-
-        physics_add_force(phys,user_force.x, user_force.y, user_force.z);
     }
 
     if(!player->spectator)
@@ -497,8 +382,7 @@ static void update_player_physics()
     }
     else
     {
-        //handle_player_control(&player->phys);
-        handle_player_control2(&player->phys);
+        handle_player_control(&player->phys);
     }
 
     handle_collisions(p0);
@@ -592,7 +476,7 @@ void player_snap_camera()
     if(player->user_force_applied)
     {
         float period = player->run ? 10 : 5;
-        player->camera.phys.pos.y += 0.1*sin(period*g_total_t);
+        player->camera.phys.pos.y += 0.1*sin(period*player->step_time);
     }
 
     //if(!player->in_boat)

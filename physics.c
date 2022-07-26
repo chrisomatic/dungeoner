@@ -2,6 +2,7 @@
 #include "common.h"
 #include "log.h"
 #include "terrain.h"
+#include "player.h"
 #include "physics.h"
 
 #define STATIC_COEFF_FRICTION 0.20

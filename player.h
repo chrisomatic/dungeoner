@@ -84,6 +84,8 @@ typedef struct
     bool in_boat;
     Boat* boat;
 
+    float step_time; // used for bouncing while moving
+
     bool portalled;
     int equipped_projectile;
 } Player;

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "3dmath.h"
@@ -99,7 +100,7 @@ void weapon_update(Weapon* w, PlayerState* s)
     if(player->user_force_applied)
     {
         float period = player->run ? 10 : 5;
-        pos.y -= 0.1*sin(period*g_total_t+0.2);
+        pos.y -= 0.1*sin(period*player->step_time+0.2);
     }
 
     if(*s == PLAYER_STATE_NORMAL)
