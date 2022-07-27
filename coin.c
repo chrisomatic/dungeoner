@@ -26,8 +26,8 @@ int coin_pile_count = 0;
 typedef struct
 {
     Vector4f world1; Vector4f world2; Vector4f world3; Vector4f world4;
-    Vector4f view1;  Vector4f view2;  Vector4f view3;  Vector4f view4;
-    Vector4f proj1;  Vector4f proj2;  Vector4f proj3;  Vector4f proj4;
+    //Vector4f view1;  Vector4f view2;  Vector4f view3;  Vector4f view4;
+    //Vector4f proj1;  Vector4f proj2;  Vector4f proj3;  Vector4f proj4;
 } __attribute__((__packed__)) CoinInstance;
 
 CoinInstance coin_instances[MAX_COINS];
@@ -113,22 +113,22 @@ static void gl_init_coin()
     glVertexAttribDivisor(4, 1);
     glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(12*sizeof(float)));
     glVertexAttribDivisor(5, 1);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(16*sizeof(float)));
-    glVertexAttribDivisor(6, 1);
-    glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(20*sizeof(float)));
-    glVertexAttribDivisor(7, 1);
-    glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(24*sizeof(float)));
-    glVertexAttribDivisor(8, 1);
-    glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(28*sizeof(float)));
-    glVertexAttribDivisor(9, 1);
-    glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(32*sizeof(float)));
-    glVertexAttribDivisor(10, 1);
-    glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(36*sizeof(float)));
-    glVertexAttribDivisor(11, 1);
-    glVertexAttribPointer(12, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(40*sizeof(float)));
-    glVertexAttribDivisor(12, 1);
-    glVertexAttribPointer(13, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(44*sizeof(float)));
-    glVertexAttribDivisor(13, 1);
+    //glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(16*sizeof(float)));
+    //glVertexAttribDivisor(6, 1);
+    //glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(20*sizeof(float)));
+    //glVertexAttribDivisor(7, 1);
+    //glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(24*sizeof(float)));
+    //glVertexAttribDivisor(8, 1);
+    //glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(28*sizeof(float)));
+    //glVertexAttribDivisor(9, 1);
+    //glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(32*sizeof(float)));
+    //glVertexAttribDivisor(10, 1);
+    //glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(36*sizeof(float)));
+    //glVertexAttribDivisor(11, 1);
+    //glVertexAttribPointer(12, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(40*sizeof(float)));
+    //glVertexAttribDivisor(12, 1);
+    //glVertexAttribPointer(13, 4, GL_FLOAT, GL_FALSE, sizeof(CoinInstance),(const GLvoid*)(44*sizeof(float)));
+    //glVertexAttribDivisor(13, 1);
 
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -221,15 +221,15 @@ void coin_update_piles()
             ci->world3.x = world.m[0][2]; ci->world3.y = world.m[1][2]; ci->world3.z = world.m[2][2]; ci->world3.w = world.m[3][2];
             ci->world4.x = world.m[0][3]; ci->world4.y = world.m[1][3]; ci->world4.z = world.m[2][3]; ci->world4.w = world.m[3][3];
 
-            ci->view1.x = view.m[0][0]; ci->view1.y = view.m[1][0]; ci->view1.z = view.m[2][0]; ci->view1.w = view.m[3][0];
-            ci->view2.x = view.m[0][1]; ci->view2.y = view.m[1][1]; ci->view2.z = view.m[2][1]; ci->view2.w = view.m[3][1];
-            ci->view3.x = view.m[0][2]; ci->view3.y = view.m[1][2]; ci->view3.z = view.m[2][2]; ci->view3.w = view.m[3][2];
-            ci->view4.x = view.m[0][3]; ci->view4.y = view.m[1][3]; ci->view4.z = view.m[2][3]; ci->view4.w = view.m[3][3];
+            //ci->view1.x = view.m[0][0]; ci->view1.y = view.m[1][0]; ci->view1.z = view.m[2][0]; ci->view1.w = view.m[3][0];
+            //ci->view2.x = view.m[0][1]; ci->view2.y = view.m[1][1]; ci->view2.z = view.m[2][1]; ci->view2.w = view.m[3][1];
+            //ci->view3.x = view.m[0][2]; ci->view3.y = view.m[1][2]; ci->view3.z = view.m[2][2]; ci->view3.w = view.m[3][2];
+            //ci->view4.x = view.m[0][3]; ci->view4.y = view.m[1][3]; ci->view4.z = view.m[2][3]; ci->view4.w = view.m[3][3];
 
-            ci->proj1.x = proj.m[0][0]; ci->proj1.y = proj.m[1][0]; ci->proj1.z = proj.m[2][0]; ci->proj1.w = proj.m[3][0];
-            ci->proj2.x = proj.m[0][1]; ci->proj2.y = proj.m[1][1]; ci->proj2.z = proj.m[2][1]; ci->proj2.w = proj.m[3][1];
-            ci->proj3.x = proj.m[0][2]; ci->proj3.y = proj.m[1][2]; ci->proj3.z = proj.m[2][2]; ci->proj3.w = proj.m[3][2];
-            ci->proj4.x = proj.m[0][3]; ci->proj4.y = proj.m[1][3]; ci->proj4.z = proj.m[2][3]; ci->proj4.w = proj.m[3][3];
+            //ci->proj1.x = proj.m[0][0]; ci->proj1.y = proj.m[1][0]; ci->proj1.z = proj.m[2][0]; ci->proj1.w = proj.m[3][0];
+            //ci->proj2.x = proj.m[0][1]; ci->proj2.y = proj.m[1][1]; ci->proj2.z = proj.m[2][1]; ci->proj2.w = proj.m[3][1];
+            //ci->proj3.x = proj.m[0][2]; ci->proj3.y = proj.m[1][2]; ci->proj3.z = proj.m[2][2]; ci->proj3.w = proj.m[3][2];
+            //ci->proj4.x = proj.m[0][3]; ci->proj4.y = proj.m[1][3]; ci->proj4.z = proj.m[2][3]; ci->proj4.w = proj.m[3][3];
 
             /*
             memcpy(&ci->world,&world,sizeof(Matrix));
@@ -275,6 +275,8 @@ static void gl_draw_coins()
 
     shader_set_int(program_coin,"sampler",0);
     shader_set_int(program_coin,"wireframe",show_wireframe);
+    shader_set_mat4(program_coin,"view",&player->camera.view_matrix);
+    shader_set_mat4(program_coin,"proj",&g_proj_matrix);
     shader_set_vec3(program_coin,"dl.color",sunlight.base.color.x, sunlight.base.color.y, sunlight.base.color.z);
     shader_set_vec3(program_coin,"dl.direction",sunlight.direction.x, sunlight.direction.y, sunlight.direction.z);
     shader_set_vec3(program_coin,"sky_color",SKY_COLOR_R, SKY_COLOR_G, SKY_COLOR_B);

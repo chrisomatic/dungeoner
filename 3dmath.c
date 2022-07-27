@@ -315,7 +315,7 @@ Vector3f get_intersection_plane_line(Vector3f* ray, Vector3f* ray_pt, Vector3f* 
     return intersection;
 }
 
-static void get_scale_transform(Matrix* mat, Vector3f* scale)
+void get_scale_transform(Matrix* mat, Vector3f* scale)
 {
     memset(mat,0,sizeof(Matrix));
 
@@ -325,7 +325,7 @@ static void get_scale_transform(Matrix* mat, Vector3f* scale)
     mat->m[3][3] = 1.0f;
 }
 
-static void get_rotation_transform(Matrix* mat, Vector3f* rotation)
+void get_rotation_transform(Matrix* mat, Vector3f* rotation)
 {
     Matrix rx = {0};
     Matrix ry = {0};
@@ -363,7 +363,7 @@ static void get_rotation_transform(Matrix* mat, Vector3f* rotation)
     dot_product_mat(*mat,rx,mat);
 }
 
-static void get_translate_transform(Matrix* mat, Vector3f* position)
+void get_translate_transform(Matrix* mat, Vector3f* position)
 {
     memset(mat,0,sizeof(Matrix));
 
@@ -376,7 +376,7 @@ static void get_translate_transform(Matrix* mat, Vector3f* position)
     mat->m[3][3] = 1.0f;
 }
 
-static void get_perspective_transform(Matrix* mat)
+void get_perspective_transform(Matrix* mat)
 {
     /*
     	projectionMatrix = new Matrix4f();

@@ -3,6 +3,7 @@
 gcc entity.c \
     animation.c \
     3dmath.c \
+    camera.c \
     gfx.c \
     gui.c \
     boat.c \

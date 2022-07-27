@@ -16,6 +16,7 @@
 #include "weapon.h"
 #include "gui.h"
 #include "portal.h"
+#include "camera.h"
 #include "player.h"
 
 Entity  p = {0};
@@ -25,27 +26,6 @@ static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
 
 static void player_spawn_projectile(ProjectileType type);
-
-void update_camera_rotation()
-{
-    // const Vector3f v_axis = {0.0, 1.0, 0.0};
-
-    // Rotate the view vector by the horizontal angle around the vertical axis
-    Vector3f view = {0.0, 0.0, 1.0};
-
-    Vector3f h_axis = {0};
-
-    rotate_vector(&view, player->camera.angle_h, player->camera.angle_v, &h_axis);
-    copy_vector(&player->camera.lookat,view);
-    normalize(&player->camera.lookat);
-
-    //printf("lookat: %f %f %f\n", camera.lookat.x, camera.lookat.y, camera.lookat.z);
-
-    cross(player->camera.lookat,h_axis, &player->camera.up);
-    normalize(&player->camera.up);
-
-    //printf("Up: %f %f %f\n", camera.up.x, camera.up.y, camera.up.z);
-}
 
 static void handle_collisions(Vector3f p0)
 {
@@ -320,13 +300,15 @@ static void handle_player_control(PhysicsObj* phys)
                 float absd = ABS(d);
                 if(absd >= 0.25 && absd <= 0.75)
                 {
-                    // ignore small slopes
                     vel_factor = sign*d*d + 1.0;
                 }
                 else if(absd > 0.75)
                 {
-                    // prohibit big slopes
-                    vel_factor = 0.0;
+                    vel_factor = d + 1.0;
+                }
+                else if(absd > 0.90)
+                {
+                    vel_factor = 0.00;
                 }
             }
             else
@@ -334,7 +316,7 @@ static void handle_player_control(PhysicsObj* phys)
                 vel_factor = sign*d*d + 1.0;
             }
 
-            printf("vel_factor: %f\n",vel_factor);
+            //printf("vel_factor: %f\n",vel_factor);
             velocity *= vel_factor;
 
             mult(&user_force,velocity);
@@ -461,7 +443,7 @@ void player_init()
     //collision_calc_bounding_box(player->model.mesh.vertices,player->model.mesh.vertex_count,&player->model.collision_vol.box);
 
     player->model.texture = t_outfit;
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
 }
 
 void player_snap_camera()
@@ -513,7 +495,7 @@ static void update_player_model_transform()
 
 void player_update()
 {
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
     update_player_physics();
     update_player_model_transform();
 

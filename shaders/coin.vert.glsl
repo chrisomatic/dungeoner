@@ -3,8 +3,6 @@
 layout (location = 0)  in vec3 position;
 layout (location = 1)  in vec3 normal;
 layout (location = 2)  in mat4 world; // per instance
-layout (location = 6)  in mat4 view;  // per instance
-layout (location = 10) in mat4 proj;  // per instance
 
 out vec3 normal0;
 out float visibility;
@@ -14,6 +12,8 @@ out vec3 to_camera_vector;
 uniform float fog_density;
 uniform float fog_gradient;
 uniform vec3  player_position;
+uniform mat4 view;
+uniform mat4 proj;
 
 uniform vec4 clip_plane;
 

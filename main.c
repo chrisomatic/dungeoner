@@ -39,6 +39,7 @@
 Timer game_timer = {0};
 double g_delta_t = 0.0f;
 double g_total_t = 0.0f;
+Matrix g_proj_matrix;
 
 float fog_density = 0.010;
 float fog_gradient = 5.0;

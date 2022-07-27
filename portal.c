@@ -155,14 +155,13 @@ static void update_virtual_camera(PortalDoor* portal)
 
     player->camera.angle_h += (180.0+portal->angle+dest_portal->angle);
 
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
     update_terrain_block();
 }
 
 static void update_transform(PortalDoor* d)
 {
-    get_view_proj_transforms(&d->view, &d->proj);
-    get_wvp(&d->world, &d->view, &d->proj, &d->wvp);
+    get_wvp(&d->world, &player->camera.view_matrix, &g_proj_matrix, &d->wvp);
     get_wv(&d->world, &d->view, &d->wv);
 }
 
@@ -424,6 +423,6 @@ void portal_draw()
 
     glEnable(GL_CULL_FACE);
 
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
     update_terrain_block();
 }

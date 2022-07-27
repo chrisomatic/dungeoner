@@ -127,9 +127,7 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
             shader_set_float(program,"fog_density",0.0);
             shader_set_float(program,"fog_gradient",1.0);
         }
-
     }
-
 }
 
 void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane, bool flip_texture_vertically)

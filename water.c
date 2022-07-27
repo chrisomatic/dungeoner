@@ -9,6 +9,7 @@
 #include "creature.h"
 #include "projectile.h"
 #include "coin.h"
+#include "camera.h"
 //#include "particles.h"
 #include "water.h"
 
@@ -86,7 +87,7 @@ void water_draw_textures()
     float temp_angle = player->camera.angle_v;
     player->camera.angle_v *= -1;
 
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
 
     if(camera_pos > water_height)
     {
@@ -101,7 +102,7 @@ void water_draw_textures()
 
     player->camera.phys.pos.y += distance;
     player->camera.angle_v = temp_angle;
-    update_camera_rotation();
+    camera_update_rotation(&player->camera);
 
     // pass 2: render refraction
     water_bind_refraction_fbo();

@@ -30,7 +30,10 @@ typedef struct
 
 typedef Vector3f Vector;
 
-typedef struct {float m[4][4];} Matrix;
+typedef struct 
+{
+    float m[4][4];
+} Matrix;
 
 typedef struct
 {
@@ -93,3 +96,10 @@ float dist(Vector3f* a, Vector3f* b);
 
 void rotate_vector(Vector* v, float angle_h, float angle_v, Vector* ret_h_axis);
 void rotate_toward_point(Vector curr_normal, Vector* starting_point, Vector* point, Vector* ret_rotation);
+
+void get_scale_transform(Matrix* mat, Vector3f* scale);
+void get_rotation_transform(Matrix* mat, Vector3f* rotation);
+void get_translate_transform(Matrix* mat, Vector3f* position);
+void get_perspective_transform(Matrix* mat);
+void get_camera_transform(Matrix* mat, Vector3f lookat, Vector3f up);
+

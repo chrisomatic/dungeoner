@@ -5,12 +5,14 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "common.h"
 #include "player.h"
 #include "projectile.h"
 #include "gfx.h"
 #include "settings.h"
-#include "window.h"
+#include "3dmath.h"
 #include "log.h"
+#include "window.h"
 
 static GLFWwindow* window;
 
@@ -108,6 +110,12 @@ static void window_size_callback(GLFWwindow* window, int window_width, int windo
     int start_y = (window_height + view_height) / 2.0f - view_height;
 
     glViewport(start_x,start_y,view_width,view_height);
+
+    // update projection matrix
+    Matrix perspective_trans = {0};
+    get_perspective_transform(&perspective_trans);
+    memcpy(&g_proj_matrix,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(g_proj_matrix, perspective_trans, &g_proj_matrix);
 }
 
 static void window_maximize_callback(GLFWwindow* window, int maximized)

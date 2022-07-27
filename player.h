@@ -6,32 +6,7 @@
 #include "model.h"
 #include "boat.h"
 #include "weapon.h"
-
-typedef enum
-{
-    CAMERA_MODE_FIRST_PERSON,
-    CAMERA_MODE_THIRD_PERSON,
-} CameraMode;
-
-typedef struct
-{
-    PhysicsObj phys;
-
-    Vector3f lookat;
-    Vector3f up;
-    Vector3f offset; // used for third-person
-
-    Vector3f target_pos;
-
-    CameraMode mode;
-
-    float angle_h;
-    float angle_h_offset; // for boat
-    float angle_v;
-
-    double cursor_x;
-    double cursor_y;
-} Camera;
+#include "camera.h"
 
 typedef enum
 {
@@ -97,4 +72,3 @@ void player_update();
 void player_draw(bool reflection);
 void player_update_camera_angle(int cursor_x, int cursor_y);
 void player_snap_camera();
-void update_camera_rotation();
