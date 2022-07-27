@@ -263,8 +263,6 @@ static void handle_player_control(PhysicsObj* phys)
         {
             Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
             normalize(&forward);
-            mult(&forward,velocity);
-
             add(&user_force,forward);
         }
 
@@ -272,8 +270,6 @@ static void handle_player_control(PhysicsObj* phys)
         {
             Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
             normalize(&back);
-            mult(&back,velocity);
-
             add(&user_force,back);
         }
 
@@ -282,10 +278,7 @@ static void handle_player_control(PhysicsObj* phys)
             Vector3f left = {0};
             cross(player->camera.up, lookat, &left);
             normalize(&left);
-
-            mult(&left,-velocity);
-
-            add(&user_force,left);
+            subtract(&user_force,left);
         }
 
         if(player->right)
@@ -293,18 +286,10 @@ static void handle_player_control(PhysicsObj* phys)
             Vector3f right = {0};
             cross(player->camera.up, lookat, &right);
             normalize(&right);
-
-            mult(&right,velocity);
-
             add(&user_force,right);
         }
 
-        if((player->forward ^ player->back) && (player->left ^ player->right))
-        {
-            // diagonal movement
-            user_force.x *= 0.70710678118;
-            user_force.z *= 0.70710678118;
-        }
+        normalize(&user_force);
 
         bool user_force_applied = (user_force.x != 0.0 || user_force.y != 0.0 || user_force.z != 0.0);
 
@@ -324,25 +309,37 @@ static void handle_player_control(PhysicsObj* phys)
         }
         else
         {
-            phys->vel.x = user_force.x;
-            //phys->vel.y = user_force.y;
-            phys->vel.z = user_force.z;
-            
+
             // slope
-            /*
+            float d = dot(phys->ground.normal,user_force);
+            float sign = (d < 0.0 ? -1.0 : +1.0);
             float vel_factor = 1.0;
-            float d = dot(phys->ground.normal,player->phys.vel);
-            if(ABS(d) > 2.5)
+
+            if(sign == -1.0)
             {
-                vel_factor = d/3.0 + 1.0;
-                vel_factor = MIN(MAX(0.0,vel_factor),2.0);
+                float absd = ABS(d);
+                if(absd >= 0.25 && absd <= 0.75)
+                {
+                    // ignore small slopes
+                    vel_factor = sign*d*d + 1.0;
+                }
+                else if(absd > 0.75)
+                {
+                    // prohibit big slopes
+                    vel_factor = 0.0;
+                }
+            }
+            else
+            {
+                vel_factor = sign*d*d + 1.0;
             }
 
-            printf("vel_factor: %f\n", vel_factor);
+            printf("vel_factor: %f\n",vel_factor);
+            velocity *= vel_factor;
 
-            phys->vel.x *= vel_factor;
-            phys->vel.z *= vel_factor;
-            */
+            mult(&user_force,velocity);
+            phys->vel.x = user_force.x;
+            phys->vel.z = user_force.z;
 
             player->step_time += g_delta_t;
         }
