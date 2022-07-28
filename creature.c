@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
 #include "common.h"
 #include "physics.h"
 #include "3dmath.h"
@@ -8,6 +10,7 @@
 #include "log.h"
 #include "coin.h"
 #include "player.h"
+#include "terrain.h"
 #include "particles.h"
 
 #include "creature.h"
@@ -367,7 +370,11 @@ void creature_update()
 
         creature_update_model_transform(c);
         collision_transform_bounding_box(&c->model.collision_vol, &c->model.transform);
+
+        terrain_get_block_index(c->phys.pos.x, c->phys.pos.z, &c->terrain_block);
     }
+
+    //printf("pos: %f %f, terrain block: %d,%d\n",player->camera.phys.pos.x, player->camera.phys.pos.z, curr_terrain_x, curr_terrain_y);
 }
 
 void creature_draw()
@@ -375,6 +382,12 @@ void creature_draw()
     for(int i = 0; i < creature_count; ++i)
     {
         Creature* c = &creatures[i];
+
+        if(!terrain_within_draw_block_of_player(&player->terrain_block, &c->terrain_block))
+        {
+            // not in the same terrain block as player, don't render
+            continue;
+        }
 
         gfx_draw_model(&creatures[i].model);
 

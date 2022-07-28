@@ -8,6 +8,7 @@
 #include "log.h"
 #include "shader.h"
 #include "util.h"
+#include "player.h"
 
 #include "terrain.h"
 
@@ -23,6 +24,7 @@ typedef struct
     Vector pos;
     Vector rot;
     Vector sca;
+    Vector2i terrain_block;
     Model model;
 } Tree;
 
@@ -135,6 +137,7 @@ static void generate_trees()
 
                 //printf("x:%f, y: %f, z: %f\n",t->pos.x,t->pos.y,t->pos.z);
 
+                terrain_get_block_index(t->pos.x, t->pos.z, &t->terrain_block);
 
                 memcpy(&t->model, &m_tree, sizeof(Model));
                 t->model.texture = t_tree;
@@ -148,6 +151,17 @@ static void generate_trees()
     }
 
     util_unload_image(tree_data);
+}
+
+void terrain_get_block_index(float x, float z, Vector2i* block)
+{
+    block->x = round(x/TERRAIN_BLOCK_SIZE);
+    block->y = round(z/TERRAIN_BLOCK_SIZE);
+}
+
+bool terrain_within_draw_block_of_player(Vector2i* player_block, Vector2i* block)
+{
+    return (ABS(block->x - player_block->x) <= 2 && ABS(block->y - player_block->y) <= 2);
 }
 
 void terrain_update_local_block(int block_index_x, int block_index_y)
@@ -297,6 +311,8 @@ void terrain_draw()
 
     for(int i = 0; i < num_trees; ++i)
     {
+        if(!terrain_within_draw_block_of_player(&player->terrain_block, &trees[i].terrain_block))
+            continue;
         gfx_draw_model(&trees[i].model);
         //gfx_draw_mesh(&m_tree.mesh, t_tree, NULL, &trees[i].pos,&trees[i].rot, &sca);
     }

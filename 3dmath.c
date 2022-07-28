@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+#include "common.h"
 #include "settings.h"
 #include "player.h"
 #include "3dmath.h"
@@ -48,6 +50,7 @@ static float Q_rsqrt(float number)
 	conv.f *= 1.5F - (number * 0.5F * conv.f * conv.f);
 	return conv.f;
 }
+
 float magn(Vector3f v)
 {
     return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
@@ -462,6 +465,14 @@ void get_model_transform(Vector* pos, Vector* rotation, Vector* scale, Matrix* m
     dot_product_mat(*model, translate_trans, model);
     dot_product_mat(*model, rotation_trans,  model);
     dot_product_mat(*model, scale_trans,     model);
+}
+
+void update_projection_transform()
+{
+    Matrix perspective_trans = {0};
+    get_perspective_transform(&perspective_trans);
+    memcpy(&g_proj_matrix,&identity_matrix,sizeof(Matrix));
+    dot_product_mat(g_proj_matrix, perspective_trans, &g_proj_matrix);
 }
 
 void get_view_proj_transforms(Matrix* view, Matrix* proj)

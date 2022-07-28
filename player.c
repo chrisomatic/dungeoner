@@ -321,6 +321,7 @@ static void handle_player_control(PhysicsObj* phys)
 
             mult(&user_force,velocity);
             phys->vel.x = user_force.x;
+            phys->vel.y = player->spectator ? user_force.y : phys->vel.y;
             phys->vel.z = user_force.z;
 
             player->step_time += g_delta_t;
@@ -393,8 +394,8 @@ void player_init()
     player->run = false;
     player->phys.density = 1050.0f;
 
-    player->terrain_block_x = 0;
-    player->terrain_block_y = 0;
+    player->terrain_block.x = 0;
+    player->terrain_block.y = 0;
     player->equipped_projectile = PROJECTILE_FIREBALL;
 
     memcpy(&player->weapon, &w_claymore, sizeof(Weapon));
@@ -537,10 +538,10 @@ void player_update()
 
     //printf("pos: %f %f, terrain block: %d,%d\n",player->camera.phys.pos.x, player->camera.phys.pos.z, curr_terrain_x, curr_terrain_y);
 
-    if(curr_terrain_x != player->terrain_block_x || curr_terrain_y != player->terrain_block_y)
+    if(curr_terrain_x != player->terrain_block.x || curr_terrain_y != player->terrain_block.y)
     {
-        player->terrain_block_x = curr_terrain_x;
-        player->terrain_block_y = curr_terrain_y;
+        player->terrain_block.x = curr_terrain_x;
+        player->terrain_block.y = curr_terrain_y;
 
         terrain_update_local_block(-curr_terrain_x, -curr_terrain_y);
     }

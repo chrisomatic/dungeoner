@@ -6,6 +6,7 @@ typedef struct
     PhysicsObj phys;
     Vector3f lookat;
     float angle_h;
+    Vector2i terrain_block;
 } Boat;
 
 #define MAX_BOATS 10

@@ -165,6 +165,8 @@ void init()
 
     LOGI("Initializing...");
 
+    update_projection_transform();
+
     LOGI(" - Shaders.");
     shader_load_all();
 

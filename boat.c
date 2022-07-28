@@ -79,6 +79,8 @@ void boat_update()
 
         physics_simulate(&b->phys);
 
+        terrain_get_block_index(b->phys.pos.x, b->phys.pos.z, &b->terrain_block);
+
         //physics_print(&b->phys, false);
     }
 }
@@ -111,6 +113,8 @@ void boat_draw()
     for(int i = 0; i < boat_count; ++i)
     {
         Boat* b = &boats[i];
+        if(!terrain_within_draw_block_of_player(&player->terrain_block, &b->terrain_block))
+            continue;
         gfx_draw_model(&b->model);
     }
 }

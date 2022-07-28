@@ -124,10 +124,10 @@ static void update_terrain_block()
 
     //printf("pos: %f %f, terrain block: %d,%d\n",player->camera.phys.pos.x, player->camera.phys.pos.z, curr_terrain_x, curr_terrain_y);
 
-    if(curr_terrain_x != player->terrain_block_x || curr_terrain_y != player->terrain_block_y)
+    if(curr_terrain_x != player->terrain_block.x || curr_terrain_y != player->terrain_block.y)
     {
-        player->terrain_block_x = curr_terrain_x;
-        player->terrain_block_y = curr_terrain_y;
+        player->terrain_block.x = curr_terrain_x;
+        player->terrain_block.y = curr_terrain_y;
 
         terrain_update_local_block(-curr_terrain_x, -curr_terrain_y);
     }

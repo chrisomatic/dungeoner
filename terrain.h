@@ -33,4 +33,6 @@ extern Terrain terrain;
 void terrain_build(Mesh* ret_mesh, const char* height_map_file);
 void terrain_draw();
 void terrain_get_info(float x, float z, GroundInfo* ground);
+void terrain_get_block_index(float x, float z, Vector2i* block);
 void terrain_update_local_block(int block_index_x, int block_index_y);
+bool terrain_within_draw_block_of_player(Vector2i* player_block, Vector2i* block);

@@ -44,6 +44,8 @@ typedef struct
     float hp;
     float hp_max;
 
+    Vector2i terrain_block;
+
     int min_gold;
     int max_gold;
 

@@ -110,12 +110,7 @@ static void window_size_callback(GLFWwindow* window, int window_width, int windo
     int start_y = (window_height + view_height) / 2.0f - view_height;
 
     glViewport(start_x,start_y,view_width,view_height);
-
-    // update projection matrix
-    Matrix perspective_trans = {0};
-    get_perspective_transform(&perspective_trans);
-    memcpy(&g_proj_matrix,&identity_matrix,sizeof(Matrix));
-    dot_product_mat(g_proj_matrix, perspective_trans, &g_proj_matrix);
+    update_projection_transform();
 }
 
 static void window_maximize_callback(GLFWwindow* window, int maximized)
