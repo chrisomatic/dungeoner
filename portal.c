@@ -28,6 +28,7 @@ typedef struct
 
     Vector3f rect[4];
     Vector3f normal;
+    Vector2i terrain_block;
 
     Matrix world;
     Matrix view;
@@ -117,7 +118,7 @@ static void render_scene_in_portal()
     creature_draw();
 }
 
-static void update_terrain_block()
+static void update_camera_terrain_block()
 {
     int curr_terrain_x = round(player->camera.phys.pos.x/TERRAIN_BLOCK_SIZE);
     int curr_terrain_y = round(player->camera.phys.pos.z/TERRAIN_BLOCK_SIZE);
@@ -156,7 +157,7 @@ static void update_virtual_camera(PortalDoor* portal)
     player->camera.angle_h += (180.0+portal->angle+dest_portal->angle);
 
     camera_update_rotation(&player->camera);
-    update_terrain_block();
+    update_camera_terrain_block();
 }
 
 static void update_transform(PortalDoor* d)
@@ -167,11 +168,18 @@ static void update_transform(PortalDoor* d)
 
 void portal_update()
 {
+    PortalDoor* a = &main_portal.a;
+    terrain_get_block_index(a->pos.x, a->pos.z, &a->terrain_block);
 
+    PortalDoor* b = &main_portal.b;
+    terrain_get_block_index(b->pos.x, b->pos.z, &b->terrain_block);
 }
 
 static bool passed_through_portal(Player* player, PortalDoor* door, Vector3f prior_pos)
 {
+    if(!terrain_within_draw_block_of_player(&player->terrain_block, &door->terrain_block))
+        return false;
+
     Vector3f* p = &player->phys.pos;
 
     Vector3f da = {
@@ -290,8 +298,11 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
     return false;
 }
 
-static void gl_draw_portal(PortalDoor* portal_door)
+static void gl_draw_portal(PortalDoor* portal_door, bool force)
 {
+    if(!terrain_within_draw_block_of_player(&player->terrain_block, &portal_door->terrain_block) && !force)
+        return;
+
     glUseProgram(program_portal);
 
     shader_set_int(program_portal,"sampler",0);
@@ -356,6 +367,11 @@ static bool is_player_looking_at_front_face(PortalDoor* door)
 
 static void _draw_portal(PortalDoor* portal_door)
 {
+    if(!terrain_within_draw_block_of_player(&player->terrain_block, &portal_door->terrain_block))
+    {
+        return;
+    }
+
     bool front_face = is_player_looking_at_front_face(portal_door);
 
     if(front_face)
@@ -373,7 +389,7 @@ static void _draw_portal(PortalDoor* portal_door)
         glStencilMask(0xFF);
         glClear(GL_STENCIL_BUFFER_BIT);
 
-        gl_draw_portal(portal_door); // draw to stencil buffer
+        gl_draw_portal(portal_door, false); // draw to stencil buffer
 
         update_virtual_camera(portal_door); // move camera
 
@@ -398,16 +414,20 @@ static void _draw_portal(PortalDoor* portal_door)
     }
     else
     {
-        gl_draw_portal(portal_door);
+        gl_draw_portal(portal_door, false);
     }
 }
 
 void portal_draw()
 {
+    glDisable(GL_CULL_FACE);
+
     update_transform(&main_portal.a);
     update_transform(&main_portal.b);
 
-    glDisable(GL_CULL_FACE);
+    //printf("player   block: %d %d\n", player->terrain_block.x, player->terrain_block.y);
+    //printf("portal a block: %d %d\n", main_portal.a.terrain_block.x, main_portal.a.terrain_block.y);
+    //printf("portal b block: %d %d\n", main_portal.b.terrain_block.x, main_portal.b.terrain_block.y);
 
     _draw_portal(&main_portal.a);
     _draw_portal(&main_portal.b);
@@ -416,13 +436,12 @@ void portal_draw()
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    gl_draw_portal(&main_portal.a);
-    gl_draw_portal(&main_portal.b);
+    gl_draw_portal(&main_portal.a, true);
+    gl_draw_portal(&main_portal.b, true);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
     glEnable(GL_CULL_FACE);
 
     camera_update_rotation(&player->camera);
-    update_terrain_block();
+    update_camera_terrain_block();
 }

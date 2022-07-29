@@ -75,6 +75,8 @@ typedef struct
 
     bool dead;
     bool blend_additive;
+    
+    Vector2i terrain_block;
 
 } ParticleGenerator;
 

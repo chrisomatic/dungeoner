@@ -609,6 +609,8 @@ void particles_update()
 
         pg->camera_dist = dist_squared(&player->camera.phys.pos, &pg->pos);
 
+        terrain_get_block_index(pg->pos.x, pg->pos.z, &pg->terrain_block);
+
         // sort particles
         if(!pg->blend_additive)
             quick_sort_particles(pg->particles, 0, pg->particle_count-1);
@@ -762,7 +764,12 @@ void particles_draw()
 
     for(int i = 0; i < particle_generator_count; ++i)
     {
-        if(particle_generators[i].blend_additive)
+        ParticleGenerator* pg = &particle_generators[i];
+
+        if(!terrain_within_draw_block_of_player(&player->terrain_block, &pg->terrain_block))
+            continue;
+
+        if(pg->blend_additive)
             gfx_enable_blending_additive();
         else
             gfx_enable_blending();
