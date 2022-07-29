@@ -75,6 +75,7 @@ typedef struct
 
     bool dead;
     bool blend_additive;
+    bool within_view;
     
     Vector2i terrain_block;
 

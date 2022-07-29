@@ -22,6 +22,7 @@ typedef struct
     int value;
     int sparkle_id;
     bool done_animating;
+    Vector2i terrain_block;
 } CoinPile;
 
 extern CoinPile coin_piles[MAX_COIN_PILES];

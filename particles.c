@@ -65,6 +65,14 @@ typedef struct
 
 ParticleInstance particle_instances[MAX_PARTICLE_GENERATORS];
 
+typedef struct
+{
+    int index;
+    float dist;
+} ParticleDist;
+
+static ParticleDist pg_distances[MAX_PARTICLE_GENERATORS] = {0};
+
 static void delete_particle_generator(int pg_index)
 {
     memcpy(&particle_generators[pg_index], &particle_generators[particle_generator_count -1], sizeof(ParticleGenerator));
@@ -78,80 +86,42 @@ static void delete_particle(int pg_index, int p_index)
     pg->particle_count--;
 }
 
-// === Quick Sort Particles ===
-static void swap_particles(Particle* a, Particle* b)
+// === Insertion Sort ===
+void insertion_sort_pg(ParticleGenerator arr[], int n)
 {
-    Particle t = {0};
-    memcpy(&t, a, sizeof(Particle));
-    memcpy(a, b, sizeof(Particle));
-    memcpy(b, &t, sizeof(Particle));
-}
-
-static int partition_particles(Particle arr[], int low, int high)
-{
-    Particle pivot = arr[high];
-    int i = (low - 1);
-
-    for (int j = low; j <= high- 1; j++)
+    int i, j;
+    ParticleGenerator key;
+    for (i = 1; i < n; i++) 
     {
-        if (arr[j].camera_dist > pivot.camera_dist)
+        memcpy(&key,&arr[i],sizeof(ParticleGenerator));
+        j = i - 1;
+
+        while (j >= 0 && arr[j].camera_dist <= arr[i].camera_dist)
         {
-            i++;
-            swap_particles(&arr[i], &arr[j]);
+            memcpy(&arr[j+1],&arr[j], sizeof(ParticleGenerator));
+            j = j - 1;
         }
-    }
-    swap_particles(&arr[i + 1], &arr[high]);
-    return (i + 1);
-}
-
-static void quick_sort_particles(Particle arr[], int low, int high)
-{
-    if (low < high)
-    {
-        int pi = partition_particles(arr, low, high);
-
-        quick_sort_particles(arr, low, pi - 1);
-        quick_sort_particles(arr, pi + 1, high);
+        memcpy(&arr[j+1],&key, sizeof(ParticleGenerator));
     }
 }
-// ===
 
-// === Quick Sort Particle Generators ===
-static void swap_pg(ParticleGenerator* a, ParticleGenerator* b)
+void insertion_sort_particles(Particle arr[], int n)
 {
-    ParticleGenerator t = {0};
-    memcpy(&t, a, sizeof(ParticleGenerator));
-    memcpy(a, b, sizeof(ParticleGenerator));
-    memcpy(b, &t, sizeof(ParticleGenerator));
-}
-static int partition_pg(ParticleGenerator arr[], int low, int high)
-{
-    ParticleGenerator pivot = arr[high];
-    int i = (low - 1);
-
-    for (int j = low; j <= high- 1; j++)
+    int i, j;
+    Particle key;
+    for (i = 1; i < n; i++) 
     {
-        if (arr[j].camera_dist > pivot.camera_dist)
+        memcpy(&key,&arr[i],sizeof(Particle));
+        j = i - 1;
+
+        while (j >= 0 && arr[j].camera_dist <= arr[i].camera_dist)
         {
-            i++;
-            swap_pg(&arr[i], &arr[j]);
+            memcpy(&arr[j+1],&arr[j], sizeof(Particle));
+            j = j - 1;
         }
-    }
-    swap_pg(&arr[i + 1], &arr[high]);
-    return (i + 1);
-}
-static void quick_sort_pg(ParticleGenerator arr[], int low, int high)
-{
-    if (low < high)
-    {
-        int pi = partition_pg(arr, low, high);
-
-        quick_sort_pg(arr, low, pi - 1);
-        quick_sort_pg(arr, pi + 1, high);
+        memcpy(&arr[j+1],&key, sizeof(Particle));
     }
 }
-// ===
-
 
 static void print_particle_instance(int effect)
 {
@@ -610,15 +580,19 @@ void particles_update()
         pg->camera_dist = dist_squared(&player->camera.phys.pos, &pg->pos);
 
         terrain_get_block_index(pg->pos.x, pg->pos.z, &pg->terrain_block);
+        pg->within_view = terrain_within_draw_block_of_player(&player->terrain_block, &pg->terrain_block);
+        if(!pg->within_view)
+            continue;
 
         // sort particles
         if(!pg->blend_additive)
-            quick_sort_particles(pg->particles, 0, pg->particle_count-1);
-
+            insertion_sort_particles(pg->particles, pg->particle_count);
     }
 
     // sort generators
-    quick_sort_pg(particle_generators, 0, particle_generator_count-1);
+    //quick_sort_pg(particle_generators, 0, particle_generator_count-1);
+
+    insertion_sort_pg(particle_generators,particle_generator_count);
     
     // build instanced data
     for(int i = 0; i < MAX_PARTICLE_GENERATORS; ++i)
@@ -627,6 +601,9 @@ void particles_update()
     for(int i = 0; i < particle_generator_count; ++i)
     {
         ParticleGenerator* pg = &particle_generators[i];
+        
+        if(!pg->within_view)
+            continue;
 
         for(int j = 0; j < pg->particle_count; ++j)
         {
@@ -766,7 +743,7 @@ void particles_draw()
     {
         ParticleGenerator* pg = &particle_generators[i];
 
-        if(!terrain_within_draw_block_of_player(&player->terrain_block, &pg->terrain_block))
+        if(!pg->within_view)
             continue;
 
         if(pg->blend_additive)

@@ -12,6 +12,8 @@
 #include "shader.h"
 #include "coin.h"
 
+#define COIN_SPARKLE 1
+
 #define COIN_COLOR_R 0.84
 #define COIN_COLOR_G 0.78
 #define COIN_COLOR_B 0.10
@@ -72,6 +74,7 @@ static GLuint coin_ibo;
 static GLuint instance_vbo;
 
 static bool refresh_coin_piles;
+static bool should_draw_coins;
 
 void coin_destroy_pile(int index)
 {
@@ -81,7 +84,9 @@ void coin_destroy_pile(int index)
         return;
     }
 
+#if COIN_SPARKLE
     particle_generator_destroy(coin_piles[index].sparkle_id);
+#endif
     memcpy(&coin_piles[index], &coin_piles[coin_pile_count-1], sizeof(CoinPile));
 
     coin_pile_count--;
@@ -165,7 +170,9 @@ void coin_spawn_pile(float x, float y, float z, int value)
         mult(&cp->coins[i].phys.vel,vel_magn);
     }
 
+#if COIN_SPARKLE
     cp->sparkle_id = particles_create_generator(&cp->pos, PARTICLE_EFFECT_SPARKLE, 0.0);
+#endif
 
     coin_pile_count++;
 }
@@ -174,9 +181,18 @@ void coin_update_piles()
 {
     total_coin_count = 0;
 
+    should_draw_coins = true;
+
     for(int i = 0; i < coin_pile_count; ++i)
     {
         CoinPile* cp = &coin_piles[i];
+
+        terrain_get_block_index(cp->pos.x, cp->pos.z, &cp->terrain_block);
+        bool coin_pile_in_view = terrain_within_draw_block_of_player(&player->terrain_block, &cp->terrain_block);
+
+        should_draw_coins &= coin_pile_in_view;
+        if(!coin_pile_in_view)
+            continue;
 
         bool animating_check = true;
 
@@ -225,7 +241,10 @@ void coin_update_piles()
 
         mult(&avg_pos, 1.0 / (float)COINS_PER_PILE);
         copy_vector(&cp->pos,avg_pos);
+#if COIN_SPARKLE
         particle_generator_move(cp->sparkle_id,cp->pos.x, cp->pos.y + 0.25, cp->pos.z);
+#endif
+
     }
 }
 
@@ -334,6 +353,9 @@ static void gl_draw_coins()
 
 void coin_draw_piles()
 {
-    gl_update_instance_vbo();
-    gl_draw_coins();
+    if(should_draw_coins)
+    {
+        gl_update_instance_vbo();
+        gl_draw_coins();
+    }
 }
