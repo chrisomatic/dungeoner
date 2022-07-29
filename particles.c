@@ -59,11 +59,11 @@ typedef struct
 
 typedef struct
 {
-    ParticleInstanceData data[MAX_TOTAL_PARTICLES];
+    ParticleInstanceData data[MAX_PARTICLES];
     int total_particle_count;
 } ParticleInstance;
 
-ParticleInstance particle_instances[PARTICLE_EFFECT_COUNT];
+ParticleInstance particle_instances[MAX_PARTICLE_GENERATORS];
 
 static void delete_particle_generator(int pg_index)
 {
@@ -428,6 +428,11 @@ int particles_create_generator(Vector* pos,ParticleEffect effect, float lifetime
             break;
     }
 
+    pg->color0 = particle_effect_info[effect].color0;
+    pg->color1 = particle_effect_info[effect].color1;
+    pg->color2 = particle_effect_info[effect].color2;
+    pg->blend_additive = particle_effect_info[effect].blend_additive;
+
     particle_generator_count++;
     
     return pg->id;
@@ -471,12 +476,13 @@ void particle_generator_destroy(int id)
     delete_particle_generator(pg_index);
 }
 
-static void gl_update_vbo(ParticleEffect effect)
+static void gl_update_vbo(int pg_index)
 {
     glBindVertexArray(particles_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, particles_vbo);
-    int num_bytes = particle_instances[effect].total_particle_count*PARTICLE_INSTANCE_SIZE*sizeof(float);
-	glBufferData(GL_ARRAY_BUFFER, num_bytes, particle_instances[effect].data, GL_STREAM_DRAW);
+    int num_bytes = particle_instances[pg_index].total_particle_count*sizeof(ParticleInstanceData);
+    //int num_bytes = MAX_PARTICLES*sizeof(ParticleInstanceData);
+	glBufferData(GL_ARRAY_BUFFER, num_bytes, particle_instances[pg_index].data, GL_STREAM_DRAW);
 	//glBufferSubData(GL_ARRAY_BUFFER, 0, num_bytes, particle_instances[effect].data);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -613,7 +619,7 @@ void particles_update()
     quick_sort_pg(particle_generators, 0, particle_generator_count-1);
     
     // build instanced data
-    for(int i = 0; i < PARTICLE_EFFECT_COUNT; ++i)
+    for(int i = 0; i < MAX_PARTICLE_GENERATORS; ++i)
         particle_instances[i].total_particle_count = 0;
 
     for(int i = 0; i < particle_generator_count; ++i)
@@ -647,7 +653,7 @@ void particles_update()
             get_model_transform(&pos, &rot, &sca, &world);
             get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
 
-            ParticleInstance* pi = &particle_instances[pg->effect];
+            ParticleInstance* pi = &particle_instances[i];
 
             int k = pi->total_particle_count;
 
@@ -685,7 +691,7 @@ void particles_update()
     //    print_particle_instance(i);
 }
 
-static void gl_draw_particles(ParticleEffect effect)
+static void gl_draw_particles(int pg_index)
 {
     glUseProgram(program_particle);
 
@@ -693,11 +699,11 @@ static void gl_draw_particles(ParticleEffect effect)
     shader_set_int(program_particle,"wireframe",show_wireframe);
     shader_set_vec3(program_particle,"sky_color",0.7, 0.8, 0.9);
 
-    const ParticleEffectInfo* info = &particle_effect_info[effect];
+    ParticleGenerator* pg = &particle_generators[pg_index];
 
-    shader_set_vec3(program_particle,"color0",info->color0.x, info->color0.y, info->color0.z);
-    shader_set_vec3(program_particle,"color1",info->color1.x, info->color1.y, info->color1.z);
-    shader_set_vec3(program_particle,"color2",info->color2.x, info->color2.y, info->color2.z);
+    shader_set_vec3(program_particle,"color0",pg->color0.x, pg->color0.y, pg->color0.z);
+    shader_set_vec3(program_particle,"color1",pg->color1.x, pg->color1.y, pg->color1.z);
+    shader_set_vec3(program_particle,"color2",pg->color2.x, pg->color2.y, pg->color2.z);
 
     if(show_fog)
     {
@@ -734,7 +740,7 @@ static void gl_draw_particles(ParticleEffect effect)
     glEnableVertexAttribArray(7);
     glEnableVertexAttribArray(8);
 
-    glDrawArraysInstanced(GL_TRIANGLE_STRIP,0,4,particle_instances[effect].total_particle_count);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP,0,4,particle_instances[pg_index].total_particle_count);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -754,9 +760,9 @@ void particles_draw()
 {
     gfx_disable_depth_mask();
 
-    for(int i = 0; i < PARTICLE_EFFECT_COUNT; ++i)
+    for(int i = 0; i < particle_generator_count; ++i)
     {
-        if(particle_effect_info[i].blend_additive)
+        if(particle_generators[i].blend_additive)
             gfx_enable_blending_additive();
         else
             gfx_enable_blending();
