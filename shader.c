@@ -89,17 +89,16 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
 
 void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f* clip_plane)
 {
-    Matrix view, proj, wv, wvp;
-    get_view_proj_transforms(&view, &proj);
+    Matrix wv, wvp;
 
-    get_wvp(model_transform, &view, &proj, &wvp);
-    get_wv(model_transform, &view, &wv);
+    get_wvp(model_transform, &player->camera.view_matrix, &g_proj_matrix, &wvp);
+    get_wv(model_transform, &player->camera.view_matrix, &wv);
 
     if(program == program_basic)
     {
         shader_set_int(program,"sampler",0);
         shader_set_int(program,"wireframe",show_wireframe);
-        shader_set_mat4(program,"view",&view);
+        shader_set_mat4(program,"view",&player->camera.view_matrix);
         shader_set_mat4(program,"wv",&wv);
         shader_set_mat4(program,"wvp",&wvp);
         shader_set_mat4(program,"world",model_transform);
@@ -132,17 +131,17 @@ void shader_set_variables_new(GLuint program, Matrix* model_transform, Vector4f*
 
 void shader_set_variables(GLuint program, Vector* pos, Vector* rot, Vector* sca, Vector4f* clip_plane, bool flip_texture_vertically)
 {
-    Matrix world, view, proj, wv, wvp;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
+    Matrix world, wv, wvp;
 
-    get_wvp(&world, &view, &proj, &wvp);
-    get_wv(&world, &view, &wv);
+    get_model_transform(pos, rot, sca, &world);
+    get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
+    get_wv(&world, &player->camera.view_matrix, &wv);
 
     if(program == program_basic)
     {
         shader_set_int(program,"sampler",0);
         shader_set_int(program,"wireframe",show_wireframe);
-        shader_set_mat4(program,"view",&view);
+        shader_set_mat4(program,"view",&player->camera.view_matrix);
         shader_set_mat4(program,"wv",&wv);
         shader_set_mat4(program,"wvp",&wvp);
         shader_set_mat4(program,"world",&world);

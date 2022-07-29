@@ -1,8 +1,8 @@
 #pragma once
 
-#define COINS_PER_PILE 100
+#define COINS_PER_PILE 50
 #define MAX_COIN_PILES 100
-#define COIN_PILE_RADIUS 1.0
+#define COIN_PILE_RADIUS 1.2
 
 #define MAX_COINS MAX_COIN_PILES*COINS_PER_PILE
 
@@ -11,6 +11,8 @@ typedef struct
     PhysicsObj phys;
     Matrix transform;
     Vector3f rotation;
+    float init_vel_magn;
+    Matrix world;
 } Coin;
 
 typedef struct

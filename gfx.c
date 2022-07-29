@@ -71,10 +71,9 @@ void gfx_draw_sky()
     Vector3f rot = {0.0f,0.0f,0.0f};
     Vector3f sca = {1.0,1.0,1.0};
 
-
-    Matrix world, view, proj, wvp;
-    get_transforms(&pos, &rot, &sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
+    Matrix world, wvp;
+    get_model_transform(&pos, &rot, &sca, &world);
+    get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
 
     shader_set_mat4(program_sky, "wvp", &wvp);
     shader_set_vec3(program_sky, "fog_color", FOG_COLOR_R,FOG_COLOR_G, FOG_COLOR_B );
@@ -105,10 +104,10 @@ void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca)
 {
     glUseProgram(program_terrain);
 
-    Matrix world, view, proj, wvp, wv;
-    get_transforms(pos, rot, sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
-    get_wv(&world, &view, &wv);
+    Matrix world, wvp, wv;
+    get_model_transform(pos, rot, sca, &world);
+    get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
+    get_wv(&world, &player->camera.view_matrix, &wv);
 
     shader_set_int(program_terrain,"texture_r",0);
     shader_set_int(program_terrain,"texture_g",1);
@@ -284,9 +283,9 @@ void gfx_draw_water(WaterBody* water)
     glDisable(GL_CULL_FACE);
     glUseProgram(program_water);
 
-    Matrix world, view, proj, wvp;
-    get_transforms(&water->pos, &water->rot, &water->sca, &world, &view, &proj);
-    get_wvp(&world, &view, &proj, &wvp);
+    Matrix world, wvp;
+    get_model_transform(&water->pos, &water->rot, &water->sca, &world);
+    get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
 
     shader_set_int(program_water,"reflection_texture",0);
     shader_set_int(program_water,"refraction_texture",1);

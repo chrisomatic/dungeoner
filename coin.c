@@ -134,6 +134,8 @@ void coin_spawn_pile(float x, float y, float z, int value)
 {
     CoinPile* cp = &coin_piles[coin_pile_count];
 
+    memset(cp, 0, sizeof(CoinPile));
+
     cp->pos.x = x;
     cp->pos.y = y;
     cp->pos.z = z;
@@ -159,6 +161,7 @@ void coin_spawn_pile(float x, float y, float z, int value)
         c->rotation.z = rand() % 359;
 
         float vel_magn = (rand() % 100) / 20.0;
+        cp->coins[i].init_vel_magn = vel_magn;
         mult(&cp->coins[i].phys.vel,vel_magn);
     }
 
@@ -175,12 +178,6 @@ void coin_update_piles()
     {
         CoinPile* cp = &coin_piles[i];
 
-        //if(cp->done_animating)
-        //{
-        //    total_coin_count += COINS_PER_PILE;
-        //    continue;
-        //}
-
         bool animating_check = true;
 
         Vector3f avg_pos = {0.0,0.0,0.0};
@@ -189,7 +186,8 @@ void coin_update_piles()
         {
             Coin* c = &cp->coins[j];
 
-            if(c->phys.pos.y-0.01 > c->phys.ground.height)
+            float height_offset = 0.15*((float)j/COINS_PER_PILE)*(MIN(1.00, 1.0/c->init_vel_magn));
+            if(c->phys.vel.y > 0.0 || (c->phys.pos.y-0.01 > (c->phys.ground.height+height_offset)))
             {
                 physics_begin(&c->phys);
                 physics_add_gravity(&c->phys, 1.0);
@@ -201,23 +199,23 @@ void coin_update_piles()
                 c->rotation.y += 270 * g_delta_t;
                 c->rotation.z += 270 * g_delta_t;
 
+                Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z}; // @NEG
+                Vector3f rot = {c->rotation.x,c->rotation.y,c->rotation.z}; // @NEG
+                Vector3f sca = {2.0,2.0,2.0};
 
+                Matrix world;
+                get_model_transform(&pos, &rot, &sca, &world);
+
+                memcpy(&c->world, &world, sizeof(Matrix));
                 animating_check = false;
             }
 
-            Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z}; // @NEG
-            Vector3f rot = {c->rotation.x,c->rotation.y,c->rotation.z}; // @NEG
-            Vector3f sca = {2.0,2.0,2.0};
-
-            Matrix world, view, proj;
-            get_transforms(&pos, &rot, &sca, &world, &view, &proj);
-
             CoinInstance* ci = &coin_instances[total_coin_count];
             
-            ci->world1.x = world.m[0][0]; ci->world1.y = world.m[1][0]; ci->world1.z = world.m[2][0]; ci->world1.w = world.m[3][0];
-            ci->world2.x = world.m[0][1]; ci->world2.y = world.m[1][1]; ci->world2.z = world.m[2][1]; ci->world2.w = world.m[3][1];
-            ci->world3.x = world.m[0][2]; ci->world3.y = world.m[1][2]; ci->world3.z = world.m[2][2]; ci->world3.w = world.m[3][2];
-            ci->world4.x = world.m[0][3]; ci->world4.y = world.m[1][3]; ci->world4.z = world.m[2][3]; ci->world4.w = world.m[3][3];
+            ci->world1.x = c->world.m[0][0]; ci->world1.y = c->world.m[1][0]; ci->world1.z = c->world.m[2][0]; ci->world1.w = c->world.m[3][0];
+            ci->world2.x = c->world.m[0][1]; ci->world2.y = c->world.m[1][1]; ci->world2.z = c->world.m[2][1]; ci->world2.w = c->world.m[3][1];
+            ci->world3.x = c->world.m[0][2]; ci->world3.y = c->world.m[1][2]; ci->world3.z = c->world.m[2][2]; ci->world3.w = c->world.m[3][2];
+            ci->world4.x = c->world.m[0][3]; ci->world4.y = c->world.m[1][3]; ci->world4.z = c->world.m[2][3]; ci->world4.w = c->world.m[3][3];
 
             add(&avg_pos,c->phys.pos);
             total_coin_count++;
@@ -233,6 +231,7 @@ void coin_update_piles()
 
 static void gl_update_instance_vbo()
 {
+    /*
     bool all_animations_done = true;
     for(int i = 0; i < coin_pile_count; ++i)
     {
@@ -241,13 +240,15 @@ static void gl_update_instance_vbo()
     }
 
     if(all_animations_done && !refresh_coin_piles)
+    {
         return;
+    }
+    */
 
     glBindVertexArray(coin_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
     int num_bytes = MAX_COINS*sizeof(CoinInstance);
 	glBufferData(GL_ARRAY_BUFFER, num_bytes, coin_instances, GL_STREAM_DRAW);
-	//glBufferSubData(GL_ARRAY_BUFFER, 0, num_bytes, particle_instances[effect].data);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 

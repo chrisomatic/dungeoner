@@ -643,9 +643,9 @@ void particles_update()
             rot.y = -player->camera.angle_h;
             rot.z = 0.0;//p->angular_pos;
 
-            Matrix world, view, proj, wvp;
-            get_transforms(&pos, &rot, &sca, &world, &view, &proj);
-            get_wvp(&world, &view, &proj, &wvp);
+            Matrix world, wvp;
+            get_model_transform(&pos, &rot, &sca, &world);
+            get_wvp(&world, &player->camera.view_matrix, &g_proj_matrix, &wvp);
 
             ParticleInstance* pi = &particle_instances[pg->effect];
 
