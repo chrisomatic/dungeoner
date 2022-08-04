@@ -25,9 +25,10 @@ typedef struct
     float angle_h;
     float angle_h_offset; // for boat
     float angle_v;
+    float offset_transition;
 
     double cursor_x;
     double cursor_y;
 } Camera;
 
-void camera_update_rotation(Camera* camera);
+void camera_update(Camera* camera);

@@ -431,6 +431,7 @@ void player_init()
 
     player->camera.cursor_x = view_width / 2.0;
     player->camera.cursor_y = view_height / 2.0;
+    player->camera.offset_transition = 1.0;
 
     memcpy(&player->camera.target_pos,&player->camera.phys.pos,sizeof(Vector));
     player->camera.mode = CAMERA_MODE_FIRST_PERSON;
@@ -444,7 +445,8 @@ void player_init()
     //collision_calc_bounding_box(player->model.mesh.vertices,player->model.mesh.vertex_count,&player->model.collision_vol.box);
 
     player->model.texture = t_outfit;
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
+    //player->angle_h = player->camera.angle_h;
 }
 
 void player_snap_camera()
@@ -453,7 +455,7 @@ void player_snap_camera()
     player->camera.phys.pos.y = player->phys.pos.y + player->phys.height;
     player->camera.phys.pos.z = player->phys.pos.z;
 
-    if(player->user_force_applied)
+    if(player->user_force_applied && player->camera.mode == CAMERA_MODE_FIRST_PERSON)
     {
         float period = player->run ? 10 : 5;
         player->camera.phys.pos.y += 0.1*sin(period*player->step_time);
@@ -468,19 +470,17 @@ void player_snap_camera()
     //if(ABS(player->camera.angle_h - player->angle_h) < 0.5)
     //    player->camera.angle_h = player->angle_h;
 
-    if(player->camera.mode == CAMERA_MODE_THIRD_PERSON)
-    {
-        player->camera.offset.x = 3.0*player->camera.lookat.x;
-        player->camera.offset.y = 3.0*player->camera.lookat.y + 0.5;
-        player->camera.offset.z = 3.0*player->camera.lookat.z;
+    Vector3f offset_target = {
+        2.0*player->camera.lookat.x,
+        2.0*player->camera.lookat.y + 0.4,
+        2.0*player->camera.lookat.z
+    };
 
-    }
-    else if(player->camera.mode == CAMERA_MODE_FIRST_PERSON)
-    {
-        player->camera.offset.x = 0.0;
-        player->camera.offset.y = 0.0;
-        player->camera.offset.z = 0.0;
-    }
+    float transition = player->camera.mode == CAMERA_MODE_THIRD_PERSON ? player->camera.offset_transition : 1.0 - player->camera.offset_transition;
+
+    player->camera.offset.x = transition*offset_target.x;
+    player->camera.offset.y = transition*offset_target.y;
+    player->camera.offset.z = transition*offset_target.z;
 }
 
 static void update_player_model_transform()
@@ -496,7 +496,7 @@ static void update_player_model_transform()
 
 void player_update()
 {
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
     update_player_physics();
     update_player_model_transform();
 
@@ -563,7 +563,7 @@ void player_update()
 
 void player_draw(bool reflection)
 {
-    if(player->camera.mode == CAMERA_MODE_THIRD_PERSON || player->spectator || reflection)
+    if(player->camera.mode == CAMERA_MODE_THIRD_PERSON || player->camera.offset_transition < 0.9 || player->spectator || reflection)
     {
         gfx_draw_model(&player->model);
         //gfx_draw_model(&m_arrow);

@@ -69,6 +69,7 @@ GLuint t_outfit;
 GLuint t_rat;
 GLuint t_crosshair;
 GLuint t_boat;
+GLuint t_house1;
 
 // =========================
 // Models
@@ -81,6 +82,7 @@ Model m_rat;
 Model m_arrow;
 Model m_wall;
 Model m_boat;
+Model m_house;
 
 // =========================
 // Zones
@@ -183,6 +185,7 @@ void init()
     t_outfit = load_texture("textures/outfit2.png");
     t_crosshair = load_texture("textures/crosshair.png");
     t_boat = load_texture("textures/boat.png");
+    t_house1 = load_texture("textures/house1.png");
 
     char* cube_sky_day[] = {
         "textures/skybox/day_right.png",
@@ -212,6 +215,7 @@ void init()
     model_import(&m_rat,"models/rat.obj");
     model_import(&m_arrow,"models/arrow.obj");
     model_import(&m_wall,"models/wall.obj");
+    model_import(&m_house,"models/house1.obj");
 
     LOGI(" - Coins.");
     coin_init();
@@ -288,6 +292,16 @@ void init()
     get_model_transform(&p,&r,&s,&m_wall.transform);
     collision_transform_bounding_box(&m_wall.collision_vol, &m_wall.transform);
     collision_print_box(&m_wall.collision_vol.box_transformed);
+
+    // @TEST house
+    m_house.texture = t_house1;
+    p.x = 72;
+    p.z = -190;
+    r.y = 90.0;
+    GroundInfo ground;
+    terrain_get_info(-p.x, -p.z, &ground); // @NEG
+    p.y = -ground.height;
+    get_model_transform(&p,&r,&s,&m_house.transform);
     
     // @TEST boat
     boat_spawn(294.0,65.0);
@@ -377,6 +391,7 @@ void render()
     gfx_draw_sky();
     terrain_draw();
     gfx_draw_model(&m_wall); // @TEST
+    gfx_draw_model(&m_house); // @TEST
     player_draw(false);
     creature_draw();
     boat_draw();

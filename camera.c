@@ -25,8 +25,14 @@ static void update_view_matrix(Camera* camera)
     dot_product_mat(*view, camera_translate_trans, view);
 }
 
-void camera_update_rotation(Camera* camera)
+void camera_update(Camera* camera)
 {
+    if(camera->offset_transition < 1.0)
+    {
+        camera->offset_transition += g_delta_t;
+        camera->offset_transition = MIN(camera->offset_transition, 1.0);
+    }
+
     // const Vector3f v_axis = {0.0, 1.0, 0.0};
 
     // Rotate the view vector by the horizontal angle around the vertical axis

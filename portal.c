@@ -156,14 +156,14 @@ static void update_virtual_camera(PortalDoor* portal)
 
     player->camera.angle_h += (180.0+portal->angle+dest_portal->angle);
 
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
     update_camera_terrain_block();
 }
 
 static void update_transform(PortalDoor* d)
 {
     get_wvp(&d->world, &player->camera.view_matrix, &g_proj_matrix, &d->wvp);
-    get_wv(&d->world, &d->view, &d->wv);
+    get_wv(&d->world, &player->camera.view_matrix, &d->wv);
 }
 
 void portal_update()
@@ -262,6 +262,7 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
         player->camera.angle_h += (180.0+b->angle+a->angle);
+        //player->angle_h = player->camera.angle_h;
         player->portalled = true;
         printf("portalled\n");
 
@@ -289,6 +290,7 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
         player->camera.angle_h += (180.0+b->angle+a->angle);
+        //player->angle_h = player->camera.angle_h;
         player->portalled = true;
         printf("portalled\n");
 
@@ -442,6 +444,6 @@ void portal_draw()
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glEnable(GL_CULL_FACE);
 
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
     update_camera_terrain_block();
 }

@@ -71,18 +71,21 @@ void weapon_init()
     melee_anim.keyframes[0].position.y = 0.40; // up
     melee_anim.keyframes[0].position.z = 0.20; // right
     melee_anim.keyframes[0].duration   = 0.30;
+    melee_anim.keyframes[0].rotation.x = 0.00;
 
     // windup
     melee_anim.keyframes[1].position.x = 0.10;
     melee_anim.keyframes[1].position.y = 0.80;
     melee_anim.keyframes[1].position.z = 0.40;
     melee_anim.keyframes[1].duration   = 0.15;
+    melee_anim.keyframes[1].rotation.x = 0.00;
 
     // swing
     melee_anim.keyframes[2].position.x = 0.50;
     melee_anim.keyframes[2].position.y = 0.20;
     melee_anim.keyframes[2].position.z = -0.50;
     melee_anim.keyframes[2].duration   = 0.20;
+    melee_anim.keyframes[2].rotation.x = 0.30;
 
     melee_anim.elapsed_time = 0.00;
     melee_anim.keyframe_count = 3;

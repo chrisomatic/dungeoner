@@ -211,6 +211,9 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 player->phys.height /= 2.0;
                 break;
             case GLFW_KEY_P:
+
+                player->camera.offset_transition = 0.0;
+
                 if(player->camera.mode == CAMERA_MODE_FIRST_PERSON)
                 {
                     player->camera.mode = CAMERA_MODE_THIRD_PERSON;

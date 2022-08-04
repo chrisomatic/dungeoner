@@ -87,7 +87,7 @@ void water_draw_textures()
     float temp_angle = player->camera.angle_v;
     player->camera.angle_v *= -1;
 
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
 
     if(camera_pos > water_height)
     {
@@ -102,7 +102,7 @@ void water_draw_textures()
 
     player->camera.phys.pos.y += distance;
     player->camera.angle_v = temp_angle;
-    camera_update_rotation(&player->camera);
+    camera_update(&player->camera);
 
     // pass 2: render refraction
     water_bind_refraction_fbo();
