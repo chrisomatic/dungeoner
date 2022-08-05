@@ -32,6 +32,7 @@ void gfx_draw_cube_debug(Vector3f color,Vector3f* pos, Vector3f* rot, Vector3f* 
 void gfx_draw_terrain(Mesh* mesh, Vector3f *pos, Vector3f *rot, Vector3f *sca);
 void gfx_draw_sky();
 void gfx_draw_debug_lines(Vector* position, Vector* vel);
+void gfx_draw_bargauge(Vector2f* pos, Vector2f* sca, Vector4f* color1, Vector4f* color2);
 
 void gfx_sub_buffer_elements(GLuint ibo, uint32_t* indices, uint32_t index_count);
 

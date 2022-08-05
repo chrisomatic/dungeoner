@@ -98,8 +98,10 @@ static void draw_hud(float x, float y)
     Vector4f color_hp = {0.8,0.0,0.0,0.6};
     Vector4f color_mp = {0.0,0.0,0.8,0.6};
 
-    gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca,1,0);
+    //gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca,1,0);
+    gfx_draw_bargauge(&pos_hp, &sca, &color_hp, &color_mp);
     gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca,1,0);
+
 }
 
 static void draw_current_spell()

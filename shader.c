@@ -25,6 +25,7 @@ GLuint program_gui;
 GLuint program_postprocess;
 GLuint program_coin;
 GLuint program_portal;
+GLuint program_bargauge;
 
 static void shader_add(GLuint program, GLenum shader_type, const char* shader_file_path);
 
@@ -41,6 +42,7 @@ void shader_load_all()
     shader_build_program(&program_postprocess,"shaders/postprocess.vert.glsl","shaders/postprocess.frag.glsl");
     shader_build_program(&program_coin,"shaders/coin.vert.glsl","shaders/coin.frag.glsl");
     shader_build_program(&program_portal,"shaders/portal.vert.glsl","shaders/portal.frag.glsl");
+    shader_build_program(&program_bargauge,"shaders/bargauge.vert.glsl","shaders/bargauge.frag.glsl");
 }
 
 void shader_deinit()
@@ -56,6 +58,7 @@ void shader_deinit()
     glDeleteProgram(program_postprocess);
     glDeleteProgram(program_coin);
     glDeleteProgram(program_portal);
+    glDeleteProgram(program_bargauge);
 }
 
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path)

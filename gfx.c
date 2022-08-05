@@ -519,6 +519,34 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
+void gfx_draw_bargauge(Vector2f* pos, Vector2f* sca, Vector4f* color1, Vector4f* color2)
+{
+    gfx_enable_blending();
+    glUseProgram(program_bargauge);
+
+    shader_set_vec2(program_bargauge,"scale",sca->x, sca->y);
+    shader_set_vec2(program_bargauge,"translate",pos->x, pos->y);
+    shader_set_vec4(program_bargauge,"color1",color1->x, color1->y, color1->z, color1->w);
+    shader_set_vec4(program_bargauge,"color2",color2->x, color2->y, color2->z, color2->w);
+
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quad_fullscreen.vbo);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+    gfx_disable_blending();
+}
+
 void gfx_draw_quad2d(GLuint texture, Vector4f* color, Vector2f* pos, Vector2f* sca, int texture_width, int texture_index)
 {
     gfx_enable_blending();

@@ -64,7 +64,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->color.y = 0.0;
             proj->color.z = 0.0;
             proj->damage = 5.0;
-            proj->blast_radius = 5.0;
+            proj->blast_radius = 2.0;
             proj->gravity_factor = 0.0;
             proj->particle_effect = PARTICLE_EFFECT_FIRE;
             proj->impact_function = impact_function_fireball;
@@ -79,7 +79,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->damage = 0.0;
             proj->blast_radius = 0.0;
             proj->gravity_factor = 0.8;
-            proj->particle_effect = PARTICLE_EFFECT_SPARKLE;
+            proj->particle_effect = PARTICLE_EFFECT_MYSTICAL;
             proj->impact_function = impact_function_portal;
             proj->angle_h = player->angle_h;
             break;

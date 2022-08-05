@@ -14,6 +14,7 @@ extern GLuint program_gui;
 extern GLuint program_postprocess;
 extern GLuint program_coin;
 extern GLuint program_portal;
+extern GLuint program_bargauge;
 
 void shader_load_all();
 void shader_build_program(GLuint* p, const char* vert_shader_path, const char* frag_shader_path);

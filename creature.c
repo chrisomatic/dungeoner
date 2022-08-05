@@ -96,8 +96,15 @@ void creature_spawn(Zone* zone, CreatureType type, CreatureGroup* group)
             c->model.base_color.z = 0.03;
             c->model.reflectivity = is_gold ? 1.0 : 0.1;
 
+            c->xp = 1;
             c->hp = 10.0;
             c->hp_max = 10.0;
+            c->movement_speed = 3.0;
+
+            c->attack_state_time = 0.0;
+            c->windup_time = 0.5;
+            c->release_time = 0.5;
+            c->recovery_time = 1.0;
 
             c->group = group;
 
@@ -202,33 +209,147 @@ static void ai_pursue(Creature* c)
 
     c->rot_y_target = angle;
     update_lookat(c);
-
-    c->action = ACTION_MOVE_FORWARD;
 }
 
 static void ai_wander(Creature* c)
 {
-    //make a new decision
-    int d = rand() % 10;
-    if(d <= 4)
-        c->action = ACTION_MOVE_FORWARD;
-    else if(d <= 8)
-        c->action = ACTION_CHOOSE_DIRECTION;
-    else if(d <= 9)
-        c->action = ACTION_NONE;
+    c->action_time += g_delta_t;
 
-    switch(c->action)
+    if(c->action_time >= c->action_time_max)
     {
-        case ACTION_NONE:
+        c->action_time = 0.0;
+
+        //make a new decision
+        int d = rand() % 10;
+        if(d <= 4)
+            c->action = ACTION_MOVE_FORWARD;
+        else if(d <= 8)
+            c->action = ACTION_CHOOSE_DIRECTION;
+        else if(d <= 9)
+            c->action = ACTION_NONE;
+
+        switch(c->action)
+        {
+            case ACTION_NONE:
+                break;
+            case ACTION_MOVE_FORWARD:
+                break;
+            case ACTION_CHOOSE_DIRECTION:
+                choose_random_direction(c);
+                break;
+            default:
+                break;
+        }
+        c->action_time_max = (rand() % 3) + 1.0;
+    }
+}
+
+static bool has_died(Creature* c)
+{
+    if(c->hp <= 0.0)
+    {
+        // die
+        int coin_value = (rand() % (c->max_gold - c->min_gold)) + c->min_gold;
+        
+        coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
+        particles_create_generator_xyz(c->phys.pos.x, c->phys.pos.y+0.5, c->phys.pos.z, PARTICLE_EFFECT_BLOOD_SPLATTER, 0.25);
+        return true;
+    }
+
+    return false;
+}
+
+static void update_creature_rotation(Creature* c)
+{
+    if(c->rot_y != c->rot_y_target)
+    {
+        float rotate_amt = 180.0 * g_delta_t;
+
+        if(c->rot_y_target < c->rot_y)
+            c->rot_y -= rotate_amt;
+        else
+            c->rot_y += rotate_amt;
+
+        if(ABS(c->rot_y_target - c->rot_y) < rotate_amt)
+            c->rot_y = c->rot_y_target;
+    }
+}
+
+static void update_creature_physics(Creature* c)
+{
+    physics_begin(&c->phys);
+    physics_add_gravity(&c->phys, 1.0);
+    physics_add_kinetic_friction(&c->phys, 0.50);
+    physics_simulate(&c->phys);
+}
+
+static void handle_protective(Creature* c)
+{
+
+}
+static void handle_neutral(Creature* c)
+{
+    ai_wander(c);
+}
+static void handle_aggressive(Creature* c)
+{
+    float dist_from_player = dist_squared(&c->phys.pos, &player->phys.pos);
+    if(dist_from_player < 1.0)
+    {
+        // too close
+        c->action = ACTION_MOVE_BACKWARD;
+    }
+    else if(dist_from_player < 4.0)
+    {
+        // in range to attack
+        if(c->attack_state == ATTACK_STATE_NONE)
+        {
+            c->action_time = 0.0;
+            c->attack_trigger = true;
+            c->attack_state = ATTACK_STATE_WINDUP;
+            printf("WINDUP\n");
+        }
+        c->action = ACTION_NONE;
+    }
+    else
+    {
+        c->action = ACTION_MOVE_FORWARD;
+    }
+
+    ai_pursue(c);
+
+    if(c->attack_state > ATTACK_STATE_NONE)
+    {
+        c->attack_state_time += g_delta_t;
+    }
+
+    switch(c->attack_state)
+    {
+        case ATTACK_STATE_WINDUP:
+            if(c->attack_state_time >= c->windup_time) {
+                c->attack_state_time = 0.0;
+                c->attack_state = ATTACK_STATE_RELEASE;
+                printf("RELEASE\n");
+            }
             break;
-        case ACTION_MOVE_FORWARD:
+        case ATTACK_STATE_RELEASE:
+            if(c->attack_state_time >= c->release_time) {
+                c->attack_state_time = 0.0;
+                c->attack_state = ATTACK_STATE_RECOVERY;
+                printf("RECOVERY\n");
+            }
             break;
-        case ACTION_CHOOSE_DIRECTION:
-            choose_random_direction(c);
+        case ATTACK_STATE_RECOVERY:
+            if(c->attack_state_time >= c->recovery_time) {
+                c->attack_state_time = 0.0;
+                c->attack_state = ATTACK_STATE_NONE;
+                printf("DONE\n");
+            }
             break;
         default:
             break;
     }
+
 }
 
 void creature_update()
@@ -237,99 +358,39 @@ void creature_update()
     {
         Creature* c = &creatures[i];
 
-        // handle death
-        if(c->hp <= 0.0)
+        if(has_died(c))
         {
-            // die
-            int coin_value = (rand() % (c->max_gold - c->min_gold)) + c->min_gold;
-            
-            coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
-            particles_create_generator_xyz(c->phys.pos.x, c->phys.pos.y+0.5, c->phys.pos.z, PARTICLE_EFFECT_BLOOD_SPLATTER, 0.25);
             remove_creature(i);
             continue;
         }
 
-        // handle group logic
-#if 0
-        if(c->group != NULL)
+        // do action
+        switch(c->state)
         {
-            Vector3f avg_pos = {0};
-            float dist = get_group_distance(c, &avg_pos);
-
-            if(dist >= 10.0)
-            {
-                // go toward group
-                Vector3f dir = {
-                    avg_pos.x - c->phys.pos.x,
-                    0.0,
-                    avg_pos.z - c->phys.pos.z
-                };
-                normalize(&dir);
-
-                Vector3f axis = {-1.0,0.0,0.0};
-                float angle = get_angle_between_vectors_rad(&dir, &axis);
-                angle = DEG(angle);
-
-                //printf("pos %f %f %f (dist: %f, angle: %f)!\n", c->phys.pos.x, c->phys.pos.y, c->phys.pos.z, dist, angle);
-
-                c->rot_y_target = angle;
-                update_lookat(c);
-                //c->action = ACTION_MOVE_FORWARD;
-                //c->action_time = 0.0;
-            }
-        }
-#endif
-
-        c->action_time += g_delta_t;
-
-        if(c->action_time >= c->action_time_max)
-        {
-            // do action
-            switch(c->state)
-            {
-                case CREATURE_STATE_PASSIVE:
-                    ai_wander(c);
-                    c->action_time_max = (rand() % 3) + 1.0;
-                    break;
-                case CREATURE_STATE_AGGRESSIVE:
-                    ai_pursue(c);
-                    c->action_time_max = 0.0;
-                    break;
-
-            }
-            c->action_time = 0.0;
+            case CREATURE_STATE_PROTECTIVE:
+                handle_protective(c);
+                break;
+            case CREATURE_STATE_PASSIVE:
+                handle_neutral(c);
+                break;
+            case CREATURE_STATE_AGGRESSIVE:
+                handle_aggressive(c);
+                break;
         }
 
-        if(c->rot_y != c->rot_y_target)
-        {
-            float rotate_amt = 180.0 * g_delta_t;
-
-            if(c->rot_y_target < c->rot_y)
-                c->rot_y -= rotate_amt;
-            else
-                c->rot_y += rotate_amt;
-
-            if(ABS(c->rot_y_target - c->rot_y) < rotate_amt)
-                c->rot_y = c->rot_y_target;
-        }
-
-        Vector force = {
-            15.0*c->lookat.x,
-            15.0*c->lookat.y,
-            15.0*c->lookat.z,
-        };
-
-        physics_begin(&c->phys);
-        physics_add_gravity(&c->phys, 1.0);
+        update_creature_rotation(c);
+        update_creature_physics(c);
 
         if(c->action == ACTION_MOVE_FORWARD)
         {
-            physics_add_force(&c->phys,force.x, force.y, force.z);
+            c->phys.vel.x = c->movement_speed*c->lookat.x;
+            c->phys.vel.z = c->movement_speed*c->lookat.z;
         }
-        //physics_add_force(&c->phys,1.0, 0.0, 1.0);
-        //physics_add_user_force(&c->phys,&force);
-        physics_add_kinetic_friction(&c->phys, 0.50);
-        physics_simulate(&c->phys);
+        else if(c->action == ACTION_MOVE_BACKWARD)
+        {
+            c->phys.vel.x = -0.5*c->movement_speed*c->lookat.x;
+            c->phys.vel.z = -0.5*c->movement_speed*c->lookat.z;
+        }
 
         // keep in zone
         bool hit_edge = false;
@@ -355,17 +416,6 @@ void creature_update()
         if(hit_edge)
         {
             c->action_time = c->action_time_max;
-#if 0
-
-            c->rot_y_target += 180.0;
-
-            c->phys.vel.x *= -1.0;
-            c->phys.vel.z *= -1.0;
-
-            update_lookat(c);
-
-#endif
-
         }
 
         creature_update_model_transform(c);
@@ -403,7 +453,7 @@ void creature_draw()
             Vector3f rot = {0.0,c->rot_y,0.0};
             Vector3f sca = {1.0,1.0,1.0};
 
-            Vector3f color_bg = {0.0,0.0,0.0};
+            Vector3f color_bg = {0.2,0.2,0.2};
             Vector3f color    = {1.0,0.0,0.0};
 
             pos.y -= 0.8;
@@ -420,6 +470,7 @@ void creature_draw()
             };
 
             Vector3f pos_bg = {pos.x + bg_offset.x, pos.y + bg_offset.y, pos.z + bg_offset.z};
+
             gfx_draw_quad(0,&color_bg,&pos_bg,&rot,&sca, false);
 
             float pct = c->hp / c->hp_max;

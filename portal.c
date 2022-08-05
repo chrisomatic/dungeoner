@@ -262,7 +262,7 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
         player->camera.angle_h += (180.0+b->angle+a->angle);
-        //player->angle_h = player->camera.angle_h;
+        player->angle_h = player->camera.angle_h;
         player->portalled = true;
         printf("portalled\n");
 
@@ -290,7 +290,7 @@ bool portal_handle_collision(Player* player, Vector3f prior_pos)
         rotate(&player->phys.vel, y_axis, 180.0+b->angle+a->angle);
 
         player->camera.angle_h += (180.0+b->angle+a->angle);
-        //player->angle_h = player->camera.angle_h;
+        player->angle_h = player->camera.angle_h;
         player->portalled = true;
         printf("portalled\n");
 

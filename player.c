@@ -446,7 +446,7 @@ void player_init()
 
     player->model.texture = t_outfit;
     camera_update(&player->camera);
-    //player->angle_h = player->camera.angle_h;
+    player->angle_h = player->camera.angle_h;
 }
 
 void player_snap_camera()
