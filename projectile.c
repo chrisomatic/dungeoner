@@ -68,6 +68,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->gravity_factor = 0.0;
             proj->particle_effect = PARTICLE_EFFECT_FIRE;
             proj->impact_function = impact_function_fireball;
+            proj->mp_cost = 10.0;
             break;
         case PROJECTILE_PORTAL:
             speed = 10.0;
@@ -82,6 +83,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->particle_effect = PARTICLE_EFFECT_MYSTICAL;
             proj->impact_function = impact_function_portal;
             proj->angle_h = player->angle_h;
+            proj->mp_cost = 20.0;
             break;
         case PROJECTILE_ICE:
             speed = 5.0;
@@ -95,6 +97,7 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->gravity_factor = 1.0;
             proj->particle_effect = PARTICLE_EFFECT_NONE;
             proj->impact_function = NULL;
+            proj->mp_cost = 5.0;
             break;
         case PROJECTILE_ARROW:
             speed = 30.0;
@@ -105,9 +108,17 @@ void projectile_spawn(Player* player, ProjectileType type, Vector* pos)
             proj->gravity_factor = 1.0;
             proj->particle_effect = PARTICLE_EFFECT_NONE;
             proj->impact_function = NULL;
+            proj->mp_cost = 0.0;
             break;
     }
-    
+
+    player->mp -= proj->mp_cost;
+    if(player->mp < 0.0)
+    {
+        player->mp += proj->mp_cost;
+        return;
+    }
+
     proj->phys.collided = false;
 
     Vector vel = {-speed*player->camera.lookat.x, -speed*player->camera.lookat.y,-speed*player->camera.lookat.z}; // @NEG

@@ -24,6 +24,9 @@ int show_fog = 0;
 
 Vector4f clip_plane;
 
+static GLuint bargauge_vao;
+static GLuint bargauge_vbo;
+
 static Mesh quad_fullscreen = {};
 static Mesh cube = {};
 static Mesh sky  = {};
@@ -519,7 +522,7 @@ void gfx_draw_quad(GLuint texture, Vector* color, Vector* pos, Vector* rot, Vect
     glUseProgram(0);
 }
 
-void gfx_draw_bargauge(Vector2f* pos, Vector2f* sca, Vector4f* color1, Vector4f* color2)
+void gfx_draw_bargauge(Vector2f* pos, Vector2f* sca, Vector4f* color1, float percent)
 {
     gfx_enable_blending();
     glUseProgram(program_bargauge);
@@ -527,19 +530,20 @@ void gfx_draw_bargauge(Vector2f* pos, Vector2f* sca, Vector4f* color1, Vector4f*
     shader_set_vec2(program_bargauge,"scale",sca->x, sca->y);
     shader_set_vec2(program_bargauge,"translate",pos->x, pos->y);
     shader_set_vec4(program_bargauge,"color1",color1->x, color1->y, color1->z, color1->w);
-    shader_set_vec4(program_bargauge,"color2",color2->x, color2->y, color2->z, color2->w);
+    shader_set_float(program_bargauge,"percent",percent);
 
-    glBindVertexArray(vao);
+    glBindVertexArray(bargauge_vao);
     glEnableVertexAttribArray(0);
+    if(show_wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
-    glBindBuffer(GL_ARRAY_BUFFER, quad_fullscreen.vbo);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quad.ibo);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    glDrawArrays(GL_TRIANGLE_STRIP,0,8);
 
     glDisableVertexAttribArray(0);
     glBindVertexArray(0);
@@ -827,6 +831,32 @@ static void init_quad()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(uint32_t), indices, GL_STATIC_DRAW);
 }
 
+static void init_bargauge()
+{
+    Vector2f vertices[8] = 
+    {
+        {-1.0, -1.0},
+        {-1.0, +1.0},
+        {-0.0005, -1.0},
+        {-0.0005, +1.0},
+        {+0.0005, -1.0},
+        {+0.0005, +1.0},
+        {+1.0, -1.0},
+        {+1.0, +1.0}
+    }; 
+    
+    // VAO
+    glGenVertexArrays(1, &bargauge_vao);
+    glBindVertexArray(bargauge_vao);
+
+    // Quad VBO
+ 	glGenBuffers(1, &bargauge_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, bargauge_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 static void init_quad_fullscreen()
 {
     Vertex vertices[4] = 
@@ -946,6 +976,7 @@ void gfx_init(int width, int height)
 
     init_quad();
     init_quad_fullscreen();
+    init_bargauge();
     init_cube();
     init_skybox();
     init_debug();

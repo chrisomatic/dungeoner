@@ -34,6 +34,7 @@ typedef struct
     float gravity_factor;
     uint32_t particles_id;
     float angle_h;
+    float mp_cost;
     ProjectileFn impact_function;
 } Projectile;
 

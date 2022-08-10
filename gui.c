@@ -93,14 +93,20 @@ static void draw_hud(float x, float y)
     // hp
     Vector2f pos_hp = {ndc_x+0.9,ndc_y};
     Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
+    Vector2f sca_hp = {0.50,0.50};
     Vector2f sca = {0.25,0.0125};
 
     Vector4f color_hp = {0.8,0.0,0.0,0.6};
     Vector4f color_mp = {0.0,0.0,0.8,0.6};
 
     //gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca,1,0);
-    gfx_draw_bargauge(&pos_hp, &sca, &color_hp, &color_mp);
-    gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca,1,0);
+    //gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca,1,0);
+
+    float hp_percent = player->hp / (float)player->hp_max;
+    float mp_percent = player->mp / (float)player->mp_max;
+
+    gfx_draw_bargauge(&pos_hp, &sca, &color_hp, hp_percent);
+    gfx_draw_bargauge(&pos_mp, &sca, &color_mp, mp_percent);
 
 }
 

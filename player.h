@@ -31,6 +31,11 @@ typedef struct
     float hp;
     float hp_max;
 
+    float mp;
+    float mp_max;
+
+    float mp_regen_rate;
+
     uint32_t gold;
 
     Camera camera;
@@ -71,3 +76,4 @@ void player_update();
 void player_draw(bool reflection);
 void player_update_camera_angle(int cursor_x, int cursor_y);
 void player_snap_camera();
+void player_hurt(Player* p, float amt);

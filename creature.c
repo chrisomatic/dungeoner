@@ -330,6 +330,7 @@ static void handle_aggressive(Creature* c)
                 c->attack_state_time = 0.0;
                 c->attack_state = ATTACK_STATE_RELEASE;
                 printf("RELEASE\n");
+                player_hurt(player, 5.0);
             }
             break;
         case ATTACK_STATE_RELEASE:

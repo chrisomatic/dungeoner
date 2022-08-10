@@ -398,6 +398,13 @@ void player_init()
     player->terrain_block.y = 0;
     player->equipped_projectile = PROJECTILE_FIREBALL;
 
+    player->hp = 100.0;
+    player->hp_max = 100.0;
+
+    player->mp = 100.0;
+    player->mp_max = 100.0;
+    player->mp_regen_rate = 5.0;
+
     memcpy(&player->weapon, &w_claymore, sizeof(Weapon));
 
     Vector3f h_lookat = {player->camera.lookat.x,0.0,player->camera.lookat.z};
@@ -494,6 +501,8 @@ static void update_player_model_transform()
     //memcpy(&m_arrow.transform, &player->model.transform, sizeof(Matrix));
 }
 
+static float mp_regen_counter = 0.0;
+
 void player_update()
 {
     camera_update(&player->camera);
@@ -501,6 +510,13 @@ void player_update()
     update_player_model_transform();
 
     weapon_update(&player->weapon, &player->state);
+
+    // handle mp regen
+    if(player->mp < player->mp_max)
+    {
+        player->mp += g_delta_t*player->mp_regen_rate;
+        player->mp = MIN(player->mp_max, player->mp); // cap at max
+    }
 
     if(player->use)
     {
@@ -558,6 +574,16 @@ void player_update()
     if(!player->spectator)
     {
         player_snap_camera();
+    }
+}
+
+void player_hurt(Player* p, float amt)
+{
+    p->hp -= amt;
+    if(p->hp < 0.0)
+    {
+        p->hp = 0.0;
+        printf("Player Dead.\n");
     }
 }
 
