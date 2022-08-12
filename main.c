@@ -27,6 +27,7 @@
 #include "text.h"
 #include "water.h"
 #include "coin.h"
+#include "consumable.h"
 #include "boat.h"
 #include "creature.h"
 #include "weapon.h"
@@ -220,6 +221,9 @@ void init()
     LOGI(" - Coins.");
     coin_init();
 
+    LOGI(" - Consumables.");
+    consumable_init();
+
     LOGI(" - Terrain.");
     //terrain_build(&m_terrain, "textures/heightmap.png");
     terrain_build(&m_terrain, "textures/heightmap16.png");
@@ -336,6 +340,7 @@ void simulate()
     particles_update();
     water_update();
     coin_update_piles();
+    consumable_update();
     gui_update();
     boat_update();
     portal_update();
@@ -397,6 +402,7 @@ void render()
     boat_draw();
     projectile_draw();
     coin_draw_piles();
+    consumable_draw();
 
     water_draw();
     particles_draw();

@@ -2,6 +2,7 @@
 
 #include <GL/glew.h>
 #include <stdbool.h>
+#include "3dmath.h"
 #include "collision.h"
 
 typedef struct

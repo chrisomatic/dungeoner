@@ -13,6 +13,7 @@ gcc entity.c \
     model.c \
     physics.c \
     coin.c \
+    consumable.c \
     player.c \
     particles.c \
     projectile.c \

@@ -398,6 +398,7 @@ void player_init()
     player->terrain_block.y = 0;
     player->equipped_projectile = PROJECTILE_FIREBALL;
 
+
     player->hp = 100.0;
     player->hp_max = 100.0;
 
@@ -432,6 +433,10 @@ void player_init()
     player->phys.pos.x = -91.0;
     player->phys.pos.y = -20.0;
     player->phys.pos.z = 181.0;
+
+    player->respawn_location.x = -91.0;
+    player->respawn_location.y = -23.0;
+    player->respawn_location.z = 181.0;
 
     player->phys.com_offset.x = 0.0;
     player->phys.com_offset.y = player->phys.height / 2.0;
@@ -577,13 +582,32 @@ void player_update()
     }
 }
 
+static void player_die(Player* p)
+{
+    uint32_t half_gold = (int)(p->gold / 2.0);
+
+    p->gold = half_gold;
+    gui_update_stats();
+
+    p->hp = p->hp_max;
+
+    coin_spawn_pile(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z,half_gold);
+
+    p->phys.pos.x = p->respawn_location.x;
+    p->phys.pos.y = p->respawn_location.y;
+    p->phys.pos.z = p->respawn_location.z;
+
+    p->phys.vel.x = 0.0;
+    p->phys.vel.y = 10.0;
+    p->phys.vel.z = 0.0;
+}
+
 void player_hurt(Player* p, float amt)
 {
     p->hp -= amt;
-    if(p->hp < 0.0)
+    if(p->hp <= 0.0)
     {
-        p->hp = 0.0;
-        printf("Player Dead.\n");
+        player_die(p);
     }
 }
 

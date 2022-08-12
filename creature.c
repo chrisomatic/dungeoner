@@ -12,6 +12,7 @@
 #include "player.h"
 #include "terrain.h"
 #include "particles.h"
+#include "consumable.h"
 
 #include "creature.h"
 
@@ -253,6 +254,10 @@ static bool has_died(Creature* c)
         
         coin_spawn_pile(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z,coin_value);
         particles_create_generator_xyz(c->phys.pos.x, c->phys.pos.y+0.5, c->phys.pos.z, PARTICLE_EFFECT_BLOOD_SPLATTER, 0.25);
+
+        int consumable = rand() % 10;
+        if(consumable == 0)
+            consumable_create(CONSUMABLE_TYPE_HEALTH, c->phys.pos.x, c->phys.pos.z);
         return true;
     }
 
