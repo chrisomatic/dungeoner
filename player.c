@@ -17,6 +17,7 @@
 #include "gui.h"
 #include "portal.h"
 #include "camera.h"
+#include "consumable.h"
 #include "player.h"
 
 Entity  p = {0};
@@ -88,6 +89,10 @@ static void handle_collisions(Vector3f p0)
             coin_destroy_pile(i);
         }
     }
+
+    // consumables
+    consumable_is_colliding(player);
+
 
     // portals
     portal_handle_collision(player, p0);

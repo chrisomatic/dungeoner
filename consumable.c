@@ -8,6 +8,8 @@
 #include "util.h"
 #include "consumable.h"
 
+#define CONSUMABLE_COLLECT_RADIUS 1.8
+
 typedef struct
 {
     ConsumableType type;
@@ -21,6 +23,21 @@ static Model m_bottle;
 
 static Consumable consumables[CONSUMABLE_MAX] = {0};
 static int consumable_count;
+
+static void remove_consumable(int index)
+{
+    if(index < 0 || index >= consumable_count)
+    {
+        LOGE("Consumable index out of range (%d)", index);
+        return;
+    }
+
+    LOGI("Removing consumable %d",index);
+
+    memcpy(&consumables[index], &consumables[consumable_count-1], sizeof(Consumable));
+
+    consumable_count--;
+}
 
 void consumable_init()
 {
@@ -54,6 +71,22 @@ void consumable_create(ConsumableType type, float x, float z)
 
     memcpy(&c->model,&m_bottle,sizeof(Model));
 
+}
+
+void consumable_is_colliding(Player* p)
+{
+    for(int i = consumable_count-1; i >= 0; --i)
+    {
+        Consumable* c = &consumables[i];
+        float d = dist_squared(&p->phys.pos, &c->pos);
+        if(d < CONSUMABLE_COLLECT_RADIUS)
+        {
+            player->hp += 10.0;
+            player->hp = MIN(player->hp, player->hp_max);
+
+            remove_consumable(i);
+        }
+    }
 }
 
 void consumable_update()
