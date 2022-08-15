@@ -56,6 +56,7 @@ typedef struct
     float hp;
     float hp_max;
     float movement_speed;
+    float damage;
 
     Vector2i terrain_block;
 
@@ -77,6 +78,8 @@ typedef struct
     float windup_time;
     float release_time;
     float recovery_time;
+
+    CollisionVolume hitbox;
 
 } Creature;
 

@@ -89,8 +89,8 @@ void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox
 
     box->vertices[4].x = min_x; box->vertices[4].y = max_y; box->vertices[4].z = min_z;
     box->vertices[5].x = max_x; box->vertices[5].y = max_y; box->vertices[5].z = min_z;
-    box->vertices[6].x = max_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
-    box->vertices[7].x = min_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
+    box->vertices[6].x = min_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
+    box->vertices[7].x = max_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
 }
 
 void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
@@ -136,14 +136,33 @@ void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform)
 
     box->vertices[4].x = min_x; box->vertices[4].y = max_y; box->vertices[4].z = min_z;
     box->vertices[5].x = max_x; box->vertices[5].y = max_y; box->vertices[5].z = min_z;
-    box->vertices[6].x = max_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
-    box->vertices[7].x = min_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
+    box->vertices[6].x = min_x; box->vertices[6].y = max_y; box->vertices[6].z = max_z;
+    box->vertices[7].x = max_x; box->vertices[7].y = max_y; box->vertices[7].z = max_z;
 
     box->center.x = box->vertices[0].x + box->l/2.0;
     box->center.y = box->vertices[0].y + box->h/2.0;
     box->center.z = box->vertices[0].z + box->w/2.0;
     
     //printf("center: %f %f %f, x: %f %f   y: %f %f  z: %f %f   l,w,h: %f %f %f\n", box->center.x, box->center.y, box->center.z, min_x, max_x, min_y, max_y, min_z, max_z, box->l, box->w, box->h);
+
+}
+
+bool collision_bb_check(BoundingBox* b1, BoundingBox* b2)
+{
+    Vector3f* b1_min = &b1->vertices[0];
+    Vector3f* b1_max = &b1->vertices[7];
+
+    Vector3f* b2_min = &b2->vertices[0];
+    Vector3f* b2_max = &b2->vertices[7];
+
+    bool colliding = (b1_max->x > b2_min->x &&
+           b1_min->x < b2_max->x &&
+           b1_max->y > b2_min->y &&
+           b1_min->y < b2_max->y &&
+           b1_max->z > b2_min->z &&
+           b1_min->z < b2_max->z);
+
+    return colliding;
 
 }
 
@@ -155,10 +174,10 @@ bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2)
         BoundingBox* b2 = &vol2->box_transformed;
 
         Vector3f* b1_min = &b1->vertices[0];
-        Vector3f* b1_max = &b1->vertices[6];
+        Vector3f* b1_max = &b1->vertices[7];
 
         Vector3f* b2_min = &b2->vertices[0];
-        Vector3f* b2_max = &b2->vertices[6];
+        Vector3f* b2_max = &b2->vertices[7];
 
         bool colliding = (b1_max->x > b2_min->x &&
                b1_min->x < b2_max->x &&
@@ -295,7 +314,7 @@ void collision_set_flags(CollisionVolume* vol, CollisionFlags flags)
     vol->flags = flags;
 }
 
-void collision_draw(CollisionVolume* col)
+void collision_draw(CollisionVolume* col, float r, float g, float b)
 {
     switch(col->type)
     {
@@ -305,7 +324,7 @@ void collision_draw(CollisionVolume* col)
             Vector3f rot = {0.0,0.0,0.0};
             Vector3f sca = {col->box_transformed.l, col->box_transformed.h, col->box_transformed.w};
             
-            Vector3f color = {1.0,0.0,1.0};
+            Vector3f color = {r,g,b};
             gfx_draw_cube_debug(color, &pos, &rot, &sca);
             //gfx_draw_cube(0, &pos, &rot, &sca, true);
 

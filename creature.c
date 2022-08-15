@@ -101,11 +101,14 @@ void creature_spawn(Zone* zone, CreatureType type, CreatureGroup* group)
             c->hp = 10.0;
             c->hp_max = 10.0;
             c->movement_speed = 3.0;
+            c->damage = 5.0;
 
             c->attack_state_time = 0.0;
             c->windup_time = 0.5;
             c->release_time = 0.5;
             c->recovery_time = 1.0;
+
+            c->hitbox.flags = COLLISION_FLAG_HIT;
 
             c->group = group;
 
@@ -312,7 +315,6 @@ static void handle_aggressive(Creature* c)
             c->action_time = 0.0;
             c->attack_trigger = true;
             c->attack_state = ATTACK_STATE_WINDUP;
-            printf("WINDUP\n");
         }
         c->action = ACTION_NONE;
     }
@@ -334,28 +336,80 @@ static void handle_aggressive(Creature* c)
             if(c->attack_state_time >= c->windup_time) {
                 c->attack_state_time = 0.0;
                 c->attack_state = ATTACK_STATE_RELEASE;
-                printf("RELEASE\n");
-                player_hurt(player, 5.0);
+
             }
             break;
         case ATTACK_STATE_RELEASE:
             if(c->attack_state_time >= c->release_time) {
                 c->attack_state_time = 0.0;
                 c->attack_state = ATTACK_STATE_RECOVERY;
-                printf("RECOVERY\n");
             }
             break;
         case ATTACK_STATE_RECOVERY:
             if(c->attack_state_time >= c->recovery_time) {
                 c->attack_state_time = 0.0;
                 c->attack_state = ATTACK_STATE_NONE;
-                printf("DONE\n");
+                collision_clear_hurt_list(&c->hitbox);
             }
             break;
         default:
             break;
     }
 
+    if(c->attack_state == ATTACK_STATE_RELEASE)
+    {
+        // update hitbox
+        BoundingBox* box = &c->hitbox.box_transformed;
+        memcpy(&box->center, &c->phys.pos, sizeof(Vector3f));
+
+        const float r = 0.35;
+
+        // move center forward
+        box->center.x = box->center.x + 1.0*c->lookat.x;
+        box->center.y = box->center.y + 1.0*c->lookat.y + 0.5;
+        box->center.z = box->center.z + 1.0*c->lookat.z;
+
+        //printf("center: %f %f %f\n", box->center.x, box->center.y, box->center.z);
+
+        // calculate vertices
+        box->vertices[0].x = box->center.x - r;
+        box->vertices[0].y = box->center.y - r;
+        box->vertices[0].z = box->center.z - r;
+
+        box->vertices[1].x = box->center.x - r;
+        box->vertices[1].y = box->center.y - r;
+        box->vertices[1].z = box->center.z + r;
+
+        box->vertices[2].x = box->center.x + r;
+        box->vertices[2].y = box->center.y - r;
+        box->vertices[2].z = box->center.z - r;
+
+        box->vertices[3].x = box->center.x + r;
+        box->vertices[3].y = box->center.y - r;
+        box->vertices[3].z = box->center.z + r;
+
+        box->l = 2.0*r;
+        box->w = 2.0*r;
+        box->h = 2.0*r;
+
+
+        for(int i = 4; i < 8; ++i)
+        {
+            box->vertices[i].x = box->vertices[i-4].x;
+            box->vertices[i].y = box->vertices[i-4].y + (2.0*r);
+            box->vertices[i].z = box->vertices[i-4].z;
+        }
+
+        if(!collision_is_in_hurt_list(&c->hitbox,&player->model.collision_vol))
+        {
+            if(collision_bb_check(&player->model.collision_vol.box_transformed, box))
+            {
+                // hurt the player
+                player_hurt(player, c->damage);
+                collision_add_to_hurt_list(&c->hitbox, &player->model.collision_vol);
+            }
+        }
+    }
 }
 
 void creature_update()
@@ -449,12 +503,15 @@ void creature_draw()
 
         if(show_collision)
         {
-            collision_draw(&c->model.collision_vol);
+            //collision_draw(&c->model.collision_vol);
+            if(c->attack_state == ATTACK_STATE_RELEASE)
+            {
+                collision_draw(&c->hitbox, 1.0,0.0,0.0);
+            }
         }
 
         if(c->hp < c->hp_max)
         {
-
             Vector3f pos = {-c->phys.pos.x, -c->phys.pos.y, -c->phys.pos.z};
             Vector3f rot = {0.0,c->rot_y,0.0};
             Vector3f sca = {1.0,1.0,1.0};

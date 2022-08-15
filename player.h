@@ -33,8 +33,12 @@ typedef struct
 
     float mp;
     float mp_max;
-
     float mp_regen_rate;
+
+    float xp;
+    float xp_next_level;
+    int level;
+
     Vector3f respawn_location;
 
     uint32_t gold;

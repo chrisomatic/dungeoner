@@ -242,7 +242,7 @@ void projectile_draw()
 
         if(show_collision)
         {
-            collision_draw(&projectiles[i].model.collision_vol);
+            collision_draw(&projectiles[i].model.collision_vol, 1.0,0.0,1.0);
         }
     }
 

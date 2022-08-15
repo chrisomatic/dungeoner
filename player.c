@@ -289,7 +289,7 @@ static void handle_player_control(PhysicsObj* phys)
             }
             else
             {
-                physics_add_kinetic_friction(phys, 1.00);
+                physics_add_kinetic_friction(phys, 1.50);
             }
         }
         else
@@ -410,6 +410,10 @@ void player_init()
     player->mp = 100.0;
     player->mp_max = 100.0;
     player->mp_regen_rate = 5.0;
+
+    player->level = 1;
+    player->xp = 0.0;
+    player->xp_next_level = 10.0;
 
     memcpy(&player->weapon, &w_claymore, sizeof(Weapon));
 
@@ -628,7 +632,7 @@ void player_draw(bool reflection)
 
     if(show_collision)
     {
-        collision_draw(&player->model.collision_vol);
+        collision_draw(&player->model.collision_vol, 1.0,0.0,1.0);
     }
 }
 

@@ -187,6 +187,6 @@ void weapon_draw(Weapon* w)
 
     if(show_collision)
     {
-        collision_draw(&w->model.collision_vol);
+        collision_draw(&w->model.collision_vol, 1.0,0.0,1.0);
     }
 }

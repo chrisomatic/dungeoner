@@ -39,9 +39,10 @@ typedef struct
 void collision_calc_bounding_box(Vertex* vertices, int vertex_count, BoundingBox* box);
 void collision_transform_bounding_box(CollisionVolume* col, Matrix* transform);
 bool collision_check(CollisionVolume* vol1, CollisionVolume* vol2);
+bool collision_bb_check(BoundingBox* b1, BoundingBox* b2);
 bool collision_add_to_hurt_list(CollisionVolume* vol, CollisionVolume* hurt);
 bool collision_is_in_hurt_list(CollisionVolume* vol, CollisionVolume* hurt);
-void collision_draw(CollisionVolume* col);
+void collision_draw(CollisionVolume* col, float r, float g, float b);
 void collision_set_flags(CollisionVolume* vol, CollisionFlags flags);
 float collision_get_closest_normal_to_point(BoundingBox* box, Vector3f* p0, Vector3f* p1, Vector3f* return_normal);
 void collision_print_box(BoundingBox* box);
