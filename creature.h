@@ -52,7 +52,7 @@ typedef struct
     float rot_y_target;
     float rot_y;
     Vector lookat;
-    int xp;
+    float xp;
     float hp;
     float hp_max;
     float movement_speed;

@@ -16,10 +16,12 @@ static float fps_counter = 0.5;
 static char fps_str[12]    = {0};
 static char coords_str[32] = {0};
 static char gold_str[12] = {0};
+static char player_level_str[10] = {0};
 
 static GLTtext *title;
 static GLTtext *fps;
 static GLTtext *coords;
+static GLTtext *player_level;
 
 GLuint t_spells;
 
@@ -36,6 +38,7 @@ void gui_init()
     fps = gltCreateText();
     coords = gltCreateText();
     gold = gltCreateText();
+    player_level = gltCreateText();
 
     gltSetText(title, "Dungeoner");
     gui_update_stats();
@@ -60,6 +63,9 @@ void gui_update_stats()
 {
     snprintf(gold_str, 31, "Gold: %d",player->gold);
     gltSetText(gold, gold_str);
+
+    snprintf(player_level_str, 9, "Level: %d",player->level);
+    gltSetText(player_level, player_level_str);
 }
 
 static void draw_stats()
@@ -68,6 +74,8 @@ static void draw_stats()
     gltBeginDraw();
     gltColor(0.84f, 0.73f, 0.10f, 1.0f);
     gltDrawText2D(gold, 2.0, view_height - 32.0, 2.0);
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(player_level, 2.0, view_height - 64.0, 2.0);
     gltEndDraw();
     gfx_disable_blending();
 }
@@ -93,20 +101,26 @@ static void draw_hud(float x, float y)
     // hp
     Vector2f pos_hp = {ndc_x+0.9,ndc_y};
     Vector2f pos_mp = {ndc_x+0.9,ndc_y-0.030};
-    Vector2f sca_hp = {0.50,0.50};
+    Vector2f pos_xp = {ndc_x+0.9,ndc_y-0.060};
+
+    Vector2f sca_xp = {0.25,0.00675};
     Vector2f sca = {0.25,0.0125};
 
     Vector4f color_hp = {0.8,0.0,0.0,0.6};
     Vector4f color_mp = {0.0,0.0,0.8,0.6};
+    Vector4f color_xp = {0.9,0.9,0.8,0.6};
 
     //gfx_draw_quad2d(0, &color_hp, &pos_hp, &sca,1,0);
     //gfx_draw_quad2d(0, &color_mp, &pos_mp, &sca,1,0);
 
     float hp_percent = player->hp / (float)player->hp_max;
     float mp_percent = player->mp / (float)player->mp_max;
+    float xp_percent = player->xp / (float)player->xp_next_level;
 
     gfx_draw_bargauge(&pos_hp, &sca, &color_hp, hp_percent);
     gfx_draw_bargauge(&pos_mp, &sca, &color_mp, mp_percent);
+    gfx_draw_bargauge(&pos_xp, &sca_xp, &color_xp, xp_percent);
+
 
 }
 

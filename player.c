@@ -611,6 +611,19 @@ static void player_die(Player* p)
     p->phys.vel.z = 0.0;
 }
 
+void player_add_xp(Player* p, float xp)
+{
+    p->xp += xp;
+    if(p->xp >= p->xp_next_level)
+    {
+        p->xp = 0.0;
+        p->level++;
+        p->xp_next_level *= 2.0;
+        gui_update_stats();
+        particles_create_generator_xyz(p->phys.pos.x, p->phys.pos.y+p->phys.height, p->phys.pos.z, PARTICLE_EFFECT_HEAL, 2.00);
+    }
+}
+
 void player_hurt(Player* p, float amt)
 {
     p->hp -= amt;

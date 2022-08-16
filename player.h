@@ -82,3 +82,4 @@ void player_draw(bool reflection);
 void player_update_camera_angle(int cursor_x, int cursor_y);
 void player_snap_camera();
 void player_hurt(Player* p, float amt);
+void player_add_xp(Player* p, float xp);

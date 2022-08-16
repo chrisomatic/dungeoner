@@ -266,6 +266,7 @@ void init()
         creature_spawn_group(&rat_zone,CREATURE_TYPE_RAT, 1);
     }
 
+#if 0 // test particle effects
     particles_create_generator_xyz(-90.0,21.0,179.0,PARTICLE_EFFECT_HEAL, 0.0);
     particles_create_generator_xyz(-91.0,21.0,179.0,PARTICLE_EFFECT_FIRE, 0.0);
     particles_create_generator_xyz(-92.0,21.0,179.0,PARTICLE_EFFECT_EXPLOSION, 0.0);
@@ -273,6 +274,7 @@ void init()
     particles_create_generator_xyz(-94.0,21.0,179.0,PARTICLE_EFFECT_BLOOD, 0.0);
     particles_create_generator_xyz(-95.0,21.0,179.0,PARTICLE_EFFECT_BLOOD_SPLATTER, 0.0);
     particles_create_generator_xyz(-96.0,21.0,179.0,PARTICLE_EFFECT_MYSTICAL, 0.0);
+#endif
 
     LOGI(" - Renderer.");
     gfx_init(STARTING_VIEW_WIDTH, STARTING_VIEW_HEIGHT);

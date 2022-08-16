@@ -261,6 +261,9 @@ static bool has_died(Creature* c)
         int consumable = rand() % 10;
         if(consumable == 0)
             consumable_create(CONSUMABLE_TYPE_HEALTH, c->phys.pos.x, c->phys.pos.z);
+        
+        player_add_xp(player, c->xp);
+
         return true;
     }
 
