@@ -378,6 +378,10 @@ static void player_spawn_projectile(ProjectileType type)
 {
     Vector pos = {player->phys.pos.x, player->phys.height+player->phys.pos.y, player->phys.pos.z};
 
+    pos.x -= 0.5*player->camera.lookat.x;
+    pos.y -= 0.5*player->camera.lookat.y;
+    pos.z -= 0.5*player->camera.lookat.z;
+
     projectile_spawn(player,type,&pos);
 }
 
