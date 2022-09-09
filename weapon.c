@@ -56,7 +56,7 @@ void weapon_init()
     //
     // claymore
     t_claymore = load_texture("textures/claymore.png");
-    model_import(&m_claymore,"models/claymore.obj");
+    model_import(&m_claymore,"models/axe.obj");
     m_claymore.collision_vol.flags = COLLISION_FLAG_HURT;
     m_claymore.texture = t_claymore;
 
