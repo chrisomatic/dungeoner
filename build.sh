@@ -26,6 +26,8 @@ gcc entity.c \
     water.c \
     window.c \
     weapon.c \
+    socket.c \
+    net.c \
     main.c \
     -lglfw -lGLU -lGLEW -lGL -lm -O2 \
     -o dungeoner
