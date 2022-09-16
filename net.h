@@ -8,42 +8,55 @@
 typedef enum
 {
     PACKET_TYPE_INIT,
-    PACKET_TYPE_WORLD_STATE
+    PACKET_TYPE_CONNECT_REQUEST,
+    PACKET_TYPE_CONNECT_CHALLENGE,
+    PACKET_TYPE_CONNECT_CHALLENGE_RESP,
+    PACKET_TYPE_CONNECT_ACCEPTED,
+    PACKET_TYPE_CONNECT_REJECTED,
+    PACKET_TYPE_DISCONNECT,
+    PACKET_TYPE_PING,
+    PACKET_TYPE_UPDATE,
+    PACKET_TYPE_STATE,
+    PACKET_TYPE_ERROR,
 } PacketType;
+
+typedef enum
+{
+    DISCONNECTED,
+    SENDING_CONNECTION_REQUEST,
+    SENDING_CHALLENGE_RESPONSE,
+    CONNECTED,
+} ConnectionState;
+
+typedef enum
+{
+    CONNECT_REJECT_REASON_SERVER_FULL,
+    CONNECT_REJECT_REASON_INVALID_PACKET,
+    CONNECT_REJECT_REASON_FAILED_CHALLENGE,
+} ConnectionRejectionReason;
+
+typedef enum
+{
+    PACKET_ERROR_NONE,
+    PACKET_ERROR_BAD_FORMAT,
+    PACKET_ERROR_INVALID,
+} PacketError;
 
 typedef struct
 {
     uint32_t game_id;
-    uint16_t packet_id;
+    uint16_t id;
     PacketType type;
-    uint16_t ack;
-    uint32_t ack_bitfield;
 } __attribute__((__packed__)) PacketHeader;
 
 typedef struct
 {
-    PacketHeader header;
+    PacketHeader hdr;
 
     uint32_t data_len;
     uint8_t  data[MAX_PACKET_DATA_SIZE];
 } __attribute__((__packed__)) Packet;
 
-typedef struct
-{
-    Vector3f position;
-    float angle_h;
-    float angle_v;
-} __attribute__((__packed__)) ClientData;
-
-typedef struct
-{
-    uint16_t        version;
-    uint16_t        num_clients;
-    uint16_t        ignore_id;
-    ClientData client_data[MAX_CLIENTS];
-} WorldState;
-
-extern uint32_t game_id;
 extern char* server_ip_address;
 
 // Server
