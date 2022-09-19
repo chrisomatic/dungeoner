@@ -32,6 +32,7 @@
 #include "creature.h"
 #include "weapon.h"
 #include "portal.h"
+#include "net.h"
 
 // =========================
 // Global Vars
@@ -96,12 +97,16 @@ Zone rat_zone;
 // =========================
 
 double t0=0.0,t1=0.0;
+GameRole role;
 
 // =========================
 // Function Prototypes
 // =========================
 
-void start_game();
+void parse_args();
+void start_local();
+void start_client();
+void start_server();
 void init();
 void deinit();
 void simulate();
@@ -113,7 +118,21 @@ void render();
 
 int main(int argc, char* argv[])
 {
-    start_game();
+    parse_args(argc, argv);
+
+    switch(role)
+    {
+        case ROLE_LOCAL:
+            start_local();
+            break;
+        case ROLE_CLIENT:
+            start_client();
+            break;
+        case ROLE_SERVER:
+            start_server();
+            break;
+    }
+
     return 0;
 }
 
@@ -121,8 +140,36 @@ int main(int argc, char* argv[])
 // Functions
 // =========================
 
-void start_game()
+void parse_args(int argc, char* argv[])
 {
+    role = ROLE_LOCAL;
+
+    if(argc > 1)
+    {
+        for(int i = 1; i < argc; ++i)
+        {
+            if(argv[i][0] == '-' && argv[i][1] == '-')
+            {
+                // server
+                if(strncmp(argv[i]+2,"server",6) == 0)
+                    role = ROLE_SERVER;
+
+                // client
+                else if(strncmp(argv[i]+2,"client",6) == 0)
+                    role = ROLE_CLIENT;
+            }
+            else
+            {
+                net_client_set_server_ip(argv[i]);
+            }
+        }
+    }
+}
+
+void start_local()
+{
+    LOGI("Starting Local Game");
+
     init();
 
     timer_set_fps(&game_timer,TARGET_FPS);
@@ -149,6 +196,55 @@ void start_game()
     }
 
     deinit();
+}
+
+void start_client()
+{
+    LOGI("Starting Client");
+
+    init();
+
+    net_client_init();
+
+    for(;;)
+    {
+        if(net_client_connect())
+            break;
+
+        LOGE("Failed to connect, waiting 5 sec");
+        timer_delay_us(5000000); // 5 sec
+    }
+
+    timer_set_fps(&game_timer,TARGET_FPS);
+    timer_begin(&game_timer);
+
+    // main game loop
+    for(;;)
+    {
+        g_delta_t = t1-t0;
+        g_total_t += g_delta_t;
+
+        window_poll_events();
+        if(window_should_close())
+            break;
+
+        t0 = timer_get_time();
+
+        simulate();
+        render();
+
+        timer_wait_for_frame(&game_timer);
+        window_swap_buffers();
+        t1 = timer_get_time();
+    }
+
+    deinit();
+}
+
+void start_server()
+{
+    LOGI("Starting Server");
+    net_server_start();
 }
 
 void init()

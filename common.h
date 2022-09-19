@@ -5,6 +5,13 @@
 #include "gfx.h"
 #include "3dmath.h"
 
+typedef enum
+{
+    ROLE_LOCAL,
+    ROLE_CLIENT,
+    ROLE_SERVER,
+} GameRole;
+
 #define STR_EQUAL(x,y)  (strncmp((x),(y),strlen((x))) == 0 && strlen(x) == strlen(y))
 #define BIT_SET(v,b)    (((v) & (b)) == (b))
 

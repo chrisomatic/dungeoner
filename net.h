@@ -64,6 +64,7 @@ int net_server_start();
 
 // Client
 bool net_client_init();
+bool net_client_connect();
 bool net_client_set_server_ip(char* address);
 bool net_client_data_waiting();
 int net_client_send(uint8_t* data, uint32_t len);

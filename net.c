@@ -211,7 +211,7 @@ static bool server_assign_new_client(Address* addr, ClientInfo* cli)
         if(server.clients[i].state == DISCONNECTED)
         {
             cli = &server.clients[i];
-            cli->state = DISCONNECTED;
+            cli->state = SENDING_CONNECTION_REQUEST;
             memcpy(&cli->address, &addr, sizeof(Address));
             server.num_clients++;
 
@@ -272,6 +272,8 @@ static void server_send(PacketType type, ClientInfo* cli)
             pkt.data[0] = (uint8_t)cli->last_packet_error;
             net_send(&server.info,&cli->address,&pkt);
             break;
+        default:
+            break;
     }
 }
 
@@ -292,9 +294,9 @@ int net_server_start()
 
     for(;;)
     {
-        // Read all pending packets
         for(;;)
         {
+            // Read all pending packets
             bool data_waiting = has_data_waiting(server.info.socket);
             if(!data_waiting)
                 break;
@@ -323,9 +325,13 @@ int net_server_start()
             {
                 if(recv_packet.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
                 {
-                    // store salt
-                    cli.client_salt = (uint64_t)recv_packet.data;
-                    server_send(PACKET_TYPE_CONNECT_CHALLENGE, &cli);
+                    bool assign_new_client = server_assign_new_client(&from, &cli);
+                    if(assign_new_client)
+                    {
+                        // store salt
+                        cli.client_salt = (uint64_t)recv_packet.data;
+                        server_send(PACKET_TYPE_CONNECT_CHALLENGE, &cli);
+                    }
                 }
             }
             else
@@ -382,6 +388,16 @@ int net_server_start()
     }
 }
 
+struct
+{
+    Address address;
+    NodeInfo info;
+    ConnectionState state;
+    uint64_t server_salt;
+    uint64_t client_salt;
+} client = {0};
+
+
 bool net_client_set_server_ip(char* address)
 {
     // example input:
@@ -415,8 +431,7 @@ bool net_client_set_server_ip(char* address)
     return true;
 }
 
-static NodeInfo client_info = {0};
-
+// client information
 bool net_client_init()
 {
     int sock;
@@ -424,22 +439,98 @@ bool net_client_init()
     LOGN("Creating socket.");
     socket_create(&sock);
 
-    client_info.socket = sock;
+    client.info.socket = sock;
 
     return true;
 }
 
 bool net_client_data_waiting()
 {
-    bool data_waiting = has_data_waiting(client_info.socket);
+    bool data_waiting = has_data_waiting(client.info.socket);
     return data_waiting;
+}
+
+static void client_send(PacketType type)
+{
+    Packet pkt = {
+        .hdr.game_id = GAME_ID,
+        .hdr.id = client.info.local_latest_packet_id,
+        .hdr.type = PACKET_TYPE_CONNECT_REQUEST
+    };
+
+    switch(type)
+    {
+        case PACKET_TYPE_CONNECT_REQUEST:
+        {
+            client.client_salt = rand64();
+            memcpy(&pkt.data[0],(uint8_t*)&client.client_salt,8);
+            pkt.data_len = 8;
+
+            net_send(&client.info,&server.address,&pkt);
+
+        }   break;
+        case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
+        {
+            pkt.data_len = 0;
+            net_send(&client.info,&server.address,&pkt);
+        }   break;
+        case PACKET_TYPE_PING:
+            pkt.data_len = 0;
+            net_send(&client.info,&server.address,&pkt);
+            break;
+        case PACKET_TYPE_UPDATE:
+            pkt.data_len = 0;
+            net_send(&client.info,&server.address,&pkt);
+            break;
+        default:
+            break;
+    }
+}
+
+bool net_client_connect()
+{
+    if(client.state != DISCONNECTED)
+        return false; // temporary, handle different states in the future
+
+    client_send(PACKET_TYPE_CONNECT_REQUEST);
+
+    for(;;)
+    {
+        bool data_waiting = net_client_data_waiting();
+
+        if(!data_waiting)
+            break;
+
+        Packet srvpkt = {0};
+        bool is_latest;
+        int recv_bytes = net_client_recv(&srvpkt, &is_latest);
+
+        if(recv_bytes > 0)
+        {
+            if(srvpkt.hdr.type == PACKET_TYPE_CONNECT_CHALLENGE)
+            {
+                uint64_t srv_client_salt = ((uint64_t*)&srvpkt.data[0])[0];
+
+                if(srv_client_salt != client.client_salt)
+                {
+                    LOGN("Server sent client salt (%llu) doesn't match actual client salt (%llu)", srv_client_salt, client.client_salt);
+                    return false;
+                }
+
+                client.server_salt = ((uint64_t*)&srvpkt.data[8])[0];
+                LOGN("Received Connect Challenge. Server Salt: %llu",client.server_salt);
+            }
+        }
+
+        timer_delay_us(10); // delay 10 us
+    }
 }
 
 int net_client_send(uint8_t* data, uint32_t len)
 {
     Packet pkt = {
         .hdr.game_id = GAME_ID,
-        .hdr.id = client_info.local_latest_packet_id,
+        .hdr.id = client.info.local_latest_packet_id,
     };
 
     memcpy(pkt.data,data,len);
@@ -447,18 +538,18 @@ int net_client_send(uint8_t* data, uint32_t len)
 
     //print_packet(&pkt);
 
-    int sent_bytes = net_send(&client_info, &server.address, &pkt);
+    int sent_bytes = net_send(&client.info, &server.address, &pkt);
     return sent_bytes;
 }
 
 int net_client_recv(Packet* pkt, bool* is_latest)
 {
     Address from = {0};
-    int recv_bytes = net_recv(&client_info, &from, pkt, is_latest);
+    int recv_bytes = net_recv(&client.info, &from, pkt, is_latest);
     return recv_bytes;
 }
 
 void net_client_deinit()
 {
-    socket_close(client_info.socket);
+    socket_close(client.info.socket);
 }
