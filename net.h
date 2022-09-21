@@ -46,7 +46,8 @@ typedef struct
 {
     uint32_t game_id;
     uint16_t id;
-    PacketType type;
+    uint8_t type;
+    uint8_t pad;
 } __attribute__((__packed__)) PacketHeader;
 
 typedef struct

@@ -202,18 +202,10 @@ void start_client()
 {
     LOGI("Starting Client");
 
-    init();
+    //init();
 
     net_client_init();
-
-    for(;;)
-    {
-        if(net_client_connect())
-            break;
-
-        LOGE("Failed to connect, waiting 5 sec");
-        timer_delay_us(5000000); // 5 sec
-    }
+    net_client_connect();
 
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
