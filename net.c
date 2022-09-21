@@ -103,15 +103,19 @@ static void print_packet(Packet* pkt)
 {
     LOGN("Game ID:      0x%08x",pkt->hdr.game_id);
     LOGN("Packet ID:    %u",pkt->hdr.id);
-    LOGN("Packet Type:  %u",pkt->hdr.type);
+    LOGN("Packet Type: %02X",pkt->hdr.type);
     LOGN("Data Len:     %u",pkt->data_len);
     LOGN("Data:");
 
+    char data[3*1024+1] = {0};
+    char byte[4] = {0};
     for(int i = 0; i < pkt->data_len; ++i)
     {
-        LOGN("0x%02x ",pkt->data[i]);
+        sprintf(byte,"%02X ",pkt->data[i]);
+        memcpy(data+(3*i), byte,3);
     }
-    LOGN("");
+
+    LOGN("%s", data);
 }
 
 static bool has_data_waiting(int socket)
@@ -145,6 +149,7 @@ static int net_send(NodeInfo* node_info, Address* to, Packet* pkt)
     int sent_bytes = socket_sendto(node_info->socket, to, (uint8_t*)pkt, pkt_len);
 
     LOGN("[SENT] Packet %d (%u B)",pkt->hdr.id,sent_bytes);
+    print_packet(pkt);
 
     node_info->local_latest_packet_id++;
 
@@ -156,6 +161,7 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt, bool* is_la
     int recv_bytes = socket_recvfrom(node_info->socket, from, (uint8_t*)pkt);
 
     LOGN("[RECV] Packet %d (%u B)",pkt->hdr.id,recv_bytes);
+    print_packet(pkt);
 
     *is_latest = is_packet_id_greater(pkt->hdr.id,node_info->remote_latest_packet_id);
     if(*is_latest)
@@ -314,7 +320,7 @@ int net_server_start()
             if(!validate_packet(&recv_packet))
             {
                 LOGN("Invalid packet!");
-                server_send(PACKET_TYPE_ERROR,&cli);
+                //server_send(PACKET_TYPE_ERROR,&cli);
                 timer_delay_us(10); // delay 10 us
                 continue;
             }
@@ -536,7 +542,6 @@ int net_client_send(uint8_t* data, uint32_t len)
     memcpy(pkt.data,data,len);
     pkt.data_len = len;
 
-    //print_packet(&pkt);
 
     int sent_bytes = net_send(&client.info, &server.address, &pkt);
     return sent_bytes;
