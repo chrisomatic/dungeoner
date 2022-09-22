@@ -36,8 +36,9 @@ typedef struct
     ConnectionState state;
     uint16_t remote_latest_packet_id;
     clock_t  time_of_latest_packet;
-    uint8_t server_salt[8];
     uint8_t client_salt[8];
+    uint8_t server_salt[8];
+    uint8_t xor_salts[8];
     ConnectionRejectionReason last_reject_reason;
     PacketError last_packet_error;
 } ClientInfo;
@@ -99,28 +100,61 @@ static char* packet_type_to_str(PacketType type)
     }
 }
 
+static char* connect_reject_reason_to_str(ConnectionRejectionReason reason)
+{
+    switch(reason)
+    {
+        case CONNECT_REJECT_REASON_SERVER_FULL: return "SERVER FULL";
+        case CONNECT_REJECT_REASON_INVALID_PACKET: return "INVALID PACKET FORMAT";
+        case CONNECT_REJECT_REASON_FAILED_CHALLENGE: return "FAILED CHALLENGE";
+        default: return "UNKNOWN";
+    }
+}
+
+static void print_salt(uint8_t* salt)
+{
+    LOGN("[SALT] %02X %02X %02X %02X %02X %02X %02X %02X",
+            salt[0], salt[1], salt[2], salt[3],
+            salt[4], salt[5], salt[6], salt[7]
+    );
+}
+
+static void store_xor_salts(uint8_t* cli_salt, uint8_t* svr_salt, uint8_t* xor_salts)
+{
+    for(int i = 0; i < 8; ++i)
+    {
+        xor_salts[i] = (cli_salt[i] ^ svr_salt[i]);
+    }
+}
+
 static void print_address(Address* addr)
 {
-    LOGN("%u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
+    LOGN("[ADDR] %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
 }
 
 static void print_packet(Packet* pkt)
 {
     LOGN("Game ID:      0x%08x",pkt->hdr.game_id);
     LOGN("Packet ID:    %u",pkt->hdr.id);
-    LOGN("Packet Type:  %02X",pkt->hdr.type);
-    LOGN("Data Len:     %u",pkt->data_len);
-    LOGN("Data:");
+    LOGN("Packet Type:  %s (%02X)",packet_type_to_str(pkt->hdr.type),pkt->hdr.type);
+    LOGN("Data (%u):", pkt->data_len);
 
-    char data[3*MAX_PACKET_DATA_SIZE+1] = {0};
+    char data[3*16+5] = {0};
     char byte[4] = {0};
-    for(int i = 0; i < pkt->data_len; ++i)
+    for(int i = 0; i < MIN(16,pkt->data_len); ++i)
     {
         sprintf(byte,"%02X ",pkt->data[i]);
         memcpy(data+(3*i), byte,3);
     }
 
-    LOGN("%s", data);
+    if(pkt->data_len <= 16)
+    {
+        LOGN("%s", data);
+    }
+    else
+    {
+        LOGN("%s ...", data);
+    }
 }
 
 static bool has_data_waiting(int socket)
@@ -166,6 +200,7 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt, bool* is_la
     int recv_bytes = socket_recvfrom(node_info->socket, from, (uint8_t*)pkt);
 
     LOGN("[RECV] Packet %d (%u B)",pkt->hdr.id,recv_bytes);
+    print_address(from);
     print_packet(pkt);
 
     *is_latest = is_packet_id_greater(pkt->hdr.id,node_info->remote_latest_packet_id);
@@ -179,9 +214,8 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt, bool* is_la
     return recv_bytes;
 }
 
-static bool validate_packet(Packet* pkt)
+static bool validate_packet_format(Packet* pkt)
 {
-
     if(pkt->hdr.game_id != GAME_ID)
     {
         LOGN("Game ID of packet doesn't match, %08X != %08X",pkt->hdr.game_id, GAME_ID);
@@ -194,29 +228,39 @@ static bool validate_packet(Packet* pkt)
         return false;
     }
 
+    return true;
+}
+
+static bool authenticate_client(Packet* pkt, ClientInfo* cli)
+{
     bool valid = true;
 
     switch(pkt->hdr.type)
     {
         case PACKET_TYPE_CONNECT_REQUEST:
+            valid &= (pkt->data_len == MAX_PACKET_DATA_SIZE); // must be padded out to 1024
+            valid &= (memcmp(&pkt->data[0],cli->client_salt, 8) == 0);
+            break;
         case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
             valid &= (pkt->data_len == MAX_PACKET_DATA_SIZE); // must be padded out to 1024
+            valid &= (memcmp(&pkt->data[0],cli->xor_salts, 8) == 0);
             break;
         default:
+            valid &= (memcmp(&pkt->data[0],cli->xor_salts, 8) == 0);
             break;
     }
 
     return valid;
 }
 
-static bool server_get_client(Address* addr, ClientInfo* cli)
+static bool server_get_client(Address* addr, ClientInfo** cli)
 {
     for(int i = 0; i < server.num_clients; ++i)
     {
-        if(memcmp(&server.clients[i].address, addr, sizeof(Address) == 0))
+        if(memcmp(&server.clients[i].address, addr, sizeof(Address)) == 0)
         {
             // found existing client, exit
-            cli = &server.clients[i];
+            *cli = &server.clients[i];
             return false;
         }
     }
@@ -224,14 +268,14 @@ static bool server_get_client(Address* addr, ClientInfo* cli)
     return true;
 }
 
-static bool server_assign_new_client(Address* addr, ClientInfo* cli)
+static bool server_assign_new_client(Address* addr, ClientInfo** cli)
 {
     // new client
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
         if(server.clients[i].state == DISCONNECTED)
         {
-            cli = &server.clients[i];
+            *cli = &server.clients[i];
             return true;
         }
     }
@@ -240,11 +284,25 @@ static bool server_assign_new_client(Address* addr, ClientInfo* cli)
     return false;
 }
 
+static void update_server_num_clients()
+{
+    int num_clients = 0;
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state != DISCONNECTED)
+        {
+            num_clients++;
+        }
+    }
+    server.num_clients = num_clients;
+}
+
 static void server_send(PacketType type, ClientInfo* cli)
 {
     Packet pkt = {
         .hdr.game_id = GAME_ID,
         .hdr.id = server.info.local_latest_packet_id,
+        .hdr.ack = server.info.remote_latest_packet_id,
         .hdr.type = type
     };
 
@@ -256,6 +314,11 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             uint64_t salt = rand64();
             memcpy(cli->server_salt, (uint8_t*)&salt,8);
+
+            // store xor salts
+            store_xor_salts(cli->client_salt, cli->server_salt, cli->xor_salts);
+            print_salt(cli->xor_salts);
+
             memcpy(&pkt.data[0],cli->client_salt,8);
             memcpy(&pkt.data[8],cli->server_salt,8);
             pkt.data_len = 16;
@@ -265,6 +328,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         }   break;
         case PACKET_TYPE_CONNECT_ACCEPTED:
         {
+            cli->state = CONNECTED;
             pkt.data_len = 0;
             net_send(&server.info,&cli->address,&pkt);
         }   break;
@@ -272,6 +336,10 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             pkt.data_len = 1;
             pkt.data[0] = (uint8_t)cli->last_reject_reason;
+
+            cli->state = DISCONNECTED;
+            update_server_num_clients();
+
             net_send(&server.info,&cli->address,&pkt);
         }   break;
         case PACKET_TYPE_PING:
@@ -321,68 +389,94 @@ int net_server_start()
                 break;
 
             Address from = {0};
-            Packet recv_packet = {0};
+            Packet recv_pkt = {0};
 
             bool is_latest;
-            int bytes_received = net_recv(&server.info, &from, &recv_packet, &is_latest);
+            int bytes_received = net_recv(&server.info, &from, &recv_pkt, &is_latest);
 
-            //print_packet(&recv_packet);
-
-            ClientInfo cli = {0};
-
-            if(!validate_packet(&recv_packet))
+            if(!validate_packet_format(&recv_pkt))
             {
-                LOGN("Invalid packet!");
-                //server_send(PACKET_TYPE_ERROR,&cli);
+                LOGN("Invalid packet format!");
                 timer_delay_us(10); // delay 10 us
                 continue;
             }
 
-            bool new_client = server_get_client(&from, &cli);
+            ClientInfo* cli = NULL;
 
-            if(new_client)
+            bool is_new_client = server_get_client(&from, &cli);
+
+            if(is_new_client)
             {
-                if(recv_packet.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
+                if(recv_pkt.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
                 {
-                    bool assign_new_client = server_assign_new_client(&from, &cli);
-
-                    if(assign_new_client)
+                    // new client
+                    if(recv_pkt.data_len != MAX_PACKET_DATA_SIZE)
                     {
-                        cli.state = SENDING_CONNECTION_REQUEST;
-                        memcpy(&cli.address,&from,sizeof(Address));
-                        server.num_clients++;
+                        LOGN("Packet length doesn't equal %d",MAX_PACKET_DATA_SIZE);
+                        break;
+                    }
+
+                    if(server_assign_new_client(&from, &cli))
+                    {
+                        cli->state = SENDING_CONNECTION_REQUEST;
+                        memcpy(&cli->address,&from,sizeof(Address));
+                        update_server_num_clients();
 
                         LOGN("New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
-                        print_address(&cli.address);
+                        print_address(&cli->address);
 
                         // store salt
-                        memcpy(cli.client_salt,&recv_packet.data[0],8);
-                        server_send(PACKET_TYPE_CONNECT_CHALLENGE, &cli);
+                        memcpy(cli->client_salt,&recv_pkt.data[0],8);
+                        server_send(PACKET_TYPE_CONNECT_CHALLENGE, cli);
                     }
                     else
                     {
-                        cli.last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
-                        server_send(PACKET_TYPE_CONNECT_REJECTED, &cli);
+                        cli->last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
+                        server_send(PACKET_TYPE_CONNECT_REJECTED, cli);
+                        break;
                     }
                 }
             }
             else
             {
                 // existing client
+                bool auth = authenticate_client(&recv_pkt,cli);
 
-                // validate salt
-                if(recv_packet.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
+                if(!auth)
                 {
-                    bool valid = (memcmp(&recv_packet.data[0],cli.client_salt, 8) == 0);
-                    server_send(valid ? PACKET_TYPE_CONNECT_ACCEPTED : PACKET_TYPE_CONNECT_REJECTED,&cli);
+                    LOGN("Client Failed authentication");
+
+                    if(recv_pkt.hdr.type == PACKET_TYPE_CONNECT_CHALLENGE_RESP)
+                    {
+                        cli->last_reject_reason = CONNECT_REJECT_REASON_FAILED_CHALLENGE;
+                        server_send(PACKET_TYPE_CONNECT_REJECTED,cli);
+                    }
+
+                    break;
                 }
 
-                is_latest = is_packet_id_greater(recv_packet.hdr.id,cli.remote_latest_packet_id);
+                switch(recv_pkt.hdr.type)
+                {
+                    case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
+                    {
+                        cli->state = SENDING_CHALLENGE_RESPONSE;
+                        server_send(PACKET_TYPE_CONNECT_ACCEPTED,cli);
+                    } break;
+                    case PACKET_TYPE_DISCONNECT:
+                    {
+                        cli->state = DISCONNECTED;
+                        update_server_num_clients();
+                    } break;
+                    default:
+                    break;
+                }
+
+                is_latest = is_packet_id_greater(recv_pkt.hdr.id,cli->remote_latest_packet_id);
 
                 if(is_latest)
                 {
-                    cli.remote_latest_packet_id = recv_packet.hdr.id;
-                    cli.time_of_latest_packet = timer_get_time();
+                    cli->remote_latest_packet_id = recv_pkt.hdr.id;
+                    cli->time_of_latest_packet = timer_get_time();
                 }
             }
 
@@ -399,14 +493,8 @@ int net_server_start()
 
                 if(time_elapsed >= DISCONNECTION_TIMEOUT)
                 {
-                    Address* addr = &server.clients[i].address;
-                    LOGN("Client Disconnected! %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
-
-                    // Disconnect client
-                    memset(&server.clients[i], 0, sizeof(ClientInfo));
-                    server.num_clients--;
-
-                    LOGN("Num Clients: %u",server.num_clients);
+                    // disconnect client
+                    // @TODO
                 }
             }
 
@@ -427,6 +515,7 @@ struct
     ConnectionState state;
     uint8_t server_salt[8];
     uint8_t client_salt[8];
+    uint8_t xor_salts[8];
 } client = {0};
 
 
@@ -482,12 +571,14 @@ bool net_client_data_waiting()
     return data_waiting;
 }
 
+
 static void client_send(PacketType type)
 {
     Packet pkt = {
         .hdr.game_id = GAME_ID,
         .hdr.id = client.info.local_latest_packet_id,
-        .hdr.type = PACKET_TYPE_CONNECT_REQUEST
+        .hdr.ack = client.info.remote_latest_packet_id,
+        .hdr.type = type
     };
 
     switch(type)
@@ -499,16 +590,20 @@ static void client_send(PacketType type)
 
             memset(pkt.data,0,MAX_PACKET_DATA_SIZE);
             memcpy(&pkt.data[0],(uint8_t*)client.client_salt,8);
-            pkt.data_len = MAX_PACKET_DATA_SIZE;
+            pkt.data_len = MAX_PACKET_DATA_SIZE; // pad to 1024
 
             net_send(&client.info,&server.address,&pkt);
 
-        }   break;
+        } break;
         case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
         {
-            pkt.data_len = 0;
+            store_xor_salts(client.client_salt, client.server_salt, client.xor_salts);
+
+            memset(pkt.data,0,MAX_PACKET_DATA_SIZE);
+            memcpy(&pkt.data[0],(uint8_t*)client.xor_salts,8);
+            pkt.data_len = MAX_PACKET_DATA_SIZE; // pad to 1024
             net_send(&client.info,&server.address,&pkt);
-        }   break;
+        } break;
         case PACKET_TYPE_PING:
             pkt.data_len = 0;
             net_send(&client.info,&server.address,&pkt);
@@ -529,6 +624,7 @@ bool net_client_connect()
 
     for(;;)
     {
+        client.state = SENDING_CONNECTION_REQUEST;
         client_send(PACKET_TYPE_CONNECT_REQUEST);
 
         for(;;)
@@ -543,8 +639,8 @@ bool net_client_connect()
 
             Packet srvpkt = {0};
             bool is_latest;
-            int recv_bytes = net_client_recv(&srvpkt, &is_latest);
 
+            int recv_bytes = net_client_recv(&srvpkt, &is_latest);
             if(recv_bytes > 0)
             {
                 switch(srvpkt.hdr.type)
@@ -563,19 +659,20 @@ bool net_client_connect()
                         memcpy(client.server_salt,&srvpkt.data[8], 8);
                         LOGN("Received Connect Challenge.");
 
+                        client.state = SENDING_CHALLENGE_RESPONSE;
                         client_send(PACKET_TYPE_CONNECT_CHALLENGE_RESP);
                     } break;
                     case PACKET_TYPE_CONNECT_ACCEPTED:
                     {
+                        client.state = CONNECTED;
                         return true;
                     } break;
                     case PACKET_TYPE_CONNECT_REJECTED:
                     {
+                        LOGN("Rejection Reason: %s (%02X)", connect_reject_reason_to_str(srvpkt.data[0]), srvpkt.data[0]);
                         return false;
                     } break;
                 }
-                }
-                else if(srv
             }
 
             timer_delay_us(10); // delay 10 us
@@ -594,7 +691,6 @@ int net_client_send(uint8_t* data, uint32_t len)
 
     memcpy(pkt.data,data,len);
     pkt.data_len = len;
-
 
     int sent_bytes = net_send(&client.info, &server.address, &pkt);
     return sent_bytes;

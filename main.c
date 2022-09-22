@@ -109,7 +109,8 @@ void start_client();
 void start_server();
 void init();
 void deinit();
-void simulate();
+void simulate_local();
+void simulate_client();
 void render();
 
 // =========================
@@ -168,7 +169,9 @@ void parse_args(int argc, char* argv[])
 
 void start_local()
 {
+    LOGI("-------------------");
     LOGI("Starting Local Game");
+    LOGI("-------------------");
 
     init();
 
@@ -187,7 +190,7 @@ void start_local()
 
         t0 = timer_get_time();
 
-        simulate();
+        simulate_local();
         render();
 
         timer_wait_for_frame(&game_timer);
@@ -200,12 +203,18 @@ void start_local()
 
 void start_client()
 {
+    LOGI("---------------");
     LOGI("Starting Client");
+    LOGI("---------------");
 
-    //init();
+    time_t t;
+    srand((unsigned) time(&t));
 
     net_client_init();
-    net_client_connect();
+    if(!net_client_connect())
+        return;
+
+    init();
 
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
@@ -222,7 +231,7 @@ void start_client()
 
         t0 = timer_get_time();
 
-        simulate();
+        simulate_client();
         render();
 
         timer_wait_for_frame(&game_timer);
@@ -235,7 +244,13 @@ void start_client()
 
 void start_server()
 {
+    LOGI("---------------");
     LOGI("Starting Server");
+    LOGI("---------------");
+
+    time_t t;
+    srand((unsigned) time(&t));
+
     net_server_start();
 }
 
@@ -250,9 +265,6 @@ void init()
         LOGE("Failed to initialize window!\n");
         exit(1);
     }
-
-    time_t t;
-    srand((unsigned) time(&t));
 
     LOGI("Initializing...");
 
@@ -422,7 +434,15 @@ void deinit()
     window_deinit();
 }
 
-void simulate()
+void simulate_client()
+{
+    player_update();
+    particles_update();
+    gui_update();
+    portal_update();
+}
+
+void simulate_local()
 {
     player_update();
     creature_update();

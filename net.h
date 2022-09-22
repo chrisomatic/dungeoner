@@ -46,8 +46,10 @@ typedef struct
 {
     uint32_t game_id;
     uint16_t id;
+    uint16_t ack;
+    uint32_t ack_bitfield;
     uint8_t type;
-    uint8_t pad;
+    uint8_t pad[3]; // pad to be 4-byte aligned
 } __attribute__((__packed__)) PacketHeader;
 
 typedef struct
