@@ -19,7 +19,9 @@
 
 #define MAXIMUM_RTT 1.0f
 
-#define DISCONNECTION_TIMEOUT 10.0f // seconds
+#define DEFAULT_TIMEOUT 1.0f // seconds
+#define PING_PERIOD 5.0f
+#define DISCONNECTION_TIMEOUT 12.0f // seconds
 
 typedef struct
 {
@@ -35,7 +37,7 @@ typedef struct
     Address address;
     ConnectionState state;
     uint16_t remote_latest_packet_id;
-    clock_t  time_of_latest_packet;
+    double  time_of_latest_packet;
     uint8_t client_salt[8];
     uint8_t server_salt[8];
     uint8_t xor_salts[8];
@@ -93,7 +95,7 @@ static char* packet_type_to_str(PacketType type)
         case PACKET_TYPE_CONNECT_REJECTED: return "CONNECT REJECTED";
         case PACKET_TYPE_DISCONNECT: return "DISCONNECT";
         case PACKET_TYPE_PING: return "PING";
-        case PACKET_TYPE_UPDATE: return "UPDATE";
+        case PACKET_TYPE_INPUT: return "INPUT";
         case PACKET_TYPE_STATE: return "STATE";
         case PACKET_TYPE_ERROR: return "ERROR";
         default: return "UNKNOWN";
@@ -297,6 +299,14 @@ static void update_server_num_clients()
     server.num_clients = num_clients;
 }
 
+static void remove_client(ClientInfo* cli)
+{
+    LOGN("Remove client");
+    memset(cli,0, sizeof(ClientInfo));
+    update_server_num_clients();
+
+}
+
 static void server_send(PacketType type, ClientInfo* cli)
 {
     Packet pkt = {
@@ -337,9 +347,6 @@ static void server_send(PacketType type, ClientInfo* cli)
             pkt.data_len = 1;
             pkt.data[0] = (uint8_t)cli->last_reject_reason;
 
-            cli->state = DISCONNECTED;
-            update_server_num_clients();
-
             net_send(&server.info,&cli->address,&pkt);
         }   break;
         case PACKET_TYPE_PING:
@@ -355,6 +362,14 @@ static void server_send(PacketType type, ClientInfo* cli)
             pkt.data[0] = (uint8_t)cli->last_packet_error;
             net_send(&server.info,&cli->address,&pkt);
             break;
+        case PACKET_TYPE_DISCONNECT:
+        {
+            cli->state = DISCONNECTED;
+            pkt.data_len = 0;
+            // redundantly send so packet is guaranteed to get through
+            for(int i = 0; i < 3; ++i)
+                net_send(&server.info,&cli->address,&pkt);
+        } break;
         default:
             break;
     }
@@ -368,6 +383,10 @@ int net_server_start()
 
     int sock;
 
+    // set tick rate
+    timer_set_fps(&server_timer,TICK_RATE);
+    timer_begin(&server_timer);
+
     LOGN("Creating socket.");
     socket_create(&sock);
 
@@ -375,9 +394,7 @@ int net_server_start()
     socket_bind(sock, NULL, PORT);
     server.info.socket = sock;
 
-    // set tick rate
-    timer_set_fps(&server_timer,TICK_RATE);
-    timer_begin(&server_timer);
+    LOGN("Server Started with tick rate %f.", TICK_RATE);
 
     for(;;)
     {
@@ -397,7 +414,7 @@ int net_server_start()
             if(!validate_packet_format(&recv_pkt))
             {
                 LOGN("Invalid packet format!");
-                timer_delay_us(10); // delay 10 us
+                timer_delay_us(1000); // delay 1ms
                 continue;
             }
 
@@ -413,6 +430,7 @@ int net_server_start()
                     if(recv_pkt.data_len != MAX_PACKET_DATA_SIZE)
                     {
                         LOGN("Packet length doesn't equal %d",MAX_PACKET_DATA_SIZE);
+                        remove_client(cli);
                         break;
                     }
 
@@ -422,7 +440,7 @@ int net_server_start()
                         memcpy(&cli->address,&from,sizeof(Address));
                         update_server_num_clients();
 
-                        LOGN("New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
+                        LOGN("Welcome New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
                         print_address(&cli->address);
 
                         // store salt
@@ -431,8 +449,12 @@ int net_server_start()
                     }
                     else
                     {
-                        cli->last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
-                        server_send(PACKET_TYPE_CONNECT_REJECTED, cli);
+                        // create a temporary ClientInfo so we can send a reject packet back
+                        ClientInfo tmp_cli = {0};
+                        memcpy(&tmp_cli.address,&from,sizeof(Address));
+
+                        tmp_cli.last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
+                        server_send(PACKET_TYPE_CONNECT_REJECTED, &tmp_cli);
                         break;
                     }
                 }
@@ -450,8 +472,8 @@ int net_server_start()
                     {
                         cli->last_reject_reason = CONNECT_REJECT_REASON_FAILED_CHALLENGE;
                         server_send(PACKET_TYPE_CONNECT_REJECTED,cli);
+                        remove_client(cli);
                     }
-
                     break;
                 }
 
@@ -464,13 +486,16 @@ int net_server_start()
                     } break;
                     case PACKET_TYPE_DISCONNECT:
                     {
-                        cli->state = DISCONNECTED;
-                        update_server_num_clients();
+                        remove_client(cli);
                     } break;
                     default:
                     break;
                 }
+            }
 
+            if(cli != NULL)
+            {
+                // update client info packet time
                 is_latest = is_packet_id_greater(recv_pkt.hdr.id,cli->remote_latest_packet_id);
 
                 if(is_latest)
@@ -480,21 +505,33 @@ int net_server_start()
                 }
             }
 
-            timer_delay_us(10); // delay 10 us
+
+            timer_delay_us(1000); // delay 1ms
         }
 
         // send state packet to all clients
         if(server.num_clients > 0)
         {
             // disconnect any client that hasn't sent a packet in DISCONNECTION_TIMEOUT
-            for(int i = 0; i < server.num_clients; ++i)
+            for(int i = 0; i < MAX_CLIENTS; ++i)
             {
-                double time_elapsed = timer_get_time() - server.clients[i].time_of_latest_packet;
+                ClientInfo* cli = &server.clients[i];
 
-                if(time_elapsed >= DISCONNECTION_TIMEOUT)
+                if(cli == NULL) continue;
+                if(cli->state == DISCONNECTED) continue;
+
+                if(cli->time_of_latest_packet > 0)
                 {
-                    // disconnect client
-                    // @TODO
+                    double time_elapsed = timer_get_time() - cli->time_of_latest_packet;
+
+                    if(time_elapsed >= DISCONNECTION_TIMEOUT)
+                    {
+                        LOGN("Client timed out. Elapsed time: %f", time_elapsed);
+
+                        // disconnect client
+                        server_send(PACKET_TYPE_DISCONNECT,cli);
+                        remove_client(cli);
+                    }
                 }
             }
 
@@ -513,6 +550,8 @@ struct
     Address address;
     NodeInfo info;
     ConnectionState state;
+    double time_of_latest_sent_packet;
+    double time_of_last_ping;
     uint8_t server_salt[8];
     uint8_t client_salt[8];
     uint8_t xor_salts[8];
@@ -571,7 +610,6 @@ bool net_client_data_waiting()
     return data_waiting;
 }
 
-
 static void client_send(PacketType type)
 {
     Packet pkt = {
@@ -605,16 +643,27 @@ static void client_send(PacketType type)
             net_send(&client.info,&server.address,&pkt);
         } break;
         case PACKET_TYPE_PING:
-            pkt.data_len = 0;
+            memcpy(&pkt.data[0],(uint8_t*)client.xor_salts,8);
+            pkt.data_len = 8;
             net_send(&client.info,&server.address,&pkt);
             break;
-        case PACKET_TYPE_UPDATE:
-            pkt.data_len = 0;
+        case PACKET_TYPE_INPUT:
+            memcpy(&pkt.data[0],(uint8_t*)client.xor_salts,8);
+            pkt.data_len = 8;
             net_send(&client.info,&server.address,&pkt);
             break;
+        case PACKET_TYPE_DISCONNECT:
+        {
+            pkt.data_len = 0;
+            // redundantly send so packet is guaranteed to get through
+            for(int i = 0; i < 3; ++i)
+                net_send(&client.info,&server.address,&pkt);
+        } break;
         default:
             break;
     }
+
+    client.time_of_latest_sent_packet = timer_get_time();
 }
 
 bool net_client_connect()
@@ -633,7 +682,11 @@ bool net_client_connect()
 
             if(!data_waiting)
             {
-                timer_delay_us(10); // delay 10 us
+                double time_elapsed = timer_get_time() - client.time_of_latest_sent_packet;
+                if(time_elapsed >= DEFAULT_TIMEOUT)
+                    break; // retry sending
+
+                timer_delay_us(1000); // delay 1ms
                 continue;
             }
 
@@ -670,15 +723,59 @@ bool net_client_connect()
                     case PACKET_TYPE_CONNECT_REJECTED:
                     {
                         LOGN("Rejection Reason: %s (%02X)", connect_reject_reason_to_str(srvpkt.data[0]), srvpkt.data[0]);
-                        return false;
                     } break;
                 }
             }
 
-            timer_delay_us(10); // delay 10 us
+            timer_delay_us(1000); // delay 1000 us
         }
+    }
+}
 
-        timer_delay_us(5000000); // 5 sec
+void net_client_update()
+{
+    bool data_waiting = net_client_data_waiting();
+
+    if(data_waiting)
+    {
+        Packet srvpkt = {0};
+        bool is_latest;
+
+        int recv_bytes = net_client_recv(&srvpkt, &is_latest);
+        if(recv_bytes > 0)
+        {
+            switch(srvpkt.hdr.type)
+            {
+                case PACKET_TYPE_STATE:
+                    //@TODO
+                    break;
+                case PACKET_TYPE_DISCONNECT:
+                    client.state = DISCONNECTED;
+                    break;
+            }
+        }
+    }
+
+    // handle pinging server
+    double time_elapsed = timer_get_time() - client.time_of_last_ping;
+    if(time_elapsed >= PING_PERIOD)
+    {
+        client_send(PACKET_TYPE_PING);
+        client.time_of_last_ping = timer_get_time();
+    }
+}
+
+bool net_client_is_connected()
+{
+    return (client.state == CONNECTED);
+}
+
+void net_client_disconnect()
+{
+    if(client.state != DISCONNECTED)
+    {
+        client_send(PACKET_TYPE_DISCONNECT);
+        client.state = DISCONNECTED;
     }
 }
 

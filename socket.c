@@ -78,7 +78,6 @@ bool socket_bind(int socket_handle, Address* address, uint16_t port)
 
     if(address == NULL)
     {
-        printf("Binding to any local ip.\n");
         to.sin_addr.s_addr = htonl(INADDR_ANY); // server
     }
     else

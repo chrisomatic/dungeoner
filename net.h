@@ -7,7 +7,7 @@
 
 typedef enum
 {
-    PACKET_TYPE_INIT,
+    PACKET_TYPE_INIT = 0,
     PACKET_TYPE_CONNECT_REQUEST,
     PACKET_TYPE_CONNECT_CHALLENGE,
     PACKET_TYPE_CONNECT_CHALLENGE_RESP,
@@ -15,14 +15,14 @@ typedef enum
     PACKET_TYPE_CONNECT_REJECTED,
     PACKET_TYPE_DISCONNECT,
     PACKET_TYPE_PING,
-    PACKET_TYPE_UPDATE,
+    PACKET_TYPE_INPUT,
     PACKET_TYPE_STATE,
     PACKET_TYPE_ERROR,
 } PacketType;
 
 typedef enum
 {
-    DISCONNECTED,
+    DISCONNECTED = 0,
     SENDING_CONNECTION_REQUEST,
     SENDING_CHALLENGE_RESPONSE,
     CONNECTED,
@@ -37,7 +37,7 @@ typedef enum
 
 typedef enum
 {
-    PACKET_ERROR_NONE,
+    PACKET_ERROR_NONE = 0,
     PACKET_ERROR_BAD_FORMAT,
     PACKET_ERROR_INVALID,
 } PacketError;
@@ -68,6 +68,9 @@ int net_server_start();
 // Client
 bool net_client_init();
 bool net_client_connect();
+void net_client_update();
+bool net_client_is_connected();
+void net_client_disconnect();
 bool net_client_set_server_ip(char* address);
 bool net_client_data_waiting();
 int net_client_send(uint8_t* data, uint32_t len);

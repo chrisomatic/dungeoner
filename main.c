@@ -210,14 +210,14 @@ void start_client()
     time_t t;
     srand((unsigned) time(&t));
 
+    timer_set_fps(&game_timer,TARGET_FPS);
+    timer_begin(&game_timer);
+
     net_client_init();
     if(!net_client_connect())
         return;
 
     init();
-
-    timer_set_fps(&game_timer,TARGET_FPS);
-    timer_begin(&game_timer);
 
     // main game loop
     for(;;)
@@ -229,6 +229,9 @@ void start_client()
         if(window_should_close())
             break;
 
+        if(!net_client_is_connected())
+            break;
+
         t0 = timer_get_time();
 
         simulate_client();
@@ -238,6 +241,8 @@ void start_client()
         window_swap_buffers();
         t1 = timer_get_time();
     }
+
+    net_client_disconnect();
 
     deinit();
 }
@@ -436,6 +441,7 @@ void deinit()
 
 void simulate_client()
 {
+    net_client_update();
     player_update();
     particles_update();
     gui_update();

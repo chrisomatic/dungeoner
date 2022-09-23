@@ -55,7 +55,7 @@ static void init_timer(void)
 
 static double get_time()
 {
-    return (double) (get_timer_value() - _timer.offset) / _timer.frequency;
+    return (double) (get_timer_value() - _timer.offset) / (_timer.frequency);
 
 }
 
