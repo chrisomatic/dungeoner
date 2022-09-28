@@ -484,6 +484,11 @@ int net_server_start()
                         cli->state = SENDING_CHALLENGE_RESPONSE;
                         server_send(PACKET_TYPE_CONNECT_ACCEPTED,cli);
                     } break;
+                    case PACKET_TYPE_INPUT:
+                    {
+                        // apply inputs to player
+                        
+                    } break;
                     case PACKET_TYPE_DISCONNECT:
                     {
                         remove_client(cli);
@@ -545,6 +550,11 @@ int net_server_start()
     }
 }
 
+
+// =========
+// @CLIENT
+// =========
+
 struct
 {
     Address address;
@@ -555,8 +565,34 @@ struct
     uint8_t server_salt[8];
     uint8_t client_salt[8];
     uint8_t xor_salts[8];
+    PacketQueue queue;
 } client = {0};
 
+typedef struct
+{
+    double game_time;
+    PlayerInput input;
+} NetPlayerInput;
+
+static NetPlayerInput net_player_inputs[10];
+static int input_count;
+static const int inputs_per_packet = 2;
+
+bool net_client_add_player_input(PlayerInput* input, double game_time)
+{
+    if(input_count >= 10)
+    {
+        LOGW("Input array is full!");
+        return false;
+    }
+
+    net_player_inputs[input_count].game_time = game_time;
+    memcpy(&net_player_inputs[input_count].input, input, sizeof(PlayerInput));
+
+    input_count++;
+
+    return true;
+}
 
 bool net_client_set_server_ip(char* address)
 {
@@ -600,6 +636,8 @@ bool net_client_init()
     socket_create(&sock);
 
     client.info.socket = sock;
+
+    packet_queue_create(&client.queue, 32);
 
     return true;
 }
@@ -649,7 +687,13 @@ static void client_send(PacketType type)
             break;
         case PACKET_TYPE_INPUT:
             memcpy(&pkt.data[0],(uint8_t*)client.xor_salts,8);
-            pkt.data_len = 8;
+            pkt.data[8] = input_count;
+            for(int i = 0; i < input_count; ++i)
+            {
+                int index = 9+(i*sizeof(NetPlayerInput));
+                memcpy(&pkt.data[index],&net_player_inputs[i],sizeof(NetPlayerInput));
+            }
+            pkt.data_len = 9+(input_count*sizeof(NetPlayerInput));
             net_send(&client.info,&server.address,&pkt);
             break;
         case PACKET_TYPE_DISCONNECT:
@@ -762,6 +806,13 @@ void net_client_update()
     {
         client_send(PACKET_TYPE_PING);
         client.time_of_last_ping = timer_get_time();
+    }
+
+    // handle publishing inputs
+    if(input_count >= inputs_per_packet)
+    {
+        client_send(PACKET_TYPE_INPUT);
+        input_count = 0;
     }
 }
 

@@ -11,7 +11,6 @@
 #include "3dmath.h"
 #include "gfx.h"
 #include "gui.h"
-#include "entity.h"
 #include "terrain.h"
 #include "settings.h"
 #include "window.h"
@@ -233,8 +232,14 @@ void start_client()
             break;
 
         t0 = timer_get_time();
+        
+        // handle networking
+        if(memcmp(&player->input,&player->prior_input, sizeof(PlayerInput)) != 0)
+            net_client_add_player_input(&player->input, g_total_t);
 
-        simulate_client();
+        net_client_update();
+
+        simulate_client(); // client prediction
         render();
 
         timer_wait_for_frame(&game_timer);
@@ -441,7 +446,6 @@ void deinit()
 
 void simulate_client()
 {
-    net_client_update();
     player_update();
     particles_update();
     gui_update();

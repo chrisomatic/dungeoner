@@ -1,7 +1,6 @@
 #!/bin/sh
 
-gcc entity.c \
-    animation.c \
+gcc animation.c \
     3dmath.c \
     camera.c \
     gfx.c \

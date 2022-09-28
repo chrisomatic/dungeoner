@@ -11,7 +11,6 @@
 #include "log.h"
 #include "gfx.h"
 #include "boat.h"
-#include "entity.h"
 #include "coin.h"
 #include "weapon.h"
 #include "gui.h"
@@ -19,9 +18,10 @@
 #include "camera.h"
 #include "consumable.h"
 #include "player.h"
+#include "net.h"
 
-Entity  p = {0};
-Player* player = &p.data.player_data;
+Player players[MAX_CLIENTS];
+Player* player = &players[0];
 
 static int prior_cursor_x = 0;
 static int prior_cursor_y = 0;
@@ -124,7 +124,7 @@ static void handle_boat_control(PhysicsObj* phys)
         boat->lookat.z
     };
 
-    if(player->forward)
+    if(player->input.forward)
     {
         Vector3f forward = {-lookat.x, 0.0,-lookat.z};
         normalize(&forward);
@@ -133,7 +133,7 @@ static void handle_boat_control(PhysicsObj* phys)
         add(&user_force,forward);
     }
 
-    if(player->back)
+    if(player->input.back)
     {
         Vector3f back = {lookat.x, 0.0,lookat.z};
         normalize(&back);
@@ -142,12 +142,12 @@ static void handle_boat_control(PhysicsObj* phys)
         add(&user_force,back);
     }
 
-    if(player->left)
+    if(player->input.left)
     {
         boat->angle_h += (90.0*g_delta_t);
     }
 
-    if(player->right)
+    if(player->input.right)
     {
         boat->angle_h -= (90.0*g_delta_t);
     }
@@ -180,7 +180,7 @@ static void handle_player_control(PhysicsObj* phys)
     if(!player->jumped)
         phys->max_linear_speed = player->walk_speed;
 
-    if(player->run)
+    if(player->input.run)
     {
         velocity = 8.0;
         if(!player->jumped)
@@ -208,9 +208,9 @@ static void handle_player_control(PhysicsObj* phys)
     if(player->jumped && (phys->pos.y <= phys->ground.height || phys->on_object))
         player->jumped = false;
  
-    if(player->secondary_action)
+    if(player->input.secondary_action)
     {
-        player->secondary_action = false;
+        player->input.secondary_action = false;
         player_spawn_projectile(player->equipped_projectile);
     }
 
@@ -227,7 +227,7 @@ static void handle_player_control(PhysicsObj* phys)
  
         Vector3f user_force = {0.0,0.0,0.0};
 
-        if(player->jump)
+        if(player->input.jump)
         {
             if(in_water)
             {
@@ -244,21 +244,21 @@ static void handle_player_control(PhysicsObj* phys)
             }
         }
 
-        if(player->forward)
+        if(player->input.forward)
         {
             Vector3f forward = {-lookat.x,player->spectator || in_water ? -lookat.y : 0.0,-lookat.z};
             normalize(&forward);
             add(&user_force,forward);
         }
 
-        if(player->back)
+        if(player->input.back)
         {
             Vector3f back = {lookat.x,player->spectator || in_water? lookat.y : 0.0,lookat.z};
             normalize(&back);
             add(&user_force,back);
         }
 
-        if(player->left)
+        if(player->input.left)
         {
             Vector3f left = {0};
             cross(player->camera.up, lookat, &left);
@@ -266,7 +266,7 @@ static void handle_player_control(PhysicsObj* phys)
             subtract(&user_force,left);
         }
 
-        if(player->right)
+        if(player->input.right)
         {
             Vector3f right = {0};
             cross(player->camera.up, lookat, &right);
@@ -400,7 +400,7 @@ void player_init()
     player->run_factor = 1.5;
     player->walk_speed = 4.5; // m/s
     player->spectator = false;
-    player->run = false;
+    player->input.run = false;
     player->phys.density = 1050.0f;
 
     player->terrain_block.x = 0;
@@ -482,7 +482,7 @@ void player_snap_camera()
 
     if(player->user_force_applied && player->camera.mode == CAMERA_MODE_FIRST_PERSON)
     {
-        float period = player->run ? 10 : 5;
+        float period = player->input.run ? 10 : 5;
         player->camera.phys.pos.y += 0.1*sin(period*player->step_time);
     }
 
@@ -512,7 +512,7 @@ static void update_player_model_transform()
 {
     Vector3f pos = {-player->phys.pos.x, -player->phys.pos.y, -player->phys.pos.z}; // @NEG
     Vector3f rot = {0.0,-player->angle_h,0.0}; // @NEG
-    Vector3f sca = {1.0,player->crouched ? 0.5 : 1.0,1.0};
+    Vector3f sca = {1.0,player->input.crouched ? 0.5 : 1.0,1.0};
     PhysicsObj* phys = &player->phys;
 
     get_model_transform(&pos,&rot,&sca,&player->model.transform);
@@ -536,9 +536,9 @@ void player_update()
         player->mp = MIN(player->mp_max, player->mp); // cap at max
     }
 
-    if(player->use)
+    if(player->input.use)
     {
-        player->use = false;
+        player->input.use = false;
 
         if(player->in_boat)
         {
@@ -584,7 +584,7 @@ void player_update()
     
     //physics_print(&player->phys, false);
 
-    if(player->primary_action && player->state == PLAYER_STATE_NORMAL)
+    if(player->input.primary_action && player->state == PLAYER_STATE_NORMAL)
     {
         player->state = PLAYER_STATE_WINDUP;
     }
@@ -593,6 +593,9 @@ void player_update()
     {
         player_snap_camera();
     }
+    
+    // copy prior input
+    memcpy(&player->prior_input, &player->input, sizeof(PlayerInput));
 }
 
 static void player_die(Player* p)

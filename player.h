@@ -18,6 +18,22 @@ typedef enum
 
 typedef struct
 {
+    uint16_t forward:1;
+    uint16_t back:1;
+    uint16_t left:1;
+    uint16_t right:1;
+    uint16_t jump:1;
+    uint16_t run:1;
+    uint16_t use:1;
+    uint16_t crouched:1;
+    uint16_t primary_action:1;
+    uint16_t secondary_action:1;
+    uint16_t pad;
+    double delta_t; //frame time
+} PlayerInput;
+
+typedef struct
+{
     float walk_speed;
     float run_factor;
 
@@ -48,29 +64,20 @@ typedef struct
     Weapon weapon;
 
     PlayerState state;
+    PlayerInput input;
+    PlayerInput prior_input;
 
-    bool spectator;
-    bool forward;
-    bool back;
-    bool left;
-    bool right;
-    bool jump;
-    bool jumped;
-    bool run;
-    bool use;
-    bool user_force_applied;
+    // state
+    uint16_t spectator:1;
+    uint16_t jumped:1;
+    uint16_t user_force_applied:1;
+    uint16_t in_boat:1;
+    uint16_t portalled:1;
 
-    bool crouched;
-
-    bool primary_action;
-    bool secondary_action;
-
-    bool in_boat;
     Boat* boat;
 
     float step_time; // used for bouncing while moving
 
-    bool portalled;
     int equipped_projectile;
 } Player;
 

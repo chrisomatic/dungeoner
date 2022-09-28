@@ -1,5 +1,6 @@
 #pragma once
 
+#include "player.h"
 #include "3dmath.h"
 
 #define MAX_CLIENTS 8
@@ -69,6 +70,7 @@ int net_server_start();
 bool net_client_init();
 bool net_client_connect();
 void net_client_update();
+bool net_client_add_player_input(PlayerInput* input, double game_time);
 bool net_client_is_connected();
 void net_client_disconnect();
 bool net_client_set_server_ip(char* address);

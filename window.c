@@ -144,22 +144,22 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
             if(mode == GLFW_CURSOR_NORMAL)
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-            player->primary_action = true;
+            player->input.primary_action = true;
         }
         else if(action == GLFW_RELEASE)
         {
-            player->primary_action = false;
+            player->input.primary_action = false;
         }
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         if(action == GLFW_PRESS)
         {
-            player->secondary_action = true;
+            player->input.secondary_action = true;
         }
         else if(action == GLFW_RELEASE)
         {
-            player->secondary_action = false;
+            player->input.secondary_action = false;
         }
     }
 }
@@ -180,25 +180,25 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 player->equipped_projectile = PROJECTILE_ICE;
                 break;
             case GLFW_KEY_W:
-                player->forward = true;
+                player->input.forward = true;
                 break;
             case GLFW_KEY_S:
-                player->back = true;
+                player->input.back = true;
                 break;
             case GLFW_KEY_A:
-                player->left = true;
+                player->input.left = true;
                 break;
             case GLFW_KEY_D:
-                player->right = true;
+                player->input.right = true;
                 break;
             case GLFW_KEY_E:
-                player->use = true;
+                player->input.use = true;
                 break;
             case GLFW_KEY_SPACE:
-                player->jump = true;
+                player->input.jump = true;
                 break;
             case GLFW_KEY_LEFT_SHIFT:
-                player->run = true;
+                player->input.run = true;
                 break;
             case GLFW_KEY_F:
                 show_fog = !show_fog;
@@ -207,7 +207,7 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
                 show_collision = !show_collision;
                 break;
             case GLFW_KEY_LEFT_CONTROL:
-                player->crouched = true;
+                player->input.crouched = true;
                 player->phys.height /= 2.0;
                 break;
             case GLFW_KEY_P:
@@ -252,26 +252,26 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
         switch(key)
         {
             case GLFW_KEY_W:
-                player->forward = false;
+                player->input.forward = false;
                 break;
             case GLFW_KEY_S:
-                player->back = false;
+                player->input.back = false;
                 break;
             case GLFW_KEY_A:
-                player->left = false;
+                player->input.left = false;
                 break;
             case GLFW_KEY_D:
-                player->right = false;
+                player->input.right = false;
                 break;
             case GLFW_KEY_LEFT_SHIFT:
-                player->run = false;
+                player->input.run = false;
                 break;
             case GLFW_KEY_LEFT_CONTROL:
-                player->crouched = false;
+                player->input.crouched = false;
                 player->phys.height *= 2.0;
                 break;
             case GLFW_KEY_SPACE:
-                player->jump = false;
+                player->input.jump = false;
                 break;
         }
     }

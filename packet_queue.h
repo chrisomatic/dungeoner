@@ -2,7 +2,7 @@
 
 typedef struct
 {
-    Packet*  data;
+    Packet* data;
     uint32_t front,rear,size;
     uint32_t capacity;
 } PacketQueue;
